@@ -434,6 +434,22 @@
         </div>
       </div>
 
+      <!-- Méthode de salage (Recouvrement au sel vs Sous-vide) -->
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Méthode de salage</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <button type="button" id="btn-salage-recouvrement" class="chip-sm active" onclick="selectionnerModeSalage('RECOUVREMENT_SEL')" style="display:flex; flex-direction:column; align-items:flex-start; padding:10px 12px; border-radius:12px; text-align:left; border:1.5px solid var(--primary); background:var(--primary-light);">
+            <span style="font-weight:700; font-size:0.84rem;">Recouvrement au sel</span>
+            <span id="salage-duree-recouvrement" style="font-size:0.74rem; opacity:0.85;">Gros sel · 24 h</span>
+          </button>
+          <button type="button" id="btn-salage-sousvide" class="chip-sm" onclick="selectionnerModeSalage('SOUS_VIDE')" style="display:flex; flex-direction:column; align-items:flex-start; padding:10px 12px; border-radius:12px; text-align:left; border:1px solid var(--border); background:var(--surface-subtle);">
+            <span style="font-weight:700; font-size:0.84rem;">Sous-vide</span>
+            <span id="salage-duree-sousvide" style="font-size:0.74rem; opacity:0.85;">3 % sel · 6 jours</span>
+          </button>
+        </div>
+        <div id="plan-salage-resume" style="font-size:0.74rem; color:var(--text-muted); margin-top:5px;"></div>
+      </div>
+
       <!-- Section Découpe Multi-sorties (si recette découpe) -->
       <div id="plan-sorties-section" style="display:none; margin-top:10px; background:var(--surface-subtle); padding:12px; border-radius:var(--radius-md);">
         <div style="font-weight:700; font-size:0.88rem; margin-bottom:4px;">Parties de découpe obtenues</div>

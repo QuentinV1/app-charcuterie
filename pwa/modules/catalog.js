@@ -2957,6 +2957,132 @@ export const CATALOGUE_BASE = [
         "facultative": false
       }
     ]
+  },
+  {
+    "id": "GIGOT_SANGLIER_SECHE",
+    "code": "GIGOT_SANGLIER_SECHE",
+    "nom": "Gigot de sanglier salé et séché",
+    "famille": "Gibier & Foie",
+    "typeRecette": "SALAISON_SECHE",
+    "type": "SALAISON_SECHE",
+    "uniteBase": "kg",
+    "unite": "kg",
+    "quantiteDefaut": 3.5,
+    "perteCiblePct": 35,
+    "perteCible": 35,
+    "tempCoeurCible": null,
+    "conditionsConservation": "Salage au frais (2-4 °C), puis séchage / affinage à 12-15 °C (70-80 % HR) ou bas du réfrigérateur pendant 6 à 12 semaines (perte cible 35 %).",
+    "pointsVigilance": "• Contrôle sanitaire du sanglier obligatoire (trichine).\n• Bien parer le gigot (retirer caillots, membranes et excès de gras).\n• Avec os : bien masser le sel le long de l'os et de l'articulation.",
+    "description": "Gigot (cuissot) de sanglier salé au gros sel ou sous vide à l'équilibre, décliné en deux lots simples : Poivre ou Original, puis séché lentement.",
+    "masquee": false,
+    "sortiesDecoupe": [],
+    "variantes": [
+      {
+        "nom": "Poivre",
+        "descriptionEpices": "Poivre noir concassé généreux sur toute la surface",
+        "epicesGrammesParUnite": 15,
+        "dureeSalageHeuresSpecifique": 144,
+        "ajouteEtapeFumage": false
+      },
+      {
+        "nom": "Original",
+        "descriptionEpices": "Recette originale : baies de genièvre concassées, thym, laurier, ail et poivre noir",
+        "epicesGrammesParUnite": 15,
+        "dureeSalageHeuresSpecifique": 144,
+        "ajouteEtapeFumage": false
+      }
+    ],
+    "ingredients": [
+      {
+        "nomIngredient": "Gigot de sanglier paré",
+        "nom": "Gigot de sanglier paré",
+        "modeCalcul": "PAR_KG_MATIERE",
+        "quantite": 1000,
+        "unite": "g",
+        "prixKgOuUniteEstime": 0,
+        "prix": 0
+      },
+      {
+        "nomIngredient": "Gros sel non iodé (recouvrement)",
+        "nom": "Gros sel non iodé (recouvrement)",
+        "modeCalcul": "PAR_KG_MATIERE",
+        "quantite": 1000,
+        "unite": "g",
+        "prixKgOuUniteEstime": 1,
+        "prix": 1
+      },
+      {
+        "nomIngredient": "Poivre / Épices",
+        "nom": "Poivre / Épices",
+        "modeCalcul": "PAR_KG_MATIERE",
+        "quantite": 15,
+        "unite": "g",
+        "prixKgOuUniteEstime": 25,
+        "prix": 25
+      }
+    ],
+    "etapes": [
+      {
+        "ordre": 1,
+        "titre": "Parage & Préparation du gigot",
+        "instructions": "• Parer soigneusement le gigot (retirer membranes, caillots et gras irrégulier).\n• Masser le long de l'os pour chasser le sang résiduel.",
+        "astuce": "",
+        "offsetDebutMinutes": 0,
+        "dureeMinutes": 45,
+        "dureeH": 0.75,
+        "varianteCible": null,
+        "modeDuree": "FIXE",
+        "facultative": false
+      },
+      {
+        "ordre": 2,
+        "titre": "Salage au gros sel par recouvrement (1,5 à 2 j/kg)",
+        "instructions": "• Frotter vigoureusement le gigot avec le gros sel non iodé (insister près de l'os).\n• Enfouir complètement dans un bac de gros sel au réfrigérateur (2-4 °C).\n• Retourner tous les 2 jours et compléter le sel si nécessaire.",
+        "astuce": "",
+        "offsetDebutMinutes": 45,
+        "dureeMinutes": 8640,
+        "dureeH": 144,
+        "varianteCible": null,
+        "modeDuree": "PAR_KG",
+        "facultative": false
+      },
+      {
+        "ordre": 3,
+        "titre": "Rinçage & Dessalage (2 h en eau froide)",
+        "instructions": "• Sortir le gigot du sel et rincer à l'eau froide.\n• Dessaler 2 heures dans un grand volume d'eau froide en changeant l'eau à mi-parcours.\n• Essuyer et sécher parfaitement au torchon propre.",
+        "astuce": "",
+        "offsetDebutMinutes": 8685,
+        "dureeMinutes": 120,
+        "dureeH": 2,
+        "varianteCible": null,
+        "modeDuree": "FIXE",
+        "facultative": false
+      },
+      {
+        "ordre": 4,
+        "titre": "Épiçage par lot (Poivre / Original) & Ficelage",
+        "instructions": "• Appliquer les épices selon chaque lot (Poivre noir concassé ou mélange Original genièvre/thym/laurier/poivre).\n• Ficeler serré ou mettre en filet/torchon et noter le poids initial !",
+        "astuce": "",
+        "offsetDebutMinutes": 8805,
+        "dureeMinutes": 30,
+        "dureeH": 0.5,
+        "varianteCible": null,
+        "modeDuree": "FIXE",
+        "facultative": false
+      },
+      {
+        "ordre": 5,
+        "titre": "Séchage & Affinage (6 à 12 semaines, perte cible 35 %)",
+        "instructions": "• Suspendre en cave d'affinage (12-15 °C, 75 % HR) ou bas du réfrigérateur.\n• Peser régulièrement jusqu'à atteindre 35 % de perte de poids.",
+        "astuce": "",
+        "offsetDebutMinutes": 60480,
+        "dureeMinutes": 60,
+        "dureeH": 1,
+        "varianteCible": null,
+        "modeDuree": "FIXE",
+        "facultative": false
+      }
+    ]
   }
 ];
 

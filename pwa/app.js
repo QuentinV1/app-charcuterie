@@ -33,7 +33,7 @@ import {
   modifierLotDraftPlanification, ajouterLigneLotPlanification, supprimerLigneLotPlanification,
   actualiserEstimationPlanification, confirmerPlanification, togglePlanRecetteDropdown,
   ouvrirPlanRecetteDropdown, fermerPlanRecetteDropdown, filtrerCategorieDropdown,
-  effacerRechercheRecettes, filtrerRecettesDropdown
+  effacerRechercheRecettes, filtrerRecettesDropdown, selectionnerModeSalage
 } from './modules/planification.js';
 import {
   rendreCourses, basculerAchatCourse, nettoyerCoursesAchetees, ouvrirModalModifierCourse,
@@ -506,6 +506,7 @@ Object.assign(window, {
   supprimerLigneLotPlanification,
   actualiserEstimationPlanification,
   confirmerPlanification,
+  selectionnerModeSalage,
   togglePlanRecetteDropdown,
   ouvrirPlanRecetteDropdown,
   fermerPlanRecetteDropdown,

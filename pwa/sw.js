@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laffinoir-v8';
+const CACHE_NAME = 'laffinoir-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './version.json',
   './modules/catalog.js',
+  './modules/salage.js',
   './modules/state.js',
   './modules/photos.js',
   './modules/calculateur.js',

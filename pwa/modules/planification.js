@@ -1,8 +1,50 @@
 import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr } from './state.js';
 import { CalculateurCharcuterie } from './calculateur.js';
 import { rendreRappelEvaluationPlanification } from './evaluation.js';
+import {
+  MODE_SALAGE, modeSalageParDefaut, formaterDureeSalage,
+  dureeSalageHeuresAdaptee, adapterEtapesPourModeSalage
+} from './salage.js';
 
 export let lotsDraftPlanification = [];
+let modeSalageSelectionne = MODE_SALAGE.RECOUVREMENT_SEL;
+
+export function selectionnerModeSalage(mode) {
+  modeSalageSelectionne = mode === MODE_SALAGE.SOUS_VIDE ? MODE_SALAGE.SOUS_VIDE : MODE_SALAGE.RECOUVREMENT_SEL;
+  actualiserAffichageModeSalage();
+}
+
+export function actualiserAffichageModeSalage() {
+  const r = appState.recettes.find(x => x.id === uiState.dropdownRecetteSelectionneeId || x.code === uiState.dropdownRecetteSelectionneeId);
+  if (!r) return;
+  const qBase = parseFloat(document.getElementById('plan-quantite')?.value) || r.quantiteDefaut || 1;
+  const dureeRecH = dureeSalageHeuresAdaptee(r, MODE_SALAGE.RECOUVREMENT_SEL, qBase);
+  const dureeSvH = dureeSalageHeuresAdaptee(r, MODE_SALAGE.SOUS_VIDE, qBase);
+
+  const elRec = document.getElementById('salage-duree-recouvrement');
+  const elSv = document.getElementById('salage-duree-sousvide');
+  const btnRec = document.getElementById('btn-salage-recouvrement');
+  const btnSv = document.getElementById('btn-salage-sousvide');
+  const elRes = document.getElementById('plan-salage-resume');
+
+  if (elRec) elRec.innerText = `Gros sel · ${formaterDureeSalage(dureeRecH)}`;
+  if (elSv) elSv.innerText = `3 % sel · ${formaterDureeSalage(dureeSvH)}`;
+
+  if (btnRec && btnSv) {
+    const isSv = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE;
+    btnRec.style.border = isSv ? '1px solid var(--border)' : '1.5px solid var(--primary)';
+    btnRec.style.background = isSv ? 'var(--surface-subtle)' : 'var(--primary-light)';
+    btnRec.classList.toggle('active', !isSv);
+
+    btnSv.style.border = isSv ? '1.5px solid var(--primary)' : '1px solid var(--border)';
+    btnSv.style.background = isSv ? 'var(--primary-light)' : 'var(--surface-subtle)';
+    btnSv.classList.toggle('active', isSv);
+  }
+  if (elRes) {
+    const dureeSelH = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE ? dureeSvH : dureeRecH;
+    elRes.innerText = `⏱️ Mise au sel : ${formaterDureeSalage(dureeSelH)} · Étapes et liste de courses adaptées automatiquement.`;
+  }
+}
 
 export function modifierLotDraftPlanification(idx, champ, valeur) {
   const lot = lotsDraftPlanification[idx];
@@ -74,6 +116,7 @@ export function selectionnerRecetteDropdown(recId) {
   }
 
   // Lots prédéfinis
+  modeSalageSelectionne = modeSalageParDefaut(r);
   lotsDraftPlanification = [];
   if (r.variantes && r.variantes.length > 0) {
     const qBase = r.quantiteDefaut || 1;
@@ -83,7 +126,8 @@ export function selectionnerRecetteDropdown(recId) {
         variante: v.nom,
         quantite: qParLot,
         unite: (r.sortiesDecoupe && r.sortiesDecoupe[0]) ? r.sortiesDecoupe[0].unite : (r.uniteBase || 'pièce'),
-        epicesGrammesParUnite: v.epicesGrammesParUnite || 15
+        epicesGrammesParUnite: v.epicesGrammesParUnite || 15,
+        dureeSalageHeuresSpecifique: v.dureeSalageHeuresSpecifique ?? null
       });
     });
   } else {
@@ -91,11 +135,13 @@ export function selectionnerRecetteDropdown(recId) {
       variante: 'Standard',
       quantite: r.quantiteDefaut || 1,
       unite: r.uniteBase || 'kg',
-      epicesGrammesParUnite: 0
+      epicesGrammesParUnite: 0,
+      dureeSalageHeuresSpecifique: null
     });
   }
 
   rendreLignesLotsPlanification();
+  actualiserAffichageModeSalage();
   actualiserEstimationPlanification();
   fermerPlanRecetteDropdown();
 }
@@ -134,6 +180,7 @@ export function supprimerLigneLotPlanification(idx) {
 export function actualiserEstimationPlanification() {
   const r = appState.recettes.find(x => x.id === uiState.dropdownRecetteSelectionneeId || x.code === uiState.dropdownRecetteSelectionneeId);
   if (!r) return;
+  actualiserAffichageModeSalage();
 
   const qBase = parseFloat(document.getElementById('plan-quantite').value) || 1.0;
   const prixMatiere = parseFloat(document.getElementById('plan-prix-matiere').value) || 0;
@@ -182,6 +229,7 @@ export function confirmerPlanification() {
 
   // Lots
   const lots = lotsDraftPlanification.map(lot => {
+    const dureeSalH = dureeSalageHeuresAdaptee(r, modeSalageSelectionne, qBase, lot.dureeSalageHeuresSpecifique ?? null);
     return {
       nomProduit: (sortiesDecoupe[0] && sortiesDecoupe[0].nom) ? sortiesDecoupe[0].nom : r.nom,
       variante: lot.variante,
@@ -189,6 +237,7 @@ export function confirmerPlanification() {
       quantiteReelle: lot.quantite,
       unite: lot.unite,
       epicesUtiliseesGrammes: lot.quantite * (lot.epicesGrammesParUnite || 15),
+      dureeSalageHeures: dureeSalH,
       poidsInitialGrammes: 0,
       poidsActuelGrammes: 0,
       noteSur5: 5,
@@ -196,20 +245,27 @@ export function confirmerPlanification() {
     };
   });
 
-  // Étapes
-  const etapes = (r.etapes || []).map(e => {
-    let jour = 'Affinage';
-    if (e.offsetDebutMinutes < 1000) jour = 'Jour 1';
-    else if (e.offsetDebutMinutes < 3000) jour = 'Jour 2';
+  // Étapes filtrées par variante et adaptées au mode de salage
+  const nomsVariantesPresentes = lots.filter(l => l.quantitePrevue > 0).map(l => (l.variante || '').toLowerCase());
+  const etapesFiltrees = (r.etapes || []).slice().sort((a, b) => (a.ordre || 0) - (b.ordre || 0)).filter(e => {
+    const vc = (e.varianteCible || '').trim().toLowerCase();
+    return !vc || nomsVariantesPresentes.some(n => n.includes(vc));
+  });
+  const etapesAdaptees = adapterEtapesPourModeSalage(r, etapesFiltrees, modeSalageSelectionne, qBase);
+
+  const etapes = etapesAdaptees.map((e, idx) => {
+    const jourNum = Math.floor((e.offsetDebutMinutes || 0) / 1440) + 1;
+    const jour = jourNum <= 3 ? `Jour ${jourNum}` : `J+${jourNum - 1}`;
 
     return {
-      ordre: e.ordre,
+      ordre: idx + 1,
       jourLibelle: jour,
       titre: e.titre,
       instructions: e.instructions,
       astuce: e.astuce,
       debutPrevuMillis: dateDebutMillis + (e.offsetDebutMinutes || 0) * 60000,
       dureeMinutes: e.dureeMinutes,
+      varianteCible: e.varianteCible || '',
       terminee: false
     };
   });
@@ -230,8 +286,71 @@ export function confirmerPlanification() {
     achete: false
   });
 
-  // 2. Ingrédients proportionnels
+  // 2. Ingrédients proportionnels (adaptés au mode de salage)
+  const nativeMode = modeSalageParDefaut(r);
+  const estSwitchSousVide = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE && nativeMode === MODE_SALAGE.RECOUVREMENT_SEL;
+  const estSwitchRecouvrement = modeSalageSelectionne === MODE_SALAGE.RECOUVREMENT_SEL && nativeMode === MODE_SALAGE.SOUS_VIDE;
+  let selSousVideAjoute = false;
+  let grosSelAjoute = false;
+  const prixSelKg = getValeurParametre('PRIX_SEL_KG', 1.0);
+
   (r.ingredients || []).forEach(ing => {
+    const nomLow = (ing.nomIngredient || ing.nom || '').toLowerCase();
+    if (estSwitchSousVide && nomLow.includes('gros sel')) {
+      if (!selSousVideAjoute) {
+        selSousVideAjoute = true;
+        const qSelG = (r.uniteBase === 'pièce' ? 15 : 30) * qBase;
+        const pSel = parseFloat(((qSelG / 1000) * 1.5).toFixed(2));
+        coursesGenerees.push({
+          id: 'c_' + Math.random().toString(36).slice(2, 9),
+          projetId: projId,
+          nomProjet: nom,
+          nom: 'Sel fin non iodé / nitrité (3 % sous-vide)',
+          categorie: 'SEL_SUCRE',
+          qte: parseFloat((qSelG >= 1000 ? qSelG / 1000 : qSelG).toFixed(2)),
+          unite: qSelG >= 1000 ? 'kg' : 'g',
+          prix: pSel,
+          prixReelPaye: pSel,
+          achete: false
+        });
+        const qSucreG = (r.uniteBase === 'pièce' ? 5 : 10) * qBase;
+        const pSucre = parseFloat(((qSucreG / 1000) * 2.0).toFixed(2));
+        coursesGenerees.push({
+          id: 'c_' + Math.random().toString(36).slice(2, 9),
+          projetId: projId,
+          nomProjet: nom,
+          nom: 'Sucre / Cassonade (1 % sous-vide)',
+          categorie: 'SEL_SUCRE',
+          qte: parseFloat((qSucreG >= 1000 ? qSucreG / 1000 : qSucreG).toFixed(2)),
+          unite: qSucreG >= 1000 ? 'kg' : 'g',
+          prix: pSucre,
+          prixReelPaye: pSucre,
+          achete: false
+        });
+      }
+      return;
+    }
+    if (estSwitchRecouvrement && nomLow.includes('sel') && ing.modeCalcul === 'POURCENT_POIDS') {
+      if (!grosSelAjoute) {
+        grosSelAjoute = true;
+        const qGrosSelKg = ((r.uniteBase === 'pièce' ? 500 : 1000) * qBase) / 1000;
+        const pGrosSel = parseFloat((qGrosSelKg * prixSelKg).toFixed(2));
+        coursesGenerees.push({
+          id: 'c_' + Math.random().toString(36).slice(2, 9),
+          projetId: projId,
+          nomProjet: nom,
+          nom: 'Gros sel non iodé (recouvrement)',
+          categorie: 'SEL_SUCRE',
+          qte: parseFloat(qGrosSelKg.toFixed(2)),
+          unite: 'kg',
+          prix: pGrosSel,
+          prixReelPaye: pGrosSel,
+          achete: false
+        });
+      }
+      return;
+    }
+
     let qTot = ing.quantite || 0;
     if (['PAR_PIECE', 'PAR_KG_MATIERE', 'POURCENT_POIDS', 'PAR_KG_MELEE'].includes(ing.modeCalcul)) {
       qTot = ing.quantite * qBase;
@@ -256,6 +375,23 @@ export function confirmerPlanification() {
       achete: false
     });
   });
+
+  if (modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE) {
+    const nbSachets = r.uniteBase === 'pièce' ? qBase : Math.max(1, Math.ceil(qBase));
+    const pSachets = parseFloat((nbSachets * 0.25).toFixed(2));
+    coursesGenerees.push({
+      id: 'c_' + Math.random().toString(36).slice(2, 9),
+      projetId: projId,
+      nomProjet: nom,
+      nom: 'Sachets sous vide',
+      categorie: 'CONSOMMABLES',
+      qte: nbSachets,
+      unite: 'pièce',
+      prix: pSachets,
+      prixReelPaye: pSachets,
+      achete: false
+    });
+  }
 
   // 3. Épices par lot
   lots.forEach(lot => {
@@ -291,6 +427,7 @@ export function confirmerPlanification() {
     prixReventeUnitaireFixe: 0,
     statut: 'EN_COURS',
     perteCiblePct: r.perteCiblePct || r.perteCible || 35,
+    modeSalage: modeSalageSelectionne,
     sortiesDecoupe: sortiesDecoupe,
     lots: lots,
     etapes: etapes
