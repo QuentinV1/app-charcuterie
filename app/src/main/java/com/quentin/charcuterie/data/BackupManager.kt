@@ -398,7 +398,8 @@ object BackupManager {
                         commentaireGeneral = pObj.str("commentaireGeneral"),
                         versionRecetteUtilisee = pObj.intVal("versionRecetteUtilisee", 1),
                         activerRevente = pObj.bool("activerRevente", true),
-                        prixReventeUnitaireFixe = pObj.dbl("prixReventeUnitaireFixe", 0.0)
+                        prixReventeUnitaireFixe = pObj.dbl("prixReventeUnitaireFixe", 0.0),
+                        modeSalage = pObj.str("modeSalage", "RECOUVREMENT_SEL")
                     )
                     val newProjId = dao.insertProjet(newProjEntity)
                     if (oldProjId.isNotBlank()) projetIdMap[oldProjId] = newProjId

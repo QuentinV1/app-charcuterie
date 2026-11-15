@@ -128,7 +128,7 @@ fun ProjetsScreen(
             onSauvegarderLotCatalogue = { recetteId, nom, desc, epicesG, salageH, fumage ->
                 viewModel.ajouterVarianteRecette(recetteId, nom, desc, epicesG, salageH, fumage)
             },
-            onConfirm = { nom, rec, dateDebutMillis, qte, prixUnit, marge, sortiesCochees, lots, rappels, activerRevente, prixReventeFixe ->
+            onConfirm = { nom, rec, dateDebutMillis, qte, prixUnit, marge, sortiesCochees, lots, rappels, activerRevente, prixReventeFixe, modeSalage ->
                 viewModel.creerProjet(
                     nomProjet = nom,
                     recetteComplete = rec,
@@ -140,7 +140,8 @@ fun ProjetsScreen(
                     lotsChoisis = lots,
                     activerRappels = rappels,
                     activerRevente = activerRevente,
-                    prixReventeUnitaireFixe = prixReventeFixe
+                    prixReventeUnitaireFixe = prixReventeFixe,
+                    modeSalage = modeSalage
                 )
                 showCreateScreen = false
             }

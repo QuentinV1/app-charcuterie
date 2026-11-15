@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.quentin.charcuterie.data.*
+import com.quentin.charcuterie.domain.ModeSalage
+import com.quentin.charcuterie.domain.SalageHelper
 import com.quentin.charcuterie.notifications.ReminderReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,7 +72,8 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
         lotsChoisis: List<LotDraft>,
         activerRappels: Boolean,
         activerRevente: Boolean = true,
-        prixReventeUnitaireFixe: Double = 0.0
+        prixReventeUnitaireFixe: Double = 0.0,
+        modeSalage: ModeSalage = SalageHelper.modeSalageParDefaut(recetteComplete)
     ) {
         viewModelScope.launch {
             val r = recetteComplete.recette
@@ -95,7 +98,8 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     activerRevente = activerRevente,
                     prixReventeUnitaireFixe = prixReventeUnitaireFixe,
                     prixSelKg = prixSelKg,
-                    prixEpicesKg = prixEpicesKg
+                    prixEpicesKg = prixEpicesKg,
+                    modeSalage = modeSalage.code
                 )
             )
 
@@ -144,7 +148,8 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                         variante = "Standard",
                         quantitePrevue = quantiteBase,
                         quantiteReelle = quantiteBase,
-                        unite = uniteLot
+                        unite = uniteLot,
+                        dureeSalageHeures = SalageHelper.dureeSalageHeuresAdaptee(recetteComplete, modeSalage, quantiteBase)
                     )
                 )
             }
@@ -156,12 +161,14 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                 e.varianteCible.isBlank() || nomsVariantesPresentes.any { it.contains(e.varianteCible.lowercase()) }
             }
 
-            val etapesPlanifiees = etapesFiltrees.mapIndexed { idx, e ->
-                val dureeEffective = if (e.modeDuree == "PAR_KG") {
-                    (e.dureeMinutes * (quantiteBase / r.quantiteDefaut.coerceAtLeast(1.0))).toInt()
-                } else {
-                    e.dureeMinutes
-                }
+            val etapesAdaptees = SalageHelper.adapterEtapesPourModeSalage(
+                recetteComplete = recetteComplete,
+                etapesFiltrees = etapesFiltrees,
+                modeSalage = modeSalage,
+                quantiteBase = quantiteBase
+            )
+
+            val etapesPlanifiees = etapesAdaptees.mapIndexed { idx, e ->
                 val debutMillis = dateDebutMillis + (e.offsetDebutMinutes * 60_000L)
                 val jourNum = (e.offsetDebutMinutes / 1440) + 1
                 val jourLabel = if (jourNum <= 3) "Jour $jourNum" else "J+${jourNum - 1}"
@@ -174,7 +181,7 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     instructions = e.instructions,
                     astuce = e.astuce,
                     debutPrevuMillis = debutMillis,
-                    dureeMinutes = dureeEffective,
+                    dureeMinutes = e.dureeMinutes,
                     varianteCible = e.varianteCible,
                     terminee = false,
                     rappelProgramme = activerRappels && e.rappelActifParDefaut
@@ -209,7 +216,65 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     prixEstimeTotal = quantiteBase * prixUnitaireMatiere
                 )
             )
+            val nativeMode = SalageHelper.modeSalageParDefaut(recetteComplete)
+            val estSwitchSousVide = modeSalage == ModeSalage.SOUS_VIDE && nativeMode == ModeSalage.RECOUVREMENT_SEL
+            val estSwitchRecouvrement = modeSalage == ModeSalage.RECOUVREMENT_SEL && nativeMode == ModeSalage.SOUS_VIDE
+            var selSousVideAjoute = false
+            var grosSelAjoute = false
+
             recetteComplete.ingredients.forEach { ing ->
+                val nomLow = ing.nomIngredient.lowercase()
+                if (estSwitchSousVide && nomLow.contains("gros sel")) {
+                    if (!selSousVideAjoute) {
+                        selSousVideAjoute = true
+                        val gParUnite = if (r.uniteBase == "pièce") 15.0 else 30.0
+                        val qSelG = gParUnite * quantiteBase
+                        coursesGenerees.add(
+                            ProjetCourseEntity(
+                                projetId = projetId,
+                                nomProjet = nomProjet.ifBlank { r.nom },
+                                nomIngredient = "Sel fin non iodé / nitrité (3 % sous-vide)",
+                                categorie = "SEL_SUCRE",
+                                quantiteRequise = if (qSelG >= 1000.0) qSelG / 1000.0 else qSelG,
+                                unite = if (qSelG >= 1000.0) "kg" else "g",
+                                prixEstimeTotal = (qSelG / 1000.0) * 1.5
+                            )
+                        )
+                        val qSucreG = (if (r.uniteBase == "pièce") 5.0 else 10.0) * quantiteBase
+                        coursesGenerees.add(
+                            ProjetCourseEntity(
+                                projetId = projetId,
+                                nomProjet = nomProjet.ifBlank { r.nom },
+                                nomIngredient = "Sucre / Cassonade (1 % sous-vide)",
+                                categorie = "SEL_SUCRE",
+                                quantiteRequise = if (qSucreG >= 1000.0) qSucreG / 1000.0 else qSucreG,
+                                unite = if (qSucreG >= 1000.0) "kg" else "g",
+                                prixEstimeTotal = (qSucreG / 1000.0) * 2.0
+                            )
+                        )
+                    }
+                    return@forEach
+                }
+                if (estSwitchRecouvrement && nomLow.contains("sel") && ing.modeCalcul == "POURCENT_POIDS") {
+                    if (!grosSelAjoute) {
+                        grosSelAjoute = true
+                        val gParUnite = if (r.uniteBase == "pièce") 500.0 else 1000.0
+                        val qGrosSelKg = (gParUnite * quantiteBase) / 1000.0
+                        coursesGenerees.add(
+                            ProjetCourseEntity(
+                                projetId = projetId,
+                                nomProjet = nomProjet.ifBlank { r.nom },
+                                nomIngredient = "Gros sel non iodé (recouvrement)",
+                                categorie = "SEL_SUCRE",
+                                quantiteRequise = qGrosSelKg,
+                                unite = "kg",
+                                prixEstimeTotal = qGrosSelKg * prixSelKg
+                            )
+                        )
+                    }
+                    return@forEach
+                }
+
                 val qTotale = when (ing.modeCalcul) {
                     "PAR_PIECE", "PAR_KG_MATIERE" -> ing.quantite * quantiteBase
                     "POURCENT_POIDS" -> ing.quantite * quantiteBase // ing.quantite est en g/kg (ex: 30g pour 3%)
@@ -228,6 +293,20 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                         quantiteRequise = qAffichee,
                         unite = uniteAffichee,
                         prixEstimeTotal = coutEstime
+                    )
+                )
+            }
+            if (modeSalage == ModeSalage.SOUS_VIDE) {
+                val nbSachets = if (r.uniteBase == "pièce") quantiteBase else kotlin.math.ceil(quantiteBase).coerceAtLeast(1.0)
+                coursesGenerees.add(
+                    ProjetCourseEntity(
+                        projetId = projetId,
+                        nomProjet = nomProjet.ifBlank { r.nom },
+                        nomIngredient = "Sachets sous vide",
+                        categorie = "CONSOMMABLES",
+                        quantiteRequise = nbSachets,
+                        unite = "pièce",
+                        prixEstimeTotal = nbSachets * 0.25
                     )
                 )
             }

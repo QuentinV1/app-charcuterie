@@ -161,7 +161,8 @@ data class ProjetEntity(
     val commentaireGeneral: String = "",
     val versionRecetteUtilisee: Int = 1,
     val activerRevente: Boolean = true,
-    val prixReventeUnitaireFixe: Double = 0.0
+    val prixReventeUnitaireFixe: Double = 0.0,
+    val modeSalage: String = "RECOUVREMENT_SEL" // "RECOUVREMENT_SEL" ou "SOUS_VIDE"
 )
 
 /**

@@ -70,6 +70,7 @@ object InitialCatalogData {
     suspend fun populateIfNeeded(dao: CharcuterieDao) {
         if (dao.countRecettes() > 0 || dao.getParametresList().isNotEmpty()) {
             dao.deleteDemoProjets()
+            seedMissingRecettes(dao)
             return
         }
 
@@ -919,6 +920,101 @@ object InitialCatalogData {
             )
         )
 
+        seedMissingRecettes(dao)
+
         // Les projets et courses sont initialement vides (démarrage à blanc)
+    }
+
+    private suspend fun seedMissingRecettes(dao: CharcuterieDao) {
+        if (dao.getRecetteByCode("GIGOT_SANGLIER_SECHE") == null) {
+            insertGigotSanglierSeche(dao)
+        }
+    }
+
+    private suspend fun insertGigotSanglierSeche(dao: CharcuterieDao) {
+        val gigotId = dao.insertRecette(
+            RecetteEntity(
+                code = "GIGOT_SANGLIER_SECHE",
+                nom = "Gigot de sanglier salé et séché",
+                famille = "Gibier & Foie",
+                typeRecette = "SALAISON_SECHE",
+                uniteBase = "kg",
+                quantiteDefaut = 3.5,
+                perteCiblePct = 35.0,
+                conditionsConservation = "Salage au frais (2-4 °C), puis séchage / affinage à 12-15 °C (70-80 % HR) ou bas du réfrigérateur pendant 6 à 12 semaines (perte cible 35 %).",
+                pointsVigilance = "• Contrôle sanitaire du sanglier obligatoire (trichine).\n• Bien parer le gigot (retirer caillots, membranes et excès de gras).\n• Avec os : bien masser le sel le long de l'os et de l'articulation.",
+                description = "Gigot (cuissot) de sanglier salé au gros sel ou sous vide à l'équilibre, décliné en deux lots simples : Poivre ou Original, puis séché lentement."
+            )
+        )
+        dao.insertRecetteVariantes(
+            listOf(
+                RecetteVarianteEntity(
+                    recetteId = gigotId,
+                    nom = "Poivre",
+                    descriptionEpices = "Poivre noir concassé généreux sur toute la surface",
+                    epicesGrammesParUnite = 15.0,
+                    dureeSalageHeuresSpecifique = 144.0
+                ),
+                RecetteVarianteEntity(
+                    recetteId = gigotId,
+                    nom = "Original",
+                    descriptionEpices = "Recette originale : baies de genièvre concassées, thym, laurier, ail et poivre noir",
+                    epicesGrammesParUnite = 15.0,
+                    dureeSalageHeuresSpecifique = 144.0
+                )
+            )
+        )
+        dao.insertRecetteIngredients(
+            listOf(
+                RecetteIngredientEntity(recetteId = gigotId, nomIngredient = "Gigot de sanglier paré", modeCalcul = "PAR_KG_MATIERE", quantite = 1000.0, unite = "g", prixKgOuUniteEstime = 0.0),
+                RecetteIngredientEntity(recetteId = gigotId, nomIngredient = "Gros sel non iodé (recouvrement)", modeCalcul = "PAR_KG_MATIERE", quantite = 1000.0, unite = "g", prixKgOuUniteEstime = 1.0),
+                RecetteIngredientEntity(recetteId = gigotId, nomIngredient = "Poivre / Épices", modeCalcul = "PAR_KG_MATIERE", quantite = 15.0, unite = "g", prixKgOuUniteEstime = 25.0)
+            )
+        )
+        dao.insertRecetteEtapes(
+            listOf(
+                RecetteEtapeEntity(
+                    recetteId = gigotId,
+                    ordre = 1,
+                    titre = "Parage & Préparation du gigot",
+                    instructions = "• Parer soigneusement le gigot (retirer membranes, caillots et gras irrégulier).\n• Masser le long de l'os pour chasser le sang résiduel.",
+                    offsetDebutMinutes = 0,
+                    dureeMinutes = 45
+                ),
+                RecetteEtapeEntity(
+                    recetteId = gigotId,
+                    ordre = 2,
+                    titre = "Salage au gros sel par recouvrement (1,5 à 2 j/kg)",
+                    instructions = "• Frotter vigoureusement le gigot avec le gros sel non iodé (insister près de l'os).\n• Enfouir complètement dans un bac de gros sel au réfrigérateur (2-4 °C).\n• Retourner tous les 2 jours et compléter le sel si nécessaire.",
+                    offsetDebutMinutes = 45,
+                    dureeMinutes = 8640,
+                    modeDuree = "PAR_KG"
+                ),
+                RecetteEtapeEntity(
+                    recetteId = gigotId,
+                    ordre = 3,
+                    titre = "Rinçage & Dessalage (2 h en eau froide)",
+                    instructions = "• Sortir le gigot du sel et rincer à l'eau froide.\n• Dessaler 2 heures dans un grand volume d'eau froide en changeant l'eau à mi-parcours.\n• Essuyer et sécher parfaitement au torchon propre.",
+                    offsetDebutMinutes = 8685,
+                    dureeMinutes = 120
+                ),
+                RecetteEtapeEntity(
+                    recetteId = gigotId,
+                    ordre = 4,
+                    titre = "Épiçage par lot (Poivre / Original) & Ficelage",
+                    instructions = "• Appliquer les épices selon chaque lot (Poivre noir concassé ou mélange Original genièvre/thym/laurier/poivre).\n• Ficeler serré ou mettre en filet/torchon et noter le poids initial !",
+                    offsetDebutMinutes = 8805,
+                    dureeMinutes = 30
+                ),
+                RecetteEtapeEntity(
+                    recetteId = gigotId,
+                    ordre = 5,
+                    titre = "Séchage & Affinage (6 à 12 semaines, perte cible 35 %)",
+                    instructions = "• Suspendre en cave d'affinage (12-15 °C, 75 % HR) ou bas du réfrigérateur.\n• Peser régulièrement jusqu'à atteindre 35 % de perte de poids.",
+                    offsetDebutMinutes = 60480,
+                    dureeMinutes = 60
+                )
+            )
+        )
     }
 }

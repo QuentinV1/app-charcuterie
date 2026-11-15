@@ -48,6 +48,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.quentin.charcuterie.R
 import com.quentin.charcuterie.data.*
 import com.quentin.charcuterie.domain.CalculateurCharcuterie
+import com.quentin.charcuterie.domain.ModeSalage
+import com.quentin.charcuterie.domain.SalageHelper
 import com.quentin.charcuterie.ui.CharcuterieViewModel
 import com.quentin.charcuterie.ui.LotDraft
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +79,7 @@ internal fun PlanifierProjetScreen(
     prixEpicesKgDefaut: Double = 25.0,
     onBack: () -> Unit,
     onSauvegarderLotCatalogue: (Long, String, String, Double, Double, Boolean) -> Unit,
-    onConfirm: (String, RecetteComplete, Long, Double, Double, Double, Set<String>, List<LotDraft>, Boolean, Boolean, Double) -> Unit
+    onConfirm: (String, RecetteComplete, Long, Double, Double, Double, Set<String>, List<LotDraft>, Boolean, Boolean, Double, ModeSalage) -> Unit
 ) {
     BackHandler { onBack() }
 
@@ -91,6 +93,9 @@ internal fun PlanifierProjetScreen(
     var quantiteBase by remember(selectedRecette.recette.id) {
         val q = selectedRecette.recette.quantiteDefaut
         mutableStateOf(if (q % 1.0 == 0.0) q.toInt().toString() else q.toString())
+    }
+    var modeSalage by remember(selectedRecette.recette.id) {
+        mutableStateOf(SalageHelper.modeSalageParDefaut(selectedRecette))
     }
     var prixUnitaire by remember(selectedRecette.recette.id, prixCanardDefaut) {
         val prixInit = if (selectedRecette.recette.code == "VALORISATION_CANARD" || selectedRecette.recette.famille.equals("Canard", ignoreCase = true)) {
@@ -716,6 +721,86 @@ internal fun PlanifierProjetScreen(
                             }
                         }
 
+                        Spacer(Modifier.height(14.dp))
+
+                        // Sélection du mode de salage : Recouvrement au sel vs Sous-vide
+                        val qBaseNum = quantiteBase.replace(",", ".").toDoubleOrNull() ?: selectedRecette.recette.quantiteDefaut
+                        val dureeRecouvrementH = remember(selectedRecette.recette.id, qBaseNum) {
+                            SalageHelper.dureeSalageHeuresAdaptee(selectedRecette, ModeSalage.RECOUVREMENT_SEL, qBaseNum)
+                        }
+                        val dureeSousVideH = remember(selectedRecette.recette.id, qBaseNum) {
+                            SalageHelper.dureeSalageHeuresAdaptee(selectedRecette, ModeSalage.SOUS_VIDE, qBaseNum)
+                        }
+
+                        Text(
+                            text = "Méthode de salage",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            listOf(
+                                ModeSalage.RECOUVREMENT_SEL to dureeRecouvrementH,
+                                ModeSalage.SOUS_VIDE to dureeSousVideH
+                            ).forEach { (mode, dureeH) ->
+                                val selected = modeSalage == mode
+                                Surface(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { modeSalage = mode },
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                    border = BorderStroke(
+                                        width = if (selected) 1.5.dp else 1.dp,
+                                        color = if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (selected) Icons.Default.CheckCircle else Icons.Outlined.Circle,
+                                                contentDescription = null,
+                                                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = mode.libelle,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        Text(
+                                            text = if (mode == ModeSalage.RECOUVREMENT_SEL) "Gros sel · ${SalageHelper.formaterDureeSalage(dureeH)}"
+                                            else "3 % sel · ${SalageHelper.formaterDureeSalage(dureeH)}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        val dureeSelectionneeH = if (modeSalage == ModeSalage.SOUS_VIDE) dureeSousVideH else dureeRecouvrementH
+                        Text(
+                            text = "⏱️ Mise au sel : ${SalageHelper.formaterDureeSalage(dureeSelectionneeH)} · Les étapes et la liste de courses s'adaptent automatiquement.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
                         Spacer(Modifier.height(12.dp))
 
                         Row(
@@ -894,8 +979,14 @@ internal fun PlanifierProjetScreen(
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     fontWeight = FontWeight.Medium
                                                 )
+                                                val salageVarH = SalageHelper.dureeSalageHeuresAdaptee(
+                                                    selectedRecette,
+                                                    modeSalage,
+                                                    qBaseNum,
+                                                    v.dureeSalageHeuresSpecifique
+                                                )
                                                 Text(
-                                                    text = "${v.epicesGrammesParUnite.toInt()}g épices · Salage ${(v.dureeSalageHeuresSpecifique ?: 24.0).toInt()}h",
+                                                    text = "${v.epicesGrammesParUnite.toInt()}g épices · Salage ${SalageHelper.formaterDureeSalage(salageVarH)}",
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -1032,7 +1123,10 @@ internal fun PlanifierProjetScreen(
                             val codesActifs = sortiesCochees.filterValues { it }.keys
                             val lotsCatalogue = selectedRecette.variantes.mapNotNull { v ->
                                 val q = (qteParVariante[v.nom] ?: "0").replace(",", ".").toDoubleOrNull() ?: 0.0
-                                if (q > 0.0) LotDraft(v.nom, q, v.epicesGrammesParUnite, v.dureeSalageHeuresSpecifique ?: 24.0) else null
+                                if (q > 0.0) {
+                                    val salH = SalageHelper.dureeSalageHeuresAdaptee(selectedRecette, modeSalage, qBase, v.dureeSalageHeuresSpecifique)
+                                    LotDraft(v.nom, q, v.epicesGrammesParUnite, salH)
+                                } else null
                             }
                             val lotsCustomValides = lotsPersonnalises.filter { it.quantite > 0.0 }
 
@@ -1045,7 +1139,8 @@ internal fun PlanifierProjetScreen(
                                     val premVar = selectedRecette.variantes.firstOrNull()
                                     if (premVar != null) {
                                         val nbPieces = if (selectedRecette.recette.code == "VALORISATION_CANARD") qBase * 2.0 else qBase
-                                        listOf(LotDraft(premVar.nom, nbPieces, premVar.epicesGrammesParUnite, premVar.dureeSalageHeuresSpecifique ?: 24.0))
+                                        val salH = SalageHelper.dureeSalageHeuresAdaptee(selectedRecette, modeSalage, qBase, premVar.dureeSalageHeuresSpecifique)
+                                        listOf(LotDraft(premVar.nom, nbPieces, premVar.epicesGrammesParUnite, salH))
                                     } else emptyList()
                                 }
                             }
@@ -1060,7 +1155,8 @@ internal fun PlanifierProjetScreen(
                                 lots,
                                 activerRappels,
                                 activerReventeProjet,
-                                prixRevUnit
+                                prixRevUnit,
+                                modeSalage
                             )
                         },
                         modifier = Modifier.weight(1.8f),
