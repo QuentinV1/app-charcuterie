@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <!-- Dégradé Fond Noir Ébène & Reflets Havane Cuir -->
+    <radialGradient id="bgGradP3" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#241B18" />
+      <stop offset="60%" stop-color="#140E0C" />
+      <stop offset="100%" stop-color="#090605" />
+    </radialGradient>
+
+    <!-- Dégradé Or Royal Brillant -->
+    <linearGradient id="goldRoyalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF0CE" />
+      <stop offset="25%" stop-color="#DFBC70" />
+      <stop offset="50%" stop-color="#F7E5B5" />
+      <stop offset="75%" stop-color="#BA8735" />
+      <stop offset="100%" stop-color="#8C5C1B" />
+    </linearGradient>
+
+    <filter id="luxeShadowP3" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#000000" flood-opacity="0.65" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="800" rx="40" fill="url(#bgGradP3)" />
+
+  <g transform="translate(400, 315)" filter="url(#luxeShadowP3)">
+    <!-- 1. Cercle des 4 Piliers de l'Affinage (Cercle astronomique / cadran de précision) -->
+    <!-- Double cerclage fin -->
+    <circle cx="0" cy="0" r="175" fill="none" stroke="url(#goldRoyalGrad)" stroke-width="1.2" stroke-opacity="0.35" />
+    <circle cx="0" cy="0" r="162" fill="none" stroke="url(#goldRoyalGrad)" stroke-width="2.5" />
+
+    <!-- 4 Repères cardinaux (Temps, Sel, Température, Humidité) -->
+    <g stroke="url(#goldRoyalGrad)" stroke-width="2" stroke-linecap="round">
+      <line x1="0" y1="-172" x2="0" y2="-152" />
+      <line x1="172" y1="0" x2="152" y2="0" />
+      <line x1="0" y1="172" x2="0" y2="152" />
+      <line x1="-172" y1="0" x2="-152" y2="0" />
+    </g>
+
+    <!-- 2. Les Deux Crochets d'Affinage Entrelacés (Courbe Héraldique Haute Couture) -->
+    <!-- Crochet Gauche -->
+    <path d="M-12,-85 
+             C-25,-85 -75,-65 -85,-10 
+             C-95,45 -50,90 0,115
+             C-40,80 -70,40 -60,-5
+             C-52,-45 -18,-62 -5,-62
+             C2,-62 6,-68 4,-75
+             C2,-82 -6,-85 -12,-85 Z" 
+          fill="url(#goldRoyalGrad)" />
+
+    <!-- Anneau de suspension gauche -->
+    <circle cx="-12" cy="-94" r="8" fill="none" stroke="url(#goldRoyalGrad)" stroke-width="3" />
+
+    <!-- Crochet Droit (Symétrie miroir parfaite) -->
+    <path d="M12,-85 
+             C25,-85 75,-65 85,-10 
+             C95,45 50,90 0,115
+             C40,80 70,40 60,-5
+             C52,-45 18,-62 5,-62
+             C-2,-62 -6,-68 -4,-75
+             C-2,-82 6,-85 12,-85 Z" 
+          fill="url(#goldRoyalGrad)" />
+
+    <!-- Anneau de suspension droit -->
+    <circle cx="12" cy="-94" r="8" fill="none" stroke="url(#goldRoyalGrad)" stroke-width="3" />
+
+    <!-- 3. Fleur de Sel / Étoile Diamant d'Or au Centre -->
+    <g transform="translate(0, 10)">
+      <!-- Étoile 4 branches principales -->
+      <path d="M0,-32 Q0,0 32,0 Q0,0 0,32 Q0,0 -32,0 Q0,0 0,-32 Z" 
+            fill="url(#goldRoyalGrad)" />
+      <!-- Étoile 4 branches secondaires -->
+      <path d="M-15,-15 Q0,0 15,-15 Q0,0 15,15 Q0,0 -15,15 Q0,0 -15,-15 Z" 
+            fill="#FFF5DC" opacity="0.8" />
+      <!-- Cœur diamant -->
+      <circle cx="0" cy="0" r="3" fill="#FFF9EA" />
+    </g>
+  </g>
+
+  <!-- 4. Logotype Typographique -->
+  <text x="400" y="585" 
+        text-anchor="middle" 
+        fill="url(#goldRoyalGrad)" 
+        font-family="'Playfair Display', 'Cormorant Garamond', 'Cinzel', serif" 
+        font-size="44" 
+        font-weight="600" 
+        letter-spacing="13">L’AFFINOIR</text>
+
+  <!-- Ligne séparatrice avec 3 diamants -->
+  <g transform="translate(400, 622)">
+    <line x1="-180" y1="0" x2="-35" y2="0" stroke="url(#goldRoyalGrad)" stroke-width="1" stroke-opacity="0.5" />
+    <polygon points="-12,0 -8,-3 -4,0 -8,3" fill="url(#goldRoyalGrad)" opacity="0.6" />
+    <polygon points="-4,0 0,-4.5 4,0 0,4.5" fill="url(#goldRoyalGrad)" />
+    <polygon points="4,0 8,-3 12,0 8,3" fill="url(#goldRoyalGrad)" opacity="0.6" />
+    <line x1="35" y1="0" x2="180" y2="0" stroke="url(#goldRoyalGrad)" stroke-width="1" stroke-opacity="0.5" />
+  </g>
+
+  <!-- Sous-titre Signature -->
+  <text x="400" y="658" 
+        text-anchor="middle" 
+        fill="#DFBC70" 
+        font-family="'Montserrat', 'Cinzel', sans-serif" 
+        font-size="13" 
+        font-weight="400" 
+        letter-spacing="9" 
+        fill-opacity="0.9">MAÎTRE CHARCUTIER &amp; AFFINEUR</text>
+
+  <!-- Mention de tradition -->
+  <text x="400" y="688" 
+        text-anchor="middle" 
+        fill="#8A6E46" 
+        font-family="'Playfair Display', 'Cormorant Garamond', serif" 
+        font-style="italic" 
+        font-size="12" 
+        letter-spacing="3">L’Excellence des Pièces Séchées au Sel Sec</text>
+</svg>

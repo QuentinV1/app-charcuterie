@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Atelier Magret</title>
+  <style>
+    :root {
+      --bg: #f4f2ed;
+      --surface: rgba(255,255,255,.88);
+      --surface-solid: #ffffff;
+      --text: #17201c;
+      --muted: #68736d;
+      --green: #1f5c46;
+      --green-2: #2e7a5c;
+      --green-soft: #e8f2ed;
+      --copper: #b66a3c;
+      --copper-soft: #f7e9df;
+      --line: #dfe6e1;
+      --danger: #b33a3a;
+      --shadow: 0 20px 55px rgba(30, 55, 43, .10);
+      --shadow-small: 0 8px 25px rgba(30, 55, 43, .08);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(182,106,60,.13), transparent 25rem),
+        radial-gradient(circle at 95% 12%, rgba(31,92,70,.14), transparent 28rem),
+        var(--bg);
+    }
+
+    button, input { font: inherit; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 470px;
+      color: white;
+      background: linear-gradient(135deg, #123c2e 0%, #1f5c46 56%, #2e7a5c 100%);
+      isolation: isolate;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 78% 26%, rgba(255,255,255,.16), transparent 16rem),
+        linear-gradient(112deg, transparent 45%, rgba(255,255,255,.05));
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      bottom: -220px;
+      width: 640px;
+      height: 640px;
+      z-index: -1;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 50%;
+      box-shadow: 0 0 0 70px rgba(255,255,255,.035), 0 0 0 140px rgba(255,255,255,.025);
+    }
+
+    .nav, .hero-content, main, footer {
+      width: min(1180px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      font-size: 1.08rem;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.13);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-pill {
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 999px;
+      color: rgba(255,255,255,.9);
+      background: rgba(255,255,255,.08);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1.18fr .82fr;
+      align-items: center;
+      gap: 60px;
+      padding: 48px 0 90px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: #dcebe4;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.14);
+      font-weight: 750;
+      font-size: .78rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      max-width: 770px;
+      margin: 0;
+      font-size: clamp(2.8rem, 6vw, 5.4rem);
+      line-height: .96;
+      letter-spacing: -.06em;
+    }
+
+    .hero h1 span { color: #e9bd9c; }
+
+    .hero-copy {
+      max-width: 660px;
+      margin: 24px 0 0;
+      color: rgba(255,255,255,.75);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      line-height: 1.7;
+    }
+
+    .hero-visual {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 290px;
+    }
+
+    .duck-card {
+      width: min(100%, 350px);
+      aspect-ratio: 1;
+      padding: 30px;
+      border-radius: 38px;
+      background: linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.07));
+      border: 1px solid rgba(255,255,255,.2);
+      box-shadow: 0 28px 70px rgba(0,0,0,.2);
+      backdrop-filter: blur(18px);
+      transform: rotate(3deg);
+    }
+
+    .duck-card svg { width: 100%; height: 100%; filter: drop-shadow(0 18px 18px rgba(0,0,0,.18)); }
+
+    main {
+      position: relative;
+      z-index: 2;
+      margin-top: -45px;
+      padding-bottom: 70px;
+    }
+
+    .panel {
+      overflow: hidden;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel-inner { padding: 30px; }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-kicker {
+      margin: 0 0 6px;
+      color: var(--green-2);
+      font-size: .74rem;
+      font-weight: 850;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      letter-spacing: -.04em;
+    }
+
+    .section-description {
+      max-width: 680px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .icon-box {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      color: var(--green);
+      border-radius: 16px;
+      background: var(--green-soft);
+    }
+
+    .icon-box svg { width: 24px; height: 24px; }
+
+    .form-grid, .stats-grid, .product-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .field { grid-column: span 6; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #3e4d46;
+      font-size: .88rem;
+      font-weight: 750;
+    }
+
+    .field-hint {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .76rem;
+      line-height: 1.4;
+    }
+
+    .input-shell { position: relative; }
+
+    input {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 54px 0 16px;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      background: rgba(255,255,255,.85);
+      font-weight: 720;
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+
+    input:focus {
+      border-color: var(--green-2);
+      box-shadow: 0 0 0 4px rgba(46,122,92,.12);
+      transform: translateY(-1px);
+    }
+
+    .unit {
+      position: absolute;
+      top: 50%;
+      right: 15px;
+      color: var(--muted);
+      transform: translateY(-50%);
+      font-size: .82rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .result-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 20px;
+      border-top: 1px solid var(--line);
+      background: linear-gradient(90deg, var(--green-soft), #f6faf8);
+    }
+
+    .result-strip span { color: var(--muted); font-size: .88rem; }
+    .result-strip strong { color: var(--green); font-size: 1.08rem; }
+
+    .stats-grid { margin-top: 4px; }
+
+    .stat {
+      grid-column: span 4;
+      min-height: 125px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.7);
+    }
+
+    .stat.accent {
+      color: white;
+      border-color: transparent;
+      background: linear-gradient(145deg, var(--green), var(--green-2));
+    }
+
+    .stat-label {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .stat.accent .stat-label { color: rgba(255,255,255,.68); }
+    .stat-value { font-size: clamp(1.45rem, 4vw, 2rem); font-weight: 850; letter-spacing: -.04em; }
+    .stat-note { margin-top: 6px; color: var(--muted); font-size: .78rem; }
+    .stat.accent .stat-note { color: rgba(255,255,255,.7); }
+
+    /* Tableau de valorisation */
+    .table-wrap { overflow-x: auto; margin: 0 -8px; padding: 0 8px; }
+
+    table.valo {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+    }
+
+    table.valo th {
+      padding: 0 12px 4px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-align: left;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    table.valo td {
+      padding: 12px;
+      vertical-align: middle;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    table.valo td:first-child { border-left: 1px solid var(--line); border-radius: 16px 0 0 16px; }
+    table.valo td:last-child { border-right: 1px solid var(--line); border-radius: 0 16px 16px 0; background: var(--green-soft); }
+
+    table.valo input { min-height: 44px; padding: 0 58px 0 12px; border-radius: 12px; }
+
+    .p-name { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+    .p-ico { font-size: 1.5rem; }
+    .p-name strong { display: block; font-size: .94rem; }
+    .p-name small { color: var(--muted); font-size: .78rem; }
+    .cell-muted { color: var(--muted); font-size: .84rem; line-height: 1.4; }
+    .price-final { color: var(--green); font-size: 1.1rem; font-weight: 850; letter-spacing: -.02em; }
+    .price-unit { display: block; color: var(--muted); font-size: .72rem; font-weight: 700; }
+
+    .recipe-list {
+      display: grid;
+      gap: 12px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      counter-reset: recipe;
+    }
+
+    .recipe-list li {
+      counter-increment: recipe;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: #f8faf8;
+    }
+
+    .recipe-list li::before {
+      content: counter(recipe, decimal-leading-zero);
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      color: var(--green);
+      border-radius: 13px;
+      background: var(--green-soft);
+      font-size: .78rem;
+      font-weight: 900;
+    }
+
+    .recipe-list p { margin: 0; line-height: 1.52; }
+    .recipe-list strong { color: var(--green); }
+
+    .product-grid { margin-top: 20px; }
+
+    .product {
+      grid-column: span 3;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+      transition: .2s ease;
+    }
+
+    .product:hover { transform: translateY(-3px); box-shadow: var(--shadow-small); }
+    .product-icon { margin-bottom: 12px; font-size: 1.55rem; }
+    .product strong { display: block; font-size: .92rem; }
+    .product small { color: var(--muted); }
+
+    .fat-budget {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: var(--copper-soft);
+      color: #5c3720;
+      font-size: .84rem;
+      line-height: 1.6;
+    }
+
+    .fat-budget strong { color: #8a4a26; }
+
+    .error {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      color: var(--danger);
+      border: 1px solid rgba(179,58,58,.18);
+      border-radius: 12px;
+      background: rgba(179,58,58,.06);
+      font-size: .86rem;
+      font-weight: 650;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 5px 0 40px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero-content { grid-template-columns: 1fr; padding-top: 35px; }
+      .hero-visual { display: none; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .product { grid-column: span 6; }
+    }
+
+    @media (max-width: 650px) {
+      .nav, .hero-content, main, footer { width: min(100% - 24px, 1180px); }
+      .nav-pill { display: none; }
+      .hero { min-height: 435px; }
+      .hero-content { padding-bottom: 85px; }
+      .panel-inner { padding: 22px; }
+      .section-head { align-items: center; }
+      .field, .stat, .product { grid-column: span 12; }
+      .result-strip, footer { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav" aria-label="Navigation principale">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">🦆</span>
+        Atelier Magret
+      </div>
+      <span class="nav-pill">Outil de production artisanale</span>
+    </nav>
+
+    <div class="hero-content">
+      <div>
+        <div class="eyebrow">Production • coûts • valorisation</div>
+        <h1>Vos magrets, <span>mieux calculés.</span></h1>
+        <p class="hero-copy">Centralisez vos paramètres et obtenez instantanément les quantités, les coûts et les prix de revente à vos amis, avec une valorisation de chaque partie du canard.</p>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="duck-card">
+          <svg viewBox="0 0 320 320" role="img" aria-label="Illustration stylisée d'un canard">
+            <defs>
+              <linearGradient id="bodyG" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#f3d4b9"/>
+                <stop offset="1" stop-color="#bd7148"/>
+              </linearGradient>
+              <linearGradient id="neckG" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#3f8e6d"/>
+                <stop offset="1" stop-color="#174d3a"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="165" cy="224" rx="105" ry="57" fill="url(#bodyG)"/>
+            <path d="M102 212c31-42 88-49 138-14-55-7-91 9-118 45z" fill="#8c4f31" opacity=".75"/>
+            <path d="M213 200c30-38 7-72-4-91-12-20 0-55 31-59 39-5 68 30 57 65-8 28-33 35-48 51-10 10-12 24-9 39z" fill="url(#neckG)"/>
+            <circle cx="270" cy="82" r="6" fill="#fff"/>
+            <circle cx="271" cy="82" r="3" fill="#17201c"/>
+            <path d="M297 101l31 12-30 13z" fill="#e0a23c"/>
+            <path d="M73 215L30 183c37-4 58 4 79 21z" fill="#d7b08d"/>
+            <path d="M139 272c8 18 11 31 6 39M194 274c-2 18 0 29 8 36" fill="none" stroke="#e7aa42" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="parametres-title">
+      <div class="panel-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Saisie unique</p>
+            <h2 id="parametres-title">Paramètres communs</h2>
+            <p class="section-description">Ces valeurs alimentent automatiquement tous les calculateurs de la page.</p>
+          </div>
+          <div class="icon-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.09A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 3.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H1.8V9.6h.09A1.7 1.7 0 0 0 3.6 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8 3.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V1.8h4v.09A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8c.12.37.33.7.6 1 .3.27.67.4 1.1.4h.09v4h-.09a1.7 1.7 0 0 0-1.7 1.6Z"/></svg>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="nbMagrets">Nombre de magrets souhaités</label>
+            <div class="input-shell"><input type="number" id="nbMagrets" min="1" step="1" value="10"><span class="unit">pièces</span></div>
+          </div>
+          <div class="field">
+            <label for="prixCanard">Prix d'achat d'un canard</label>
+            <div class="input-shell"><input type="number" id="prixCanard" min="0" step="0.01" value="18"><span class="unit">€</span></div>
+          </div>
+        </div>
+        <div id="globalError" class="error" role="alert">Veuillez saisir des valeurs valides (supérieures à zéro pour le nombre de magrets, et une valeur de référence totale non nulle).</div>
+      </div>
+      <div class="result-strip"><span>Mise à jour automatique</span><strong id="canardsResume">5 canards nécessaires</strong></div>
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="panel" aria-labelledby="ingredients-title">
+        <div class="panel-inner">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Préparation</p>
+              <h2 id="ingredients-title">Sel & épices</h2>
+              <p class="section-description">Quantités estimatives pour le salage et l'épiçage des magrets.</p>
+            </div>
+            <div class="icon-box" aria-hidden="true">✦</div>
+          </div>
+          <div class="stats-grid">
+            <article class="stat accent"><div class="stat-label">Gros sel</div><div class="stat-value" id="selValue">5,00 kg</div><div class="stat-note">500 g par magret</div></article>
+            <article class="stat"><div class="stat-label">Épices</div><div class="stat-value" id="epicesValue">150 g</div><div class="stat-note">15 g par magret</div></article>
+            <article class="stat"><div class="stat-label">Durée</div><div class="stat-value">3–6</div><div class="stat-note">semaines de séchage</div></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="cout-title">
+        <div class="panel-inner">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Rentabilité</p>
+              <h2 id="cout-title">Coûts & marge</h2>
+              <p class="section-description">Prix des ingrédients et petite marge pour le travail fourni.</p>
+            </div>
+            <div class="icon-box" aria-hidden="true">€</div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label for="prixSelKg">Prix du sel</label><div class="input-shell"><input type="number" id="prixSelKg" min="0" step="0.01" value="1"><span class="unit">€/kg</span></div></div>
+            <div class="field"><label for="prixEpicesKg">Prix des épices</label><div class="input-shell"><input type="number" id="prixEpicesKg" min="0" step="0.01" value="25"><span class="unit">€/kg</span></div></div>
+            <div class="field" style="grid-column: span 12;">
+              <label for="marge">Marge pour le travail (revente aux amis)</label>
+              <div class="input-shell"><input type="number" id="marge" min="0" step="1" value="10"><span class="unit">%</span></div>
+              <p class="field-hint">Appliquée au coût de revient de chaque produit : matière première + ingrédients, sans chercher à faire du bénéfice.</p>
+            </div>
+          </div>
+        </div>
+        <div class="result-strip"><span>Prix de revente conseillé par magret séché</span><strong id="prixVenteValue">5,55 €</strong></div>
+      </section>
+    </div>
+
+    <section class="panel" aria-labelledby="revente-title">
+      <div class="panel-inner">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Valorisation & revente</p>
+            <h2 id="revente-title">Un canard, chaque partie utilisée une seule fois</h2>
+            <p class="section-description">Le prix d'achat du canard est réparti entre tous les produits au prorata de leur <strong>valeur de référence</strong> (ce que vaudrait le produit en boutique ou chez un artisan). Les magrets ne portent donc que leur part du canard. Le prix de revente à vos amis = coût de revient + marge. Tous les prix sont modifiables.</p>
+          </div>
+          <div class="icon-box" aria-hidden="true">⚖</div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="valo">
+            <thead>
+              <tr>
+                <th>Produit (quantité)</th>
+                <th>Valeur de référence</th>
+                <th>Frais de transformation</th>
+                <th>Coût de revient</th>
+                <th>Prix de revente amis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🍖</span><div><strong>Magrets séchés</strong><small id="qty_magret">10 pièces</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_magret" min="0" step="0.1" value="14"><span class="unit">€/pièce</span></div></td>
+                <td class="cell-muted" id="fr_magret_txt">0,88 € / pièce<br>(sel + épices)</td>
+                <td><strong id="cout_magret">5,04 €</strong><span class="price-unit">par pièce</span></td>
+                <td><span class="price-final" id="prix_magret">5,55 €</span><span class="price-unit">par pièce</span></td>
+              </tr>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🍗</span><div><strong>Cuisses confites</strong><small id="qty_cuisse">10 pièces</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_cuisse" min="0" step="0.1" value="7"><span class="unit">€/pièce</span></div></td>
+                <td><div class="input-shell"><input type="number" id="fr_cuisse" min="0" step="0.05" value="0.6"><span class="unit">€/pièce</span></div></td>
+                <td><strong id="cout_cuisse">–</strong><span class="price-unit">par pièce</span></td>
+                <td><span class="price-final" id="prix_cuisse">–</span><span class="price-unit">par pièce</span></td>
+              </tr>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🥄</span><div><strong>Rillettes</strong><small id="qty_rillettes">1,25 kg</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_rillettes" min="0" step="0.5" value="28"><span class="unit">€/kg</span></div></td>
+                <td><div class="input-shell"><input type="number" id="fr_rillettes" min="0" step="0.1" value="2"><span class="unit">€/kg</span></div></td>
+                <td><strong id="cout_rillettes">–</strong><span class="price-unit">par kg</span></td>
+                <td><span class="price-final" id="prix_rillettes">–</span><span class="price-unit">par kg</span></td>
+              </tr>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🥣</span><div><strong>Bouillons (50 cl)</strong><small id="qty_bouillon">10 bocaux</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_bouillon" min="0" step="0.1" value="3"><span class="unit">€/bocal</span></div></td>
+                <td><div class="input-shell"><input type="number" id="fr_bouillon" min="0" step="0.05" value="0.6"><span class="unit">€/bocal</span></div></td>
+                <td><strong id="cout_bouillon">–</strong><span class="price-unit">par bocal</span></td>
+                <td><span class="price-final" id="prix_bouillon">–</span><span class="price-unit">par bocal</span></td>
+              </tr>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🥓</span><div><strong>Grattons</strong><small id="qty_gratton">1,00 kg</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_gratton" min="0" step="0.5" value="22"><span class="unit">€/kg</span></div></td>
+                <td><div class="input-shell"><input type="number" id="fr_gratton" min="0" step="0.1" value="1"><span class="unit">€/kg</span></div></td>
+                <td><strong id="cout_gratton">–</strong><span class="price-unit">par kg</span></td>
+                <td><span class="price-final" id="prix_gratton">–</span><span class="price-unit">par kg</span></td>
+              </tr>
+              <tr>
+                <td><div class="p-name"><span class="p-ico">🫙</span><div><strong>Graisse en pot</strong><small id="qty_graisse">0,50 kg</small></div></div></td>
+                <td><div class="input-shell"><input type="number" id="ref_graisse" min="0" step="0.5" value="12"><span class="unit">€/kg</span></div></td>
+                <td><div class="input-shell"><input type="number" id="fr_graisse" min="0" step="0.1" value="2"><span class="unit">€/kg</span></div></td>
+                <td><strong id="cout_graisse">–</strong><span class="price-unit">par kg</span></td>
+                <td><span class="price-final" id="prix_graisse">–</span><span class="price-unit">par kg</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="result-strip"><span>Part du prix des canards portée par les magrets</span><strong id="partMagrets">46 %</strong></div>
+    </section>
+
+    <section class="panel" aria-labelledby="bilan-title">
+      <div class="panel-inner">
+        <div class="section-head">
+          <div><p class="section-kicker">Vue d'ensemble</p><h2 id="bilan-title">Bilan financier</h2><p class="section-description">Si tout est revendu à vos amis aux prix conseillés ci-dessus.</p></div>
+          <div class="icon-box" aria-hidden="true">↗</div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat"><div class="stat-label">Canards</div><div class="stat-value" id="nbCanardsValue">5</div><div class="stat-note">2 magrets par canard</div></article>
+          <article class="stat"><div class="stat-label">Coût des canards</div><div class="stat-value" id="coutCanardsValue">90,00 €</div><div class="stat-note">Matière première</div></article>
+          <article class="stat"><div class="stat-label">Ingrédients & frais</div><div class="stat-value" id="coutIngredientsValue">–</div><div class="stat-note">Sel, épices, bocaux, aromates</div></article>
+          <article class="stat"><div class="stat-label">Coût total</div><div class="stat-value" id="coutTotalValue">–</div><div class="stat-note">Hors énergie et temps de travail</div></article>
+          <article class="stat"><div class="stat-label">Valeur de référence</div><div class="stat-value" id="valeurRefValue">–</div><div class="stat-note">Ce que vaut l'ensemble en boutique</div></article>
+          <article class="stat accent"><div class="stat-label">Recettes si tout est revendu</div><div class="stat-value" id="recettesValue">–</div><div class="stat-note" id="margeNote">–</div></article>
+        </div>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="panel" aria-labelledby="recette-title">
+        <div class="panel-inner">
+          <div class="section-head"><div><p class="section-kicker">Méthode</p><h2 id="recette-title">Recette artisanale</h2></div><div class="icon-box" aria-hidden="true">⌁</div></div>
+          <ol class="recipe-list">
+            <li><p>Saler les magrets au gros sel pendant <strong>24 h au réfrigérateur</strong>.</p></li>
+            <li><p>Rincer puis dessaler pendant <strong>1 heure</strong> dans l'eau froide.</p></li>
+            <li><p>Bien sécher les magrets avec du papier absorbant.</p></li>
+            <li><p>Répartir les épices sur toute la surface.</p></li>
+            <li><p>Faire sécher dans un endroit ventilé pendant <strong>3 à 6 semaines</strong>.</p></li>
+            <li><p>Optionnel : placer sous vide pendant <strong>20 jours</strong>.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="valo-title">
+        <div class="panel-inner">
+          <div class="section-head"><div><p class="section-kicker">Zéro gaspillage</p><h2 id="valo-title">Répartition du canard</h2><p class="section-description">Chaque partie a un seul usage : rien n'est compté deux fois.</p></div><div class="icon-box" aria-hidden="true">♻</div></div>
+          <div class="product-grid">
+            <div class="product"><div class="product-icon">🍖</div><strong id="pv_magret">10</strong><small>Magrets séchés</small></div>
+            <div class="product"><div class="product-icon">🍗</div><strong id="pv_cuisse">10</strong><small>Cuisses confites</small></div>
+            <div class="product"><div class="product-icon">🥄</div><strong id="pv_rillettes">1,25 kg</strong><small>Rillettes (cou + chair de carcasse)</small></div>
+            <div class="product"><div class="product-icon">🥣</div><strong id="pv_bouillon">10</strong><small>Bouillons (carcasse)</small></div>
+            <div class="product"><div class="product-icon">🥓</div><strong id="pv_gratton">1,00 kg</strong><small>Grattons (peau)</small></div>
+            <div class="product"><div class="product-icon">🫙</div><strong id="pv_graisse">0,50 kg</strong><small>Graisse en pot (surplus)</small></div>
+            <div class="product"><div class="product-icon">🧈</div><strong id="pv_graisseTotale">2,50 kg</strong><small>Graisse fondue au total</small></div>
+            <div class="product"><div class="product-icon">💶</div><strong id="achatValue">90,00 €</strong><small>Achat total</small></div>
+          </div>
+          <div class="fat-budget" id="fatBudget">La graisse est utilisée en priorité pour les cuisses confites et les rillettes ; seul le surplus est mis en pot.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer><span>Atelier Magret</span><span>Calculs indicatifs à adapter à votre production réelle.</span></footer>
+
+  <script>
+    /* Hypothèses par canard : chaque partie n'a qu'un seul usage */
+    const MAGRETS_PAR_CANARD = 2;
+    const CUISSES_PAR_CANARD = 2;
+    const GRAISSE_FONDUE_PAR_CANARD = 0.5;      // kg, issue de la peau et du gras
+    const GRAISSE_CONFIT_PAR_CUISSE = 0.15;     // kg de graisse pour confire une cuisse
+    const RILLETTES_PAR_CANARD = 0.25;          // kg (cou + chair de carcasse)
+    const GRAISSE_RILLETTES_PAR_KG = 0.4;       // kg de graisse par kg de rillettes
+    const BOUILLONS_PAR_CANARD = 2;             // bocaux de 50 cl (carcasse)
+    const GRATTONS_PAR_CANARD = 0.2;            // kg (sous-produit de la fonte de la peau)
+    const SEL_PAR_MAGRET = 0.5;                 // kg
+    const EPICES_PAR_MAGRET = 0.015;            // kg
+
+    const PRODUITS = [
+      { key: "magret",    type: "piece" },
+      { key: "cuisse",    type: "piece" },
+      { key: "rillettes", type: "kg" },
+      { key: "bouillon",  type: "bocal" },
+      { key: "gratton",   type: "kg" },
+      { key: "graisse",   type: "kg" }
+    ];
+
+    const ids = ["nbMagrets", "prixCanard", "prixSelKg", "prixEpicesKg", "marge",
+      "ref_magret", ...PRODUITS.filter(p => p.key !== "magret").flatMap(p => [`ref_${p.key}`, `fr_${p.key}`])];
+
+    const euro = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+    const decimal = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const kg = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pct = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+
+    function value(id) { return Number(document.getElementById(id).value); }
+    function setText(id, text) { document.getElementById(id).textContent = text; }
+    function setHTML(id, html) { document.getElementById(id).innerHTML = html; }
+
+    function formatQty(type, q) {
+      if (type === "kg") return `${kg.format(q)} kg`;
+      if (type === "bocal") return `${q} bocal${q > 1 ? "x" : ""}`.replace("bocalx", "bocaux");
+      return `${q} pièce${q > 1 ? "s" : ""}`;
+    }
+
+    function toutCalculer() {
+      const nbMagretsSouhaites = value("nbMagrets");
+      const prixCanard = value("prixCanard");
+      const prixSelKg = value("prixSelKg");
+      const prixEpicesKg = value("prixEpicesKg");
+      const marge = value("marge");
+
+      const autresValeurs = ids.filter(id => !["nbMagrets"].includes(id)).map(value);
+      const invalid = !Number.isFinite(nbMagretsSouhaites) || nbMagretsSouhaites <= 0 || autresValeurs.some(n => !Number.isFinite(n) || n < 0);
+      document.getElementById("globalError").style.display = invalid ? "block" : "none";
+      if (invalid) return;
+
+      /* Quantités */
+      const nbCanards = Math.ceil(nbMagretsSouhaites / MAGRETS_PAR_CANARD);
+      const nbMagrets = nbCanards * MAGRETS_PAR_CANARD;
+      const nbCuisses = nbCanards * CUISSES_PAR_CANARD;
+
+      const graisseTotale = nbCanards * GRAISSE_FONDUE_PAR_CANARD;
+      const rillettesKg = nbCanards * RILLETTES_PAR_CANARD;
+      const graisseConfit = nbCuisses * GRAISSE_CONFIT_PAR_CUISSE;
+      const graisseRillettes = rillettesKg * GRAISSE_RILLETTES_PAR_KG;
+      const graisseSurplus = Math.max(0, graisseTotale - graisseConfit - graisseRillettes);
+      const graisseManquante = Math.max(0, graisseConfit + graisseRillettes - graisseTotale);
+
+      const qty = {
+        magret: nbMagrets,
+        cuisse: nbCuisses,
+        rillettes: rillettesKg,
+        bouillon: nbCanards * BOUILLONS_PAR_CANARD,
+        gratton: nbCanards * GRATTONS_PAR_CANARD,
+        graisse: graisseSurplus
+      };
+
+      /* Ingrédients des magrets */
+      const selKg = nbMagrets * SEL_PAR_MAGRET;
+      const epicesKg = nbMagrets * EPICES_PAR_MAGRET;
+      const coutIngredientsMagrets = selKg * prixSelKg + epicesKg * prixEpicesKg;
+
+      /* Valeur de référence (clé de répartition) */
+      const refTotale = PRODUITS.reduce((s, p) => s + qty[p.key] * value(`ref_${p.key}`), 0);
+      if (refTotale <= 0) { document.getElementById("globalError").style.display = "block"; return; }
+
+      const coutCanards = nbCanards * prixCanard;
+
+      let coutTotal = 0, recettes = 0, fraisReste = 0, partMagrets = 0;
+      PRODUITS.forEach(p => {
+        const q = qty[p.key];
+        const refValeur = q * value(`ref_${p.key}`);
+        const partCanard = coutCanards * refValeur / refTotale;
+        const frais = p.key === "magret" ? coutIngredientsMagrets : q * value(`fr_${p.key}`);
+        if (p.key !== "magret") fraisReste += frais;
+        const coutRevient = partCanard + frais;
+        const coutUnitaire = q > 0 ? coutRevient / q : 0;
+        const prixUnitaire = coutUnitaire * (1 + marge / 100);
+
+        coutTotal += coutRevient;
+        recettes += prixUnitaire * q;
+        if (p.key === "magret") partMagrets = partCanard / coutCanards;
+
+        setText(`qty_${p.key}`, formatQty(p.type, q));
+        setText(`cout_${p.key}`, q > 0 ? euro.format(coutUnitaire) : "–");
+        setText(`prix_${p.key}`, q > 0 ? euro.format(prixUnitaire) : "–");
+        setText(`pv_${p.key}`, formatQty(p.type, q).replace(" pièces", "").replace(" pièce", "").replace(" bocaux", "").replace(" bocal", ""));
+      });
+
+      setHTML("fr_magret_txt", `${euro.format(coutIngredientsMagrets / nbMagrets)} / pièce<br>(sel + épices)`);
+
+      /* Résumés */
+      setText("canardsResume", `${nbCanards} canard${nbCanards > 1 ? "s" : ""} nécessaire${nbCanards > 1 ? "s" : ""} · ${nbMagrets} magrets`);
+      setText("selValue", `${kg.format(selKg)} kg`);
+      setText("epicesValue", epicesKg < 1 ? `${Math.round(epicesKg * 1000)} g` : `${decimal.format(epicesKg)} kg`);
+      setText("prixVenteValue", euro.format((coutCanards * partMagrets + coutIngredientsMagrets) / nbMagrets * (1 + marge / 100)));
+      setText("partMagrets", `${pct.format(partMagrets * 100)} %`);
+
+      setText("nbCanardsValue", nbCanards);
+      setText("coutCanardsValue", euro.format(coutCanards));
+      setText("coutIngredientsValue", euro.format(coutIngredientsMagrets + fraisReste));
+      setText("coutTotalValue", euro.format(coutTotal));
+      setText("valeurRefValue", euro.format(refTotale));
+      setText("recettesValue", euro.format(recettes));
+      setText("margeNote", `Soit ${euro.format(recettes - coutTotal)} de marge pour votre travail`);
+
+      setText("pv_graisseTotale", `${kg.format(graisseTotale)} kg`);
+      setText("achatValue", euro.format(coutCanards));
+
+      let fatText = `<strong>Budget graisse :</strong> ${kg.format(graisseTotale)} kg fondus = ${kg.format(graisseConfit)} kg pour les cuisses confites + ${kg.format(graisseRillettes)} kg pour les rillettes + ${kg.format(graisseSurplus)} kg mis en pot.`;
+      if (graisseManquante > 0) fatText += ` <strong>Attention :</strong> il manquerait ${kg.format(graisseManquante)} kg de graisse (à acheter ou à réduire).`;
+      setHTML("fatBudget", fatText);
+    }
+
+    ids.forEach(id => document.getElementById(id).addEventListener("input", toutCalculer));
+    toutCalculer();
+  </script>
+</body>
+</html>

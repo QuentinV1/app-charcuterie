@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'Affinoir — Propositions d'Identité & Logos Haute Salaisonnerie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0D0C0B;
+      --card-dark: #151413;
+      --card-border: #2C2824;
+      --gold-primary: #DFBA6E;
+      --gold-light: #F7E5B5;
+      --gold-dark: #9E7226;
+      --burgundy: #481218;
+      --text-main: #EDE8DE;
+      --text-muted: #9E9689;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Montserrat', sans-serif;
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* HEADER HERO */
+    .hero {
+      text-align: center;
+      padding: 70px 24px 50px;
+      position: relative;
+      background: radial-gradient(circle at 50% 20%, #2A1715 0%, #0D0C0B 70%);
+      border-bottom: 1px solid #241F1C;
+    }
+    .hero-badge {
+      display: inline-block;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--gold-primary);
+      border: 1px solid rgba(223, 186, 110, 0.35);
+      padding: 6px 18px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+      background: rgba(223, 186, 110, 0.05);
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(38px, 6vw, 64px);
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: var(--gold-light);
+      margin-bottom: 12px;
+    }
+    .hero p {
+      max-width: 680px;
+      margin: 0 auto;
+      color: var(--text-muted);
+      font-size: 16px;
+      font-weight: 300;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* SECTION TITLE */
+    .section-header {
+      margin: 60px 0 30px;
+      text-align: center;
+    }
+    .section-header h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 34px;
+      color: var(--gold-light);
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+    }
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* MOCKUP SHOWCASE */
+    .mockup-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 50px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+    }
+    @media (max-width: 900px) {
+      .mockup-card { grid-template-columns: 1fr; }
+    }
+    .mockup-img-wrap {
+      position: relative;
+      background: #000;
+      min-height: 380px;
+    }
+    .mockup-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .mockup-info {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .mockup-info h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      color: var(--gold-light);
+      margin-bottom: 15px;
+    }
+    .mockup-info p {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 20px;
+      line-height: 1.7;
+    }
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .pill {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: #201D1A;
+      color: var(--gold-primary);
+      border: 1px solid #363028;
+    }
+
+    /* THEME SWITCHER CONTROLS */
+    .theme-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 30px;
+      background: #181615;
+      padding: 10px 20px;
+      border-radius: 40px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      border: 1px solid #2B2621;
+    }
+    .theme-bar span {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .theme-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .theme-btn.active {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 10px rgba(223, 186, 110, 0.3);
+    }
+    .btn-dark { background: #0D0C0B; color: #FFF; }
+    .btn-burgundy { background: #2E0B10; color: #FFF; }
+    .btn-cream { background: #F8F5EE; color: #1A1816; }
+
+    /* PROPOSITIONS GRID */
+    .proposals-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+    @media (max-width: 1024px) {
+      .proposals-grid { grid-template-columns: 1fr; }
+    }
+
+    .prop-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .prop-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(223, 186, 110, 0.4);
+    }
+    .prop-badge {
+      background: #1F1B18;
+      padding: 12px 20px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--gold-primary);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .prop-tag {
+      background: rgba(223, 186, 110, 0.15);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .prop-visual {
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0E0D0C;
+      transition: background 0.3s ease;
+      min-height: 340px;
+    }
+    .prop-visual svg {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,0.5));
+    }
+    .prop-details {
+      padding: 28px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .prop-details h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+    }
+    .prop-details .concept {
+      font-size: 13px;
+      color: #D4B67D;
+      font-style: italic;
+      margin-bottom: 14px;
+    }
+    .prop-details p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .prop-features {
+      list-style: none;
+      margin-bottom: 24px;
+      font-size: 12.5px;
+      color: #CBC4B7;
+    }
+    .prop-features li {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .prop-features li::before {
+      content: "✦";
+      color: var(--gold-primary);
+      font-size: 11px;
+      margin-top: 1px;
+    }
+    .prop-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-action {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #E0BC72, #9E7226);
+      color: #14110E;
+      border: none;
+      font-weight: 600;
+    }
+    .btn-gold:hover {
+      filter: brightness(1.15);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--gold-light);
+      border: 1px solid rgba(223, 186, 110, 0.4);
+    }
+    .btn-outline:hover {
+      background: rgba(223, 186, 110, 0.1);
+    }
+
+    /* BEFORE / AFTER COMPARATIVE */
+    .compare-section {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 40px;
+      margin-bottom: 60px;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 30px;
+    }
+    @media (max-width: 800px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+    .compare-box {
+      border: 1px solid #282420;
+      border-radius: 14px;
+      padding: 24px;
+      background: #100F0E;
+      text-align: center;
+    }
+    .compare-box.new {
+      border-color: rgba(223, 186, 110, 0.5);
+      background: linear-gradient(180deg, #1A1612 0%, #100F0E 100%);
+    }
+    .compare-box h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 16px;
+    }
+    .compare-box.old h4 { color: #A66560; }
+    .compare-box.new h4 { color: var(--gold-light); }
+    .compare-img {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .compare-img img, .compare-img svg {
+      width: 100%;
+      height: 100%;
+    }
+    .compare-list {
+      text-align: left;
+      font-size: 13px;
+      color: var(--text-muted);
+      list-style: none;
+    }
+    .compare-list li {
+      margin-bottom: 10px;
+      padding-left: 20px;
+      position: relative;
+    }
+    .compare-box.old .compare-list li::before {
+      content: "✕";
+      color: #B54D43;
+      position: absolute;
+      left: 0;
+    }
+    .compare-box.new .compare-list li::before {
+      content: "✓";
+      color: var(--gold-primary);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    /* APP ICON PREVIEW SIZES */
+    .icon-preview-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      background: #141211;
+      padding: 30px;
+      border-radius: 14px;
+      margin-top: 25px;
+      border: 1px solid #28231E;
+    }
+    .icon-size-item {
+      text-align: center;
+    }
+    .icon-size-item span {
+      display: block;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* PALETTE DE COULEURS */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 25px;
+    }
+    @media (max-width: 768px) {
+      .palette-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .swatch {
+      background: #181615;
+      border-radius: 12px;
+      border: 1px solid #2B2621;
+      overflow: hidden;
+      text-align: center;
+    }
+    .swatch-color {
+      height: 80px;
+      width: 100%;
+    }
+    .swatch-info {
+      padding: 12px;
+    }
+    .swatch-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .swatch-code {
+      font-size: 11px;
+      color: var(--gold-primary);
+      font-family: monospace;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-badge">Identité Visuelle &amp; Direction Artistique</div>
+    <h1>L’AFFINOIR</h1>
+    <p>Élévation de l'identité de marque vers les codes du luxe gastronomique, de la haute salaisonnerie artisanale et de l'affinage d'exception.</p>
+  </header>
+
+  <main class="container">
+
+    <!-- 1. RENDU RÉEL / MOCKUP LUXE -->
+    <section class="section-header">
+      <h2>Le Rendu Haute Couture</h2>
+      <p>Marquage à chaud feuille d'or mat brossé sur cuir grainé et chêne de cave d'affinage</p>
+    </section>
+
+    <div class="mockup-card">
+      <div class="mockup-img-wrap">
+        <img src="laffinoir_luxury_logo_mockup.jpg" alt="Mockup Luxe L'Affinoir marquage à chaud or">
+      </div>
+      <div class="mockup-info">
+        <h3>L’Épure &amp; la Passion du Fait-Maison</h3>
+        <p>
+          Pour <strong>L’Affinoir</strong>, l'approche retenue privilégie une élégance sobre et confidentielle : aucun slogan commercial, aucune mention d'artisanat ou de maison, uniquement la noblesse du <strong>monogramme « A »</strong> fusionné avec le crochet d'affinage et le nom <strong>L’AFFINOIR</strong>.
+        </p>
+        <p>
+          Ce marquage à l'or mat brossé évoque les pièces d'exception soignées à la maison avec rigueur, patience et passion du sel et du temps.
+        </p>
+        <div class="pill-list">
+          <span class="pill">Monogramme Signature</span>
+          <span class="pill">Or Chaud Brossé</span>
+          <span class="pill">Typographie Pure</span>
+          <span class="pill">100% Passion Personnelle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. LES 3 PROPOSITIONS DE LOGO VECTORIEL -->
+    <section class="section-header">
+      <h2>Trois Directions Artistiques</h2>
+      <p>Chaque concept répond à une facette d'excellence : le sceau de maître, l'architecture des caves, ou l'héraldique moderne.</p>
+    </section>
+
+    <!-- Contrôle de fond dynamique -->
+    <div class="theme-bar">
+      <span>Tester sur fond :</span>
+      <button class="theme-btn btn-dark active" onclick="setVisualBg('#0E0D0C', this)">Noir Ardoise</button>
+      <button class="theme-btn btn-burgundy" onclick="setVisualBg('#22070A', this)">Lie-de-vin Profond</button>
+      <button class="theme-btn btn-cream" onclick="setVisualBg('#F5F2EB', this)">Blanc Lin Artisanal</button>
+    </div>
+
+    <div class="proposals-grid">
+
+      <!-- PROPOSITION 1 -->
+      <article class="prop-card">
+        <div class="prop-badge">
+          <span>Direction 01</span>
+          <span class="prop-tag">Choix Retenu</span>
+        </div>
+        <div class="prop-visual" id="vis-1">
+          <img src="logo-p1-monogramme.svg" alt="Proposition 1 Monogramme" style="max-width: 290px; width: 100%;">
+        </div>
+        <div class="prop-details">
+          <h3>Le Poinçon &amp; Monogramme</h3>
+          <div class="concept">« Épure &amp; Passion Personnelle »</div>
+          <p>
+            Un monogramme épuré de la lettre <strong>« A »</strong> dont la traverse médiane devient la volute ciselée d'un crochet d'affinage. L'ensemble s'inscrit dans un <strong>poinçon octogonal</strong> sobre, surmonté d'un cristal de sel géométrique, suivi du nom <strong>L’AFFINOIR</strong> sans slogan superflu.
+          </p>
+          <ul class="prop-features">
+            <li>Épure intemporelle immédiatement identifiable en icône d'application</li>
+            <li>Typographie sérif majestueuse équilibrée et épurée</li>
+            <li>Sobre, discret et confidentiel, sans mention commerciale</li>
+          </ul>
+          <div class="prop-actions">
+            <a href="logo-p1-monogramme.svg" download class="btn-action btn-gold">Télécharger SVG</a>
+            <a href="icon-p1-monogramme.svg" target="_blank" class="btn-action btn-outline">Icône Seule</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- PROPOSITION 2 -->
+      <article class="prop-card">
+        <div class="prop-badge">
+          <span>Direction 02</span>
+          <span class="prop-tag">Architecturale</span>
+        </div>
+        <div class="prop-visual" id="vis-2">
+          <img src="logo-p2-arche-epuree.svg" alt="Proposition 2 Arche Épurée" style="max-width: 290px; width: 100%;">
+        </div>
+        <div class="prop-details">
+          <h3>L’Arche &amp; la Ligne Pure</h3>
+          <div class="concept">« La Cave Voûtée Contemporaine »</div>
+          <p>
+            Rappel des voûtes en pierre des caves d'affinage ancestrales. L'arche en plein cintre enserre une silhouette sculpturale géométrique minimaliste d'une pièce suspendue à son fil, avec cœur rubis biseauté.
+          </p>
+          <ul class="prop-features">
+            <li>Ligne claire ultra-contemporaine (Fine-line art)</li>
+            <li>Hommage direct à l'atmosphère et au repos des caves</li>
+            <li>Idéal pour emballages, étiquettes de bouteilles et bocaux</li>
+          </ul>
+          <div class="prop-actions">
+            <a href="logo-p2-arche-epuree.svg" download class="btn-action btn-gold">Télécharger SVG</a>
+            <a href="logo-p2-arche-epuree.svg" target="_blank" class="btn-action btn-outline">Voir Plein Écran</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- PROPOSITION 3 -->
+      <article class="prop-card">
+        <div class="prop-badge">
+          <span>Direction 03</span>
+          <span class="prop-tag">Gastronomique</span>
+        </div>
+        <div class="prop-visual" id="vis-3">
+          <img src="logo-p3-blason-crochets.svg" alt="Proposition 3 Blason des Crochets" style="max-width: 290px; width: 100%;">
+        </div>
+        <div class="prop-details">
+          <h3>Le Sceau des Deux Crochets</h3>
+          <div class="concept">« L'Héraldique &amp; la Mesure du Temps »</div>
+          <p>
+            Deux crochets forgés symétriques s'enroulent pour esquisser à la fois un cœur noble et l'initiale d'affinage. Le cercle extérieur est marqué des 4 repères cardinaux régissant l'affinage : <em>Temps, Sel, Température, Humidité</em>.
+          </p>
+          <ul class="prop-features">
+            <li>Allure de médaille de concours gastronomique d'or</li>
+            <li>Symétrie parfaite et équilibre optique absolu</li>
+            <li>Étoile fleur de sel diamantée à 8 facettes</li>
+          </ul>
+          <div class="prop-actions">
+            <a href="logo-p3-blason-crochets.svg" download class="btn-action btn-gold">Télécharger SVG</a>
+            <a href="logo-p3-blason-crochets.svg" target="_blank" class="btn-action btn-outline">Voir Plein Écran</a>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- 3. COMPARAISON AVANT / APRÈS -->
+    <section class="compare-section">
+      <div class="section-header" style="margin-top: 0;">
+        <h2>Pourquoi Cette Évolution est Stratégique</h2>
+        <p>Analyse objective de l'ancienne version vs la nouvelle identité de marque</p>
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-box old">
+          <h4>Ancien Logo (Actuel)</h4>
+          <div class="compare-img">
+            <img src="../icons/icon.svg" alt="Ancien logo" style="max-height: 160px; width: auto;">
+          </div>
+          <ul class="compare-list">
+            <li><strong>Trop figuratif &amp; illustratif :</strong> Dessin réaliste de jambon, ficelles multiples, graisse et marbrures qui créent un effet "clipart / boucherie de quartier".</li>
+            <li><strong>Surcharge d'éléments hétérogènes :</strong> Branches de laurier vertes, baies rouges, nœud de corde, anneau, étoile, pointillés...</li>
+            <li><strong>Absence de logotype intégré :</strong> Pas de typographie propre, impossible à utiliser sur un en-tête ou packaging.</li>
+            <li><strong>Lisibilité difficile en petite taille :</strong> En favicon ou icône 32px, les détails de ficelage et de laurier deviennent illisibles.</li>
+          </ul>
+        </div>
+
+        <div class="compare-box new">
+          <h4>Nouvelle Proposition Premium</h4>
+          <div class="compare-img">
+            <img src="icon-p1-monogramme.svg" alt="Nouveau logo icone" style="max-height: 160px; width: auto;">
+          </div>
+          <ul class="compare-list">
+            <li><strong>Symbolique épurée &amp; noble :</strong> Le monogramme « A » et le crochet d'affinage stylisé adoptent les codes des joailliers et grandes maisons de salaison.</li>
+            <li><strong>Équilibre &amp; sobriété :</strong> Moins d'éléments, mais chaque trait est ciselé au nombre d'or avec des pleins et déliés maîtrisés.</li>
+            <li><strong>Typographie haute couture :</strong> Logotype sérif complet avec interlettrage généreux digne des tables étoilées.</li>
+            <li><strong>Déclinaison universelle :</strong> Fonctionne parfaitement à 16px (favicon), sur mobile, gravé sur bois, embouti sur cuir ou imprimé en monochromie.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- APERÇU TAILLES APP ICON -->
+      <div style="margin-top: 40px; text-align: center;">
+        <h4 style="font-size: 13px; text-transform: uppercase; letter-spacing: 3px; color: var(--gold-primary); margin-bottom: 8px;">
+          Épreuve de Réduction — Rendu Icône d'Application
+        </h4>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+          Le monogramme conserve une netteté et un impact parfaits à toutes les échelles d'écran (128px, 64px, 32px).
+        </p>
+
+        <div class="icon-preview-row">
+          <div class="icon-size-item">
+            <img src="icon-p1-monogramme.svg" style="width: 128px; height: 128px;" alt="128px">
+            <span>128 × 128 px</span>
+          </div>
+          <div class="icon-size-item">
+            <img src="icon-p1-monogramme.svg" style="width: 64px; height: 64px;" alt="64px">
+            <span>64 × 64 px</span>
+          </div>
+          <div class="icon-size-item">
+            <img src="icon-p1-monogramme.svg" style="width: 48px; height: 48px;" alt="48px">
+            <span>48 × 48 px</span>
+          </div>
+          <div class="icon-size-item">
+            <img src="icon-p1-monogramme.svg" style="width: 32px; height: 32px;" alt="32px">
+            <span>32 × 32 px</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PALETTE OFFICIELLE DU LUXE SALAISONNIER -->
+    <section class="section-header">
+      <h2>Palette Chromatique de Prestige</h2>
+      <p>Harmonie de tons profonds et minéraux inspirés des fûts, du cuir patiné, de la fleur de sel et de la viande séchée</p>
+    </section>
+
+    <div class="palette-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #121110;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Noir Ardoise &amp; Caviar</div>
+          <div class="swatch-code">#121110</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #DFBA6E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Or Champagne Satiné</div>
+          <div class="swatch-code">#DFBA6E</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #3B090F;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Lie-de-vin Impérial</div>
+          <div class="swatch-code">#3B090F</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #F7F4EE;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Blanc Lin &amp; Fleur de Sel</div>
+          <div class="swatch-code">#F7F4EE</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function setVisualBg(color, btn) {
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.prop-visual').forEach(v => {
+        v.style.backgroundColor = color;
+      });
+    }
+  </script>
+</body>
+</html>

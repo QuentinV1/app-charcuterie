@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="L'Affinoir">
+  <meta name="theme-color" content="#C84B31">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>L'Affinoir - Charcuterie & Salaison</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <img src="icons/icon.svg" alt="L'Affinoir" class="brand-icon">
+      <div>
+        <div class="brand-title">L'Affinoir</div>
+        <div class="brand-subtitle">Atelier Charcuterie & Salaison</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="basculerTheme()">🌙 Cave</button>
+      <button class="btn btn-secondary btn-sm" id="btn-quick-new" onclick="ouvrirModalPlanifier()">+ Planifier</button>
+    </div>
+  </header>
+
+  <!-- Main Content Views -->
+  <main>
+    <div id="ios-backup-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; background:#FFF8E1; color:#5D4037; border:1px solid #FFE082; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.8rem;">
+      <span id="ios-backup-banner-msg">Pensez à exporter une sauvegarde JSON.</span>
+      <button class="btn btn-primary btn-sm" onclick="exporterDonnees()" style="white-space:nowrap;">Sauvegarder</button>
+    </div>
+    <!-- 1. VUE PROJETS (Liste des sessions) -->
+    <section id="view-projets" class="view active">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Sessions en cours</div>
+          <div class="view-desc" id="projets-summary">0 session active</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="ouvrirModalPlanifier()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Nouveau
+        </button>
+      </div>
+
+      <div id="projets-list">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- 1b. VUE DÉTAIL D'UN PROJET / SESSION -->
+    <section id="view-projet-detail" class="view">
+      <div class="view-header" style="align-items: flex-start;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="naviguerVers('projets')" title="Retour aux sessions">←</button>
+          <div>
+            <div class="view-title" id="proj-detail-titre">Session</div>
+            <div class="view-desc" id="proj-detail-recette">Recette</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="supprimerProjetActuel()" style="color:var(--danger);">Supprimer</button>
+          <button class="btn btn-primary btn-sm" id="btn-toggle-termine-projet" onclick="basculerStatutProjetActuel()">Terminer</button>
+        </div>
+      </div>
+
+      <!-- Sub-tabs du Projet -->
+      <div class="sub-tabs">
+        <button class="sub-tab active" id="tab-btn-planning" onclick="basculerSousOngletProjet('planning')">Planning & Étapes</button>
+        <button class="sub-tab" id="tab-btn-production" onclick="basculerSousOngletProjet('production')">Production & Lots</button>
+        <button class="sub-tab" id="tab-btn-budget" onclick="basculerSousOngletProjet('budget')">Budget & Bilan</button>
+      </div>
+
+      <!-- Sous-vue 1: Planning -->
+      <div id="subview-proj-planning">
+        <div id="proj-etapes-list"></div>
+      </div>
+
+      <!-- Sous-vue 2: Production & Lots -->
+      <div id="subview-proj-production" style="display:none;">
+        <div id="proj-sorties-container"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 8px;">
+          <h4 style="font-size:0.95rem; font-weight:700;">Lots & Pesées d'Affinage</h4>
+          <button class="btn btn-secondary btn-sm" onclick="ouvrirModalAjouterLotProjet()">+ Lot</button>
+        </div>
+        <div id="proj-lots-list"></div>
+      </div>
+
+      <!-- Sous-vue 3: Budget & Bilan Financier -->
+      <div id="subview-proj-budget" style="display:none;">
+        <div id="proj-budget-container"></div>
+      </div>
+    </section>
+
+    <!-- 2. VUE CHARCUTERIES -->
+    <section id="view-recettes" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Charcuteries</div>
+          <div class="view-desc" id="recettes-count">Catalogue artisanal (21 recettes)</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="ouvrirModalCreerRecette()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Créer
+        </button>
+      </div>
+
+      <input type="text" id="search-recettes" class="search-box" placeholder="Rechercher (magret, sanglier, saucisse, coppa, truite…)" oninput="filtrerRecettes()">
+
+      <div class="chips-row" id="familles-chips">
+        <button class="chip active" onclick="setFamilleFiltre('Toutes')">Toutes</button>
+        <button class="chip" onclick="setFamilleFiltre('Canard')">Canard</button>
+        <button class="chip" onclick="setFamilleFiltre('Porc')">Porc</button>
+        <button class="chip" onclick="setFamilleFiltre('Bœuf')">Bœuf</button>
+        <button class="chip" onclick="setFamilleFiltre('Poisson')">Poisson</button>
+        <button class="chip" onclick="setFamilleFiltre('Gibier & Foie')">Gibier & Foie</button>
+        <button class="chip" id="chip-masquees" onclick="basculerAfficherMasquees()" style="display:none">Masquées</button>
+      </div>
+
+      <div id="recettes-list">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- 3. VUE COURSES -->
+    <section id="view-courses" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Liste de courses</div>
+          <div class="view-desc" id="courses-total-desc">Regroupée par session & catégorie</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="ouvrirModalAjoutCourseManuel()">+ Article</button>
+          <button class="btn btn-danger btn-sm" onclick="nettoyerCoursesAchetees()" id="btn-clean-courses">
+            Nettoyer achetés
+          </button>
+        </div>
+      </div>
+
+      <div id="courses-container">
+        <!-- Rendered by JS grouped by project -->
+      </div>
+    </section>
+
+    <!-- 4. VUE REVENTE (Optionnelle) -->
+    <section id="view-revente" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Revente & Amis</div>
+          <div class="view-desc">Prix conseillé & commandes réservées</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-secondary btn-sm" onclick="naviguerVers('clients')">
+            Clients (<span id="clients-count-badge">0</span>)
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="ouvrirModalNouvelleCommande()">
+            + Commande
+          </button>
+        </div>
+      </div>
+
+      <div id="revente-container">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- 4b. VUE CLIENTS -->
+    <section id="view-clients" class="view">
+      <div class="view-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="btn btn-secondary btn-sm" onclick="naviguerVers('revente')" title="Retour à Revente">←</button>
+          <div>
+            <div class="view-title">Clients</div>
+            <div class="view-desc" id="clients-summary">0 client enregistré</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="ouvrirModalClient()">
+          + Ajouter
+        </button>
+      </div>
+
+      <input type="text" id="search-clients" class="search-box" placeholder="Rechercher un client..." oninput="rendreClients()">
+
+      <div id="clients-list" style="margin-top: 12px;">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- 5. VUE PARAMÈTRES -->
+    <section id="view-parametres" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Réglages & Lots</div>
+          <div class="view-desc">Configuration de L'Affinoir</div>
+        </div>
+      </div>
+
+      <!-- Sub-tabs Réglages -->
+      <div class="sub-tabs">
+        <button class="sub-tab active" id="tab-btn-params-tarifs" onclick="basculerSousOngletParametres('tarifs')">Options & Tarifs</button>
+        <button class="sub-tab" id="tab-btn-params-lots" onclick="basculerSousOngletParametres('lots')">Lots à paramétrer</button>
+      </div>
+
+      <!-- Sous-vue 1: Options & Tarifs -->
+      <div id="subview-params-tarifs">
+        <div class="card">
+          <div style="font-weight: 700; margin-bottom: 12px;">Options d'affichage</div>
+          <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+            <div>
+              <div style="font-weight: 600;">Gestion des prix & coûts</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Afficher ou masquer tout ce qui concerne les prix, coûts et budgets</div>
+            </div>
+            <input type="checkbox" id="toggle-prix" onchange="toggleModulePrix(this.checked)" style="width: 22px; height: 22px; accent-color: var(--primary);">
+          </label>
+          <label id="label-option-revente" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Module Revente</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Afficher l'onglet Revente dans la navigation</div>
+            </div>
+            <input type="checkbox" id="toggle-revente" onchange="toggleModuleRevente(this.checked)" style="width: 22px; height: 22px; accent-color: var(--primary);">
+          </label>
+        </div>
+
+        <!-- Tarifs & Coûts de base -->
+        <div class="card" id="card-params-tarifs">
+          <div style="font-weight: 700; margin-bottom: 8px;">Tarifs & Valeurs de référence</div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+            Modifiez vos prix d'achat et vos valeurs de boutique utilisées pour le calcul de rentabilité.
+          </p>
+          <div id="params-tarifs-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- MANUEL D'INSTALLATION IOS (CONSERVÉ EXPLICITEMENT) -->
+        <div class="card">
+          <div style="font-weight: 700; margin-bottom: 8px;">📲 Installer sur iPhone (iOS Safari)</div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px;">
+            Pour utiliser cette application comme une vraie app native sur votre iPhone :
+          </p>
+          <ol style="font-size: 0.85rem; padding-left: 20px; color: var(--text); line-height: 1.6;">
+            <li>Ouvrez cette page dans <strong>Safari</strong> sur votre iPhone.</li>
+            <li>Touchez le bouton <strong>Partager</strong> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> (en bas de l'écran).</li>
+            <li>Faites défiler vers le bas et touchez <strong>"Sur l'écran d'accueil"</strong>.</li>
+            <li>Validez avec <strong>Ajouter</strong> en haut à droite.</li>
+          </ol>
+        </div>
+
+        <!-- Sauvegarde & Données -->
+        <div class="card">
+          <div style="font-weight: 700; margin-bottom: 6px;">Sauvegarde & Données</div>
+          <div id="ios-storage-status" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;"></div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="exporterDonnees()">Exporter mes données (JSON)</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">Importer</button>
+            <input type="file" id="import-file" style="display:none" accept=".json" onchange="importerDonnees(event)">
+            <button class="btn btn-danger btn-sm" onclick="reinitialiserDonnees()">Réinitialiser le catalogue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sous-vue 2: Lots à paramétrer par recette -->
+      <div id="subview-params-lots" style="display:none;">
+        <div class="card">
+          <div style="font-weight: 700; margin-bottom: 8px;">Variantes d'épices & Lots</div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
+            Sélectionnez une charcuterie pour configurer ou ajouter des lots d'assaisonnement prédéfinis.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Sélectionner la charcuterie</label>
+            <select id="select-recette-lots-param" class="form-control" onchange="rendreLotsParametrage()">
+              <!-- Options rendered by JS -->
+            </select>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:8px;">
+            <span style="font-size:0.85rem; font-weight:700;">Lots configurés</span>
+            <button class="btn btn-secondary btn-sm" onclick="ouvrirModalAjouterVariante()">+ Ajouter un lot</button>
+          </div>
+          <div id="lots-param-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. VUE JOURNAL DE CAVE -->
+    <section id="view-cave" class="view">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Journal de Cave</div>
+          <div class="view-desc">Température & hygrométrie au fil des saisons</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:8px;">Nouveau relevé</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Température (°C)</label>
+            <input type="number" step="0.1" id="cave-input-temp" class="form-control" placeholder="Ex: 12.5">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Hygrométrie (%)</label>
+            <input type="number" step="0.5" id="cave-input-hygro" class="form-control" placeholder="Ex: 75">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Date</label>
+            <input type="date" id="cave-input-date" class="form-control">
+          </div>
+          <div class="form-group" style="flex:1.4;">
+            <label class="form-label">Note (optionnel)</label>
+            <input type="text" id="cave-input-note" class="form-control" placeholder="Ex: Fenêtre ouverte la nuit">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="ajouterReleveCave()">+ Enregistrer le relevé</button>
+      </div>
+
+      <div id="cave-container"></div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="naviguerVers('projets')" id="nav-projets">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Projets</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('recettes')" id="nav-recettes">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Charcuteries</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('courses')" id="nav-courses">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="nav-badge" id="nav-badge-courses" style="display:none;">0</span>
+      </div>
+      <span>Courses</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('cave')" id="nav-cave">
+      <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+      <span>Cave</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('revente')" id="nav-revente" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Revente</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('parametres')" id="nav-parametres">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Réglages</span>
+    </button>
+  </nav>
+
+  <!-- MODALS -->
+
+  <!-- 1. Modal Planifier Projet (Homogénéisé avec Découpe, Rendements, Lots & Calculateur) -->
+  <div class="modal-overlay" id="modal-planifier">
+    <div class="modal-content" style="max-height: 92vh;">
+      <div class="modal-header">
+        <div class="modal-title">Planifier une session</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+
+      <!-- Sélecteur de charcuterie -->
+      <div class="form-group">
+        <label class="form-label">Sélectionner la charcuterie</label>
+        
+        <div id="plan-dropdown-trigger" class="searchable-dropdown-trigger" onclick="togglePlanRecetteDropdown()">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="plan-selected-badge" class="badge-mini">Canard</span>
+            <span id="plan-selected-nom" style="font-weight:600;">Canard entier valorisé & Magrets séchés</span>
+          </div>
+          <svg id="plan-dropdown-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+
+        <div id="plan-dropdown-panel" class="searchable-dropdown-panel" style="display:none;">
+          <div class="dropdown-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="plan-dropdown-search" placeholder="Rechercher une charcuterie..." oninput="filtrerRecettesDropdown()">
+            <button type="button" class="btn-clear-search" onclick="effacerRechercheRecettes()">✕</button>
+          </div>
+          <div class="dropdown-category-chips">
+            <button type="button" class="chip-sm active" onclick="filtrerCategorieDropdown('Toutes', this)">Toutes</button>
+            <button type="button" class="chip-sm" onclick="filtrerCategorieDropdown('Canard', this)">Canard</button>
+            <button type="button" class="chip-sm" onclick="filtrerCategorieDropdown('Porc', this)">Porc</button>
+            <button type="button" class="chip-sm" onclick="filtrerCategorieDropdown('Bœuf', this)">Bœuf</button>
+            <button type="button" class="chip-sm" onclick="filtrerCategorieDropdown('Poisson', this)">Poisson</button>
+            <button type="button" class="chip-sm" onclick="filtrerCategorieDropdown('Gibier & Foie', this)">Gibier</button>
+          </div>
+          <div id="plan-dropdown-list" class="dropdown-options-container">
+            <!-- Rendu dynamique par JS -->
+          </div>
+        </div>
+        <input type="hidden" id="plan-recette-select" value="VALORISATION_CANARD">
+      </div>
+
+      <div id="plan-eval-rappel" style="display:none; background:#FFF8E1; border-left:3px solid var(--primary); padding:8px 10px; border-radius:6px; margin-bottom:12px;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Nom de la session</label>
+        <input type="text" id="plan-nom" class="form-control" placeholder="Ex: Week-end Canards & Magrets">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Quantité de départ (<span id="plan-unite">canard</span>)</label>
+          <input type="number" id="plan-quantite" class="form-control" value="10" min="0.1" step="0.5" oninput="actualiserEstimationPlanification()">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Date & heure de démarrage</label>
+          <input type="datetime-local" id="plan-date" class="form-control">
+        </div>
+      </div>
+
+      <!-- Section Découpe Multi-sorties (si recette découpe) -->
+      <div id="plan-sorties-section" style="display:none; margin-top:10px; background:var(--surface-subtle); padding:12px; border-radius:var(--radius-md);">
+        <div style="font-weight:700; font-size:0.88rem; margin-bottom:4px;">Parties de découpe obtenues</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Cochez les produits valorisés pour répartir les coûts au prorata boutique :</p>
+        <div id="plan-sorties-checklist"></div>
+      </div>
+
+      <!-- Section Lots d'assaisonnement / variantes -->
+      <div id="plan-lots-section" style="margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div style="font-weight:700; font-size:0.88rem;">Répartition par lot d'épices</div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigneLotPlanification()">+ Lot</button>
+        </div>
+        <div id="plan-lots-container"></div>
+      </div>
+
+      <!-- Tarifs matière & Marge -->
+      <div class="form-row" id="plan-tarifs-row" style="margin-top:10px;">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Prix d'achat matière (<span id="plan-unite-prix">€/canard</span>)</label>
+          <input type="number" id="plan-prix-matiere" class="form-control" value="18.0" step="0.5" oninput="actualiserEstimationPlanification()">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Marge revente (%)</label>
+          <input type="number" id="plan-marge" class="form-control" value="10" step="1" oninput="actualiserEstimationPlanification()">
+        </div>
+      </div>
+
+      <!-- Estimation Dynamique (CalculateurCharcuterie) -->
+      <div id="plan-estimation-box" style="margin-top:12px; padding:12px; border-radius:var(--radius-md); background:var(--primary-light); border:1px solid var(--primary);">
+        <div style="font-size:0.75rem; color:var(--primary); font-weight:700; text-transform:uppercase;">Estimation économique</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <div>
+            <div style="font-size:0.85rem;" id="plan-est-cout">Coût de revient : <strong>-- €</strong></div>
+            <div style="font-size:0.85rem;" id="plan-est-prix">Prix de revente conseillé : <strong style="color:var(--primary);">-- €</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerPlanification()">Générer la session & courses</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Modal Créer Recette Personnalisée -->
+  <div class="modal-overlay" id="modal-creer-recette">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Créer une recette</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom de la recette *</label>
+        <input type="text" id="cr-nom" class="form-control" placeholder="Ex: Saucisse sèche au piment">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Famille</label>
+          <select id="cr-famille" class="form-control">
+            <option value="Porc">Porc</option>
+            <option value="Canard">Canard</option>
+            <option value="Bœuf">Bœuf</option>
+            <option value="Poisson">Poisson</option>
+            <option value="Gibier & Foie">Gibier & Foie</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Perte cible %</label>
+          <input type="number" id="cr-perte" class="form-control" value="35">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description & conseils</label>
+        <textarea id="cr-desc" class="form-control" rows="2" placeholder="Description de la recette..."></textarea>
+      </div>
+
+      <!-- Ingrédients dynamiques -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 12px 0 6px;">
+        <label class="form-label" style="margin:0; font-weight:700;">Ingrédients</label>
+        <button class="btn btn-secondary btn-sm" onclick="ajouterLigneIngredient()">+ Ingrédient</button>
+      </div>
+      <div id="cr-ingredients-list"></div>
+
+      <!-- Étapes dynamiques -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 16px 0 6px;">
+        <label class="form-label" style="margin:0; font-weight:700;">Étapes du planning</label>
+        <button class="btn btn-secondary btn-sm" onclick="ajouterLigneEtape()">+ Étape</button>
+      </div>
+      <div id="cr-etapes-list"></div>
+
+      <div style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderRecettePersonnalisee()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Modal Détail / Fiche Recette Complète -->
+  <div class="modal-overlay" id="modal-fiche-recette">
+    <div class="modal-content" style="max-height:90vh;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="fiche-nom">Nom</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);" id="fiche-famille">Famille</div>
+        </div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div id="fiche-body"></div>
+      <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 12px; gap: 8px;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" id="btn-fiche-masquer" onclick="basculerMasquageDepuisFiche()">Masquer</button>
+          <button class="btn btn-danger btn-sm" id="btn-fiche-supprimer" onclick="supprimerRecetteDepuisFiche()">Supprimer</button>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-fiche-planifier" onclick="planifierDepuisFiche()">Planifier cette charcuterie</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Modal Modifier Course -->
+  <div class="modal-overlay" id="modal-edit-course">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Modifier l'article</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="edit-course-id">
+      <div class="form-group">
+        <label class="form-label">Nom de l'ingrédient</label>
+        <input type="text" id="edit-course-nom" class="form-control">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Quantité</label>
+          <input type="number" step="0.1" id="edit-course-qte" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Unité</label>
+          <input type="text" id="edit-course-unite" class="form-control">
+        </div>
+      </div>
+      <div class="form-group" id="edit-course-prix-group">
+        <label class="form-label">Prix réel payé (€)</label>
+        <input type="number" step="0.05" id="edit-course-prix" class="form-control">
+      </div>
+      <div style="margin-top: 14px; display: flex; justify-content: space-between;">
+        <button class="btn btn-danger btn-sm" onclick="supprimerCourseActuelle()">Supprimer</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="fermerModals()">Annuler</button>
+          <button class="btn btn-primary btn-sm" onclick="sauvegarderCourseModifiee()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4b. Modal Ajouter Article Course Manuel -->
+  <div class="modal-overlay" id="modal-ajout-course">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Ajouter un article de course</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Session / Projet rattaché</label>
+        <select id="add-course-projet-select" class="form-control">
+          <!-- Filled by JS -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom de l'article</label>
+        <input type="text" id="add-course-nom" class="form-control" placeholder="Ex: Boyaux de porc 32/34">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Catégorie</label>
+          <select id="add-course-cat" class="form-control">
+            <option value="VIANDE">Viande</option>
+            <option value="SEL_SUCRE">Sel & Sucre</option>
+            <option value="EPICES">Épices & Aromates</option>
+            <option value="CONSOMMABLES">Consommables / Boyaux</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Quantité</label>
+          <input type="number" id="add-course-qte" class="form-control" value="1" step="0.1">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Unité</label>
+          <input type="text" id="add-course-unite" class="form-control" value="lot">
+        </div>
+      </div>
+      <div class="form-group" id="add-course-prix-group">
+        <label class="form-label">Prix estimé (€)</label>
+        <input type="number" id="add-course-prix" class="form-control" value="5.0" step="0.5">
+      </div>
+      <div style="margin-top: 14px; display: flex; justify-content: flex-end; gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmerAjoutCourseManuel()">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Pesée Rapide & Courbe de Perte de Poids -->
+  <div class="modal-overlay" id="modal-pesee">
+    <div class="modal-content" style="max-height:90vh; overflow-y:auto;">
+      <div class="modal-header">
+        <div class="modal-title">⚖️ Pesées & Courbe — <span id="modal-pesee-lot-nom">Lot</span></div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
+        Suivez la déshydratation au séchoir. Perte cible recommandée : <span id="modal-pesee-cible" style="font-weight:bold; color:var(--primary);">-35%</span>.
+      </p>
+      <div id="modal-pesee-alerte"></div>
+      <div id="modal-pesee-chart" style="margin-bottom:12px;"></div>
+
+      <input type="hidden" id="modal-pesee-proj-id">
+      <input type="hidden" id="modal-pesee-lot-idx">
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Poids initial (g)</label>
+          <input type="number" id="modal-pesee-initial" class="form-control" placeholder="Ex: 420" oninput="calculerPeseeModal()">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Nouvelle pesée (g)</label>
+          <input type="number" id="modal-pesee-actuel" class="form-control" placeholder="Ex: 285" oninput="calculerPeseeModal()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Date de la pesée</label>
+          <input type="date" id="modal-pesee-date" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Note / 5</label>
+          <select id="modal-pesee-note" class="form-control">
+            <option value="5">★★★★★ (5/5) Exceptionnel</option>
+            <option value="4">★★★★☆ (4/5) Très bon</option>
+            <option value="3">★★★☆☆ (3/5) Bon</option>
+            <option value="2">★★☆☆☆ (2/5) Moyen</option>
+            <option value="1">★☆☆☆☆ (1/5) À revoir</option>
+          </select>
+        </div>
+      </div>
+      <div id="modal-pesee-resultat" style="margin-top:8px; padding:10px; border-radius:var(--radius-sm); background:var(--surface-subtle); display:none;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:2px;" id="modal-pesee-perte">-28.5% de perte</div>
+        <div style="font-size:0.78rem; color:var(--text-muted);" id="modal-pesee-details">Reste ~25g d'eau à perdre</div>
+      </div>
+      <div class="form-group" style="margin-top:10px;">
+        <label class="form-label">Observation (fleur, odeur, fermeté...)</label>
+        <input type="text" id="modal-pesee-comm" class="form-control" placeholder="Ex: Belle fleur blanche, ferme en surface">
+      </div>
+      <div style="margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Fermer</button>
+        <button class="btn btn-primary" onclick="confirmerEnregistrementPesee()">+ Ajouter la pesée</button>
+      </div>
+
+      <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:10px;">
+        <div style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">Historique des pesées</div>
+        <div id="modal-pesee-historique" style="max-height:150px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nouvelle Commande -->
+  <div class="modal-overlay" id="modal-commande">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-cmd-titre">Nouvelle commande</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="cmd-edit-id">
+      <div class="form-group">
+        <label class="form-label">Client / Ami</label>
+        <input type="text" id="cmd-client-nom" class="form-control" placeholder="Ex: Thomas" oninput="remplirSuggestionsClientsModal()">
+      </div>
+      <div id="cmd-clients-chips-wrap" style="display:none; margin-bottom:12px;">
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Clients enregistrés</div>
+        <div id="cmd-clients-chips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Session rattachée (optionnel)</label>
+        <select id="cmd-projet-select" class="form-control" onchange="mettreAJourProduitsDepuisProjetModal()">
+          <!-- Filled by JS -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produit</label>
+        <input type="text" id="cmd-produit" class="form-control" placeholder="Ex: Magret séché - Fumé">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Quantité</label>
+          <input type="number" id="cmd-qte" class="form-control" value="1" min="1" step="0.5" oninput="recalculerTotalCommandeModal()">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Prix unitaire (€)</label>
+          <input type="number" id="cmd-prix-unit" class="form-control" value="12.0" step="0.5" oninput="recalculerTotalCommandeModal()">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Total (€)</label>
+          <input type="number" step="0.1" id="cmd-prix" class="form-control" value="12.0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Moyen de paiement</label>
+          <select id="cmd-moyen" class="form-control">
+            <option value="Wero / Paylib">Wero / Paylib</option>
+            <option value="Espèces">Espèces</option>
+            <option value="Virement">Virement</option>
+            <option value="Chèque">Chèque</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Statut paiement</label>
+          <select id="cmd-paye" class="form-control">
+            <option value="false">En attente (Non payé)</option>
+            <option value="true">Payé</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="cmd-livre" style="width:18px; height:18px; accent-color:var(--secondary);">
+          <span style="font-size:0.88rem; font-weight:600;">Commande déjà livrée</span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Commentaire</label>
+        <input type="text" id="cmd-comm" class="form-control" placeholder="Ex: À livrer ce week-end">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderCommandeModal()">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter / Modifier Client -->
+  <div class="modal-overlay" id="modal-client">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-client-titre">Nouveau client</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="client-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nom du client</label>
+        <input type="text" id="client-nom-input" class="form-control" placeholder="Ex: Thomas">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderClientModal()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Modifier Paramètre de Réglage -->
+  <div class="modal-overlay" id="modal-edit-param">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-param-libelle">Paramètre</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="edit-param-cle">
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;" id="modal-param-desc"></p>
+      <div class="form-group">
+        <label class="form-label">Valeur (<span id="modal-param-unite"></span>)</label>
+        <input type="number" step="0.01" id="edit-param-valeur" class="form-control">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderParametreModal()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter / Modifier Variante d'épices (Lots) -->
+  <div class="modal-overlay" id="modal-edit-variante">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-var-titre">Ajouter un lot d'assaisonnement</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="edit-var-recette-id">
+      <input type="hidden" id="edit-var-index">
+      <div class="form-group">
+        <label class="form-label">Nom de la variante (Ex: Piment d'Espelette, Café...)</label>
+        <input type="text" id="edit-var-nom" class="form-control" placeholder="Ex: Curry doux">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description des épices & aromates</label>
+        <input type="text" id="edit-var-desc" class="form-control" placeholder="Ex: Curry doux, coriandre, pointe de cumin">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Épices (g par pièce ou kg)</label>
+          <input type="number" id="edit-var-epices" class="form-control" value="15" step="1">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Temps salage spécifique (h)</label>
+          <input type="number" id="edit-var-salage" class="form-control" value="24" step="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="edit-var-fume" style="width:18px; height:18px; accent-color:var(--primary);">
+          <span style="font-size:0.88rem; font-weight:600;">Ajouter une étape de fumage à froid</span>
+        </label>
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderVarianteModal()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL APERÇU PHOTO ÉTAPE -->
+  <div class="modal-overlay" id="modal-photo-etape">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-photo-titre">Photo d'étape</div>
+        <button class="modal-close" onclick="fermerModals()">&times;</button>
+      </div>
+      <div style="text-align:center; background:var(--surface-subtle); border-radius:var(--radius-sm); padding:8px;">
+        <img id="modal-photo-img" class="photo-lightbox-img" src="" alt="Photo d'étape">
+      </div>
+      <div id="modal-photo-meta" style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;"></div>
+      <div style="margin-top: 14px; display: flex; justify-content: space-between; gap: 8px;">
+        <button class="btn btn-secondary" style="color:var(--danger, #c62828);" id="modal-photo-delete-btn">🗑️ Supprimer</button>
+        <button class="btn btn-primary" onclick="fermerModals()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHE D'ÉVALUATION & DÉGUSTATION -->
+  <div class="modal-overlay" id="modal-evaluation">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🍷 Évaluation — <span id="eval-proj-nom">Session</span></div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="eval-proj-id">
+      <div class="form-group">
+        <label class="form-label">Note globale</label>
+        <select id="eval-note" class="form-control">
+          <option value="5">⭐⭐⭐⭐⭐ (5/5) Exceptionnel</option>
+          <option value="4">⭐⭐⭐⭐☆ (4/5) Très réussi</option>
+          <option value="3">⭐⭐⭐☆☆ (3/5) Correct</option>
+          <option value="2">⭐⭐☆☆☆ (2/5) À améliorer</option>
+          <option value="1">⭐☆☆☆☆ (1/5) Raté</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Texture</label>
+          <select id="eval-texture" class="form-control">
+            <option value="Équilibrée / Fondante">Équilibrée / Fondante</option>
+            <option value="Un peu sèche">Un peu sèche</option>
+            <option value="Trop sèche / Croûtée">Trop sèche / Croûtée</option>
+            <option value="Trop molle / Pas assez sèche">Trop molle / Pas assez sèche</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Salinité</label>
+          <select id="eval-salinite" class="form-control">
+            <option value="Parfaite">Parfaite</option>
+            <option value="Un peu juste">Un peu juste</option>
+            <option value="Trop salée">Trop salée</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Arômes & Fumage</label>
+        <select id="eval-aromes" class="form-control">
+          <option value="Équilibrés">Équilibrés</option>
+          <option value="Subtils / Discrets">Subtils / Discrets</option>
+          <option value="Puissants">Puissants</option>
+          <option value="Insuffisants">Insuffisants</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note pour la prochaine fois</label>
+        <textarea id="eval-commentaire" class="form-control" rows="3" placeholder="Ex: Passer à 28g/kg de sel, ou 2h de fumage en plus..."></textarea>
+      </div>
+      <div style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderEvaluationModal()">Enregistrer l'évaluation</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Planning Week-end Canard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: bon de cuisine. Chaque étape est un ticket : souche horaire à gauche, détachée par une perforation en pointillés, gestes à cocher à droite. */
+:root {
+  --bg: #EDF1EC;
+  --surface: #FBFCFA;
+  --stub: #E3EAE4;
+  --hatch: #D6DFD8;
+  --ink: #15211C;
+  --muted: #4F5F57;
+  --line: #C6D2C9;
+  --accent: #8E2336;
+  --on-accent: #FFFFFF;
+  --accent-soft: #F3DFE2;
+  --fat: #F1E9BE;
+  --font-display: 'Big Shoulders Display', 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1512; --surface: #151F1B; --stub: #1C2823; --hatch: #22302A;
+    --ink: #E7EEE9; --muted: #9FB0A7; --line: #2C3B34;
+    --accent: #E27A8B; --on-accent: #1A0B0F; --accent-soft: #34191F; --fat: #2D2A15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1512; --surface: #151F1B; --stub: #1C2823; --hatch: #22302A;
+  --ink: #E7EEE9; --muted: #9FB0A7; --line: #2C3B34;
+  --accent: #E27A8B; --on-accent: #1A0B0F; --accent-soft: #34191F; --fat: #2D2A15;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--font-body);
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sheet { max-width: 900px; margin-inline: auto; display: flex; flex-direction: column; gap: 44px; }
+
+/* Masthead */
+.masthead { display: flex; flex-direction: column; gap: 14px; padding-bottom: 22px; border-bottom: 3px solid var(--ink); }
+.eyebrow { margin: 0; font: 500 12px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font: 800 clamp(52px, 12vw, 96px)/.88 var(--font-display); text-transform: uppercase; letter-spacing: .005em; text-wrap: balance; }
+.lede { margin: 0; max-width: 62ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.chips li { font: 500 12.5px var(--font-mono); border: 1px solid var(--ink); padding: 4px 10px; border-radius: 4px; }
+.overall { display: flex; align-items: center; gap: 12px; }
+.overall .bar { flex: 1; }
+.prog { font: 500 13px var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; min-width: 0; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .25s ease; } }
+
+/* Day */
+.day { display: flex; flex-direction: column; gap: 14px; }
+.day-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+.day-title { min-width: 0; }
+h2 { margin: 0; font: 800 clamp(40px, 8vw, 60px)/.9 var(--font-display); text-transform: uppercase; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+.range { margin: 0; font: 500 15px var(--font-mono); font-variant-numeric: tabular-nums; padding-bottom: 4px; }
+.day-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.day-bar .bar { flex: 1 1 140px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.mini {
+  font: 500 12px var(--font-mono); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 5px; padding: 5px 9px; min-height: 32px; cursor: pointer;
+}
+.mini:hover { border-color: var(--accent); color: var(--accent); }
+.mini:focus-visible, .tin:focus-visible, .cb:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mini.warn { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* Ticket list */
+.ticket { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.ticket > li + li { border-top: 1px solid var(--line); }
+
+.step { display: grid; grid-template-columns: 150px minmax(0, 1fr); }
+.when { background: var(--stub); border-right: 2px dashed var(--line); padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lab { font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.tin {
+  font: 800 40px/1 var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: .01em;
+  color: var(--ink); background: transparent; border: 0; border-bottom: 2px dashed var(--muted);
+  border-radius: 0; padding: 0 0 2px; width: 100%; max-width: 7rem; cursor: pointer;
+}
+.tin:hover { border-bottom-color: var(--accent); }
+.tin::-webkit-calendar-picker-indicator { display: none; }
+.tprint { display: none; font: 800 34px/1 var(--font-display); }
+.until { font: 500 13px var(--font-mono); font-variant-numeric: tabular-nums; }
+.dur { display: inline-block; margin-left: 4px; padding: 0 6px; border: 1px solid var(--muted); border-radius: 4px; color: var(--muted); font-size: 12px; }
+.later { font: 500 13px/1.4 var(--font-mono); color: var(--muted); }
+.nudge { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.nudge .wide { flex-basis: 100%; }
+
+.what { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.what-head { display: flex; align-items: flex-start; gap: 12px; }
+h3 { margin: 0; font: 700 25px/1.05 var(--font-display); text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; padding-top: 2px; }
+.is-done h3 { color: var(--muted); }
+.tasks { list-style: none; margin: 0; padding: 0 0 0 38px; display: flex; flex-direction: column; gap: 9px; }
+.task { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; max-width: 66ch; font-size: 15.5px; line-height: 1.45; }
+.task input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.task strong { font-weight: 600; }
+.tok { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.cb {
+  -webkit-appearance: none; appearance: none; flex: none; width: 22px; height: 22px; margin: 1px 0 0;
+  border: 2px solid var(--ink); border-radius: 5px; background: var(--surface);
+  display: grid; place-content: center; cursor: pointer;
+  print-color-adjust: exact; -webkit-print-color-adjust: exact;
+}
+.cb.lg { width: 26px; height: 26px; margin-top: 0; }
+.cb::after { content: ""; width: 11px; height: 5px; border-left: 2.5px solid var(--on-accent); border-bottom: 2.5px solid var(--on-accent); transform: translate(0, -1px) rotate(-45deg); opacity: 0; }
+.cb:checked { background: var(--accent); border-color: var(--accent); }
+.cb:checked::after { opacity: 1; }
+.cb:indeterminate { background: var(--accent-soft); border-color: var(--accent); }
+.cb:indeterminate::after { opacity: 1; width: 11px; height: 0; border-left: 0; border-bottom: 3px solid var(--accent); transform: none; }
+
+.note { margin: 0 0 0 38px; padding: 9px 12px; border-radius: 5px; font-size: 14px; line-height: 1.45; max-width: 66ch; }
+.note .lbl { font: 500 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; margin-right: 8px; }
+.note.tip { background: var(--fat); }
+.note.calc { border: 1px dashed var(--accent); }
+.note.calc .lbl { color: var(--accent); }
+
+.gap { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 9px 18px; font: 500 12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  background: repeating-linear-gradient(135deg, transparent 0 8px, var(--hatch) 8px 9px); }
+.gap.over { color: var(--accent); }
+.gap .gn { text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-size: 13px; }
+
+.foot { margin: 0; font: 400 12.5px/1.5 var(--font-mono); color: var(--muted); max-width: 70ch; }
+
+@media (max-width: 600px) {
+  .step { grid-template-columns: 1fr; }
+  .when { border-right: 0; border-bottom: 2px dashed var(--line); flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 14px; }
+  .lab { display: none; }
+  .tin { font-size: 34px; max-width: 6rem; }
+  .nudge { margin: 0 0 0 auto; }
+  .nudge .wide { flex-basis: auto; }
+  .tasks { padding-left: 0; }
+  .note { margin-left: 0; }
+  .what { padding: 14px 14px 16px; }
+}
+
+/* Impression : feuille claire, cases vides à cocher au stylo, contrôles masqués */
+@page { size: A4; margin: 12mm; }
+@media print {
+  :root:root:root {
+    --bg: #fff; --surface: #fff; --stub: #fff; --hatch: #ddd; --ink: #000; --muted: #333; --line: #999;
+    --accent: #8E2336; --on-accent: #fff; --accent-soft: #f3dfe2; --fat: #f1e9be; color-scheme: light;
+  }
+  body { font-size: 10.5pt; padding: 0; }
+  .sheet { gap: 18px; max-width: none; }
+  .nudge, .tools, .bar, .prog, .foot, .overall, .tin { display: none !important; }
+  .tprint { display: block; }
+  .step { grid-template-columns: 120px minmax(0, 1fr); break-inside: avoid; }
+  .when { padding: 10px; }
+  .what { padding: 10px 12px 12px; }
+  .gap { break-inside: avoid; padding: 5px 12px; background: none; border-top-style: dashed; }
+  #dimanche { break-before: page; }
+  h1 { font-size: 54px; }
+  h2 { font-size: 40px; }
+  h3 { font-size: 19px; }
+  .task input:checked + span { text-decoration: none; color: inherit; }
+  .is-done h3 { color: inherit; }
+  .ticket { border-radius: 0; }
+}
+</style>
+
+<main class="sheet" id="app"></main>
+
+<script>
+(function () {
+  var KEY = 'planning-canard-v2';
+  var app = document.getElementById('app');
+
+  /* ---------- Formats ---------- */
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var wrap = function (m) { return ((m % 1440) + 1440) % 1440; };
+  var tod = function (m) { m = wrap(m); return pad(Math.floor(m / 60)) + 'h' + pad(m % 60); };
+  var todL = function (m) { return tod(m) + (m >= 1440 ? ' (lendemain)' : ''); };
+  var fmtDur = function (m) {
+    if (m < 0) return '0 min';
+    var h = Math.floor(m / 60), r = m % 60;
+    if (!h) return r + ' min';
+    return r ? h + ' h ' + pad(r) : h + ' h';
+  };
+  var inputVal = function (m) { m = wrap(m); return pad(Math.floor(m / 60)) + ':' + pad(m % 60); };
+
+  /* Valeurs calculées à partir des horaires (c = { start, end, starts }) */
+  var TOK = {
+    end: function (c) { return tod(c.end); },
+    salt: function (c) { return tod(c.start + 30); },
+    saltDone: function (c) { return tod(c.start + 30 + 1200); },
+    salt1: function (c) { return fmtDur(c.start + 1440 - (c.starts.samedi[1] + 30)); },
+    salt2: function (c) { return fmtDur(c.start + 1440 - c.starts.samedi[2]); },
+    smokeA: function (c) { return todL(c.end + 480); },
+    smokeB: function (c) { return todL(c.end + 720); },
+    steril: function (c) { return todL(c.end + 120); }
+  };
+
+  /* ---------- Planning ---------- */
+  var DAYS = [
+    {
+      id: 'samedi', name: 'Samedi', sub: 'La découpe, les salaisons et les bouillons',
+      steps: [
+        { title: 'Le Marathon de la Découpe', start: 660, dur: 180,
+          tasks: [
+            'Installez un poste propre et frais. Sortez les canards au fur et à mesure.',
+            '<strong>Découpe systématique :</strong> levez les magrets, puis les cuisses, les manchons, les aiguillettes. Séparez les cous et coupez les têtes.',
+            '<strong>Nettoyage immédiat :</strong> retirez les yeux des têtes. Grattez les carcasses pour récupérer la viande destinée aux rillettes.'
+          ],
+          tip: ['Astuce', 'Rangez au fur et à mesure vos pièces par catégories dans de grands plats au frais.'] },
+        { title: 'Le Tri des Gras et Salaisons Flash', start: 840, dur: 45,
+          tasks: [
+            'Séparez le gras pur (cubes) du gras avec peau/viande (pour les grattons).',
+            '<strong>Mise au sel prioritaire des 2 magrets à fumer :</strong> mettez-les immédiatement au gros sel dans un plat à part au réfrigérateur.'
+          ],
+          calc: 'Salés à {salt}, ils auront leurs 20 h de sel le lendemain à {saltDone}, idéal pour lancer le fumage tôt.' },
+        { title: 'Mise au sel du Reste & Conditionnement', start: 885, dur: 45,
+          tasks: [
+            'Mettez les 18 autres magrets, les 20 cuisses et les cous destinés au confit au gros sel (au réfrigérateur pour 24 h).',
+            'Mettez sous vide la majorité de vos aiguillettes et placez-les au congélateur. Gardez le reste pour les rillettes.'
+          ] },
+        { title: 'Le Grand Rôtissage & Fonte du Gras', start: 930, dur: 60,
+          tasks: [
+            'Préchauffez votre four à 200 °C. Enfournez les 10 carcasses concassées et les têtes pour les faire dorer.',
+            'Dans votre grande marmite, mettez <strong>tout</strong> le gras à fondre à feu très doux.'
+          ] },
+        { title: 'Lancement du Bouillon', start: 990, dur: 30,
+          tasks: [
+            'Transférez les carcasses et têtes rôties dans un faitout. Ajoutez vos garnitures (carottes, oignons, ail, thym, laurier) et mouillez à l’eau froide. Portez à frémissement.'
+          ] },
+        { title: 'Clarification du Gras, Grattons & Déglaçage', start: 1050, dur: 60, gapNote: 'Le bouillon frémit, le gras fond doucement.',
+          tasks: [
+            'Le gras est fondu. Passez-le à la passoire fine pour stocker votre graisse blanche pure.',
+            'Remettez les peaux dans la marmite à feu vif pour faire dorer vos grattons. Égouttez, salez, poivrez.',
+            '<strong>Le geste pro :</strong> déglacez la marmite des grattons à l’eau froide, grattez les sucs et versez ce jus concentré dans votre bouillon de carcasse.'
+          ] },
+        { title: 'Pré-cuisson des Rillettes', start: 1110, dur: 120,
+          tasks: [
+            'Dans votre marmite libérée, mettez les manchons, la viande de carcasse, les aiguillettes restantes et les cous non confits. Couvrez avec de la graisse fraîche et laissez mijoter à feu doux pendant 2 h.',
+            '<strong>À {end} :</strong> éteignez le bouillon et la marmite de rillettes. Laissez-les refroidir tranquillement toute la nuit sur le piano (la graisse va figer, ce sera parfait pour demain).'
+          ] }
+      ]
+    },
+    {
+      id: 'dimanche', name: 'Dimanche', sub: 'Fumage, confisage des cuisses, rillettes et stérilisation',
+      steps: [
+        { title: 'Dessalage et Épices des Magrets Fumés', start: 570, dur: 60,
+          tasks: [
+            'Sortez les 2 magrets destinés au fumage (ils ont fait environ {salt1} de sel).',
+            'Plongez-les dans un grand bac d’eau froide pendant 1 heure pour les dessaler, en changeant l’eau une fois.'
+          ] },
+        { title: 'Lancement du Fumage', start: 630, dur: 30,
+          tasks: [
+            'Séchez les 2 magrets méticuleusement. Poivrez le côté chair.',
+            'Installez-les dans votre fumoir (fumage à froid). Lancez le fumage pour la journée (8 à 12 heures de manière autonome).'
+          ],
+          calc: 'Fumage terminé entre {smokeA} et {smokeB}.' },
+        { title: 'Le Dessalage', start: 870, dur: 60, gapWord: 'Attente', gapNote: 'Le fumoir travaille tout seul.',
+          tasks: [
+            'Sortez les 20 cuisses du sel (après 24 h) et plongez-les <strong>1 heure dans l’eau froide</strong> pour enlever l’excès de sel.',
+            'Sortez aussi du réfrigérateur les 18 magrets restants et les cous à confire (environ {salt2} de sel) et mettez-les à dessaler de la même façon.'
+          ] },
+        { title: 'Séchage et immersion', start: 930, dur: 30,
+          tasks: [
+            '<strong>Pour les 18 magrets :</strong> séchez-les parfaitement. Poivrez-les généreusement, roulez-les serrés dans vos torchons propres et placez-les dans le bas du réfrigérateur pour 3 à 4 semaines.',
+            'Séchez minutieusement les cuisses (et les cous) avec un torchon ou du papier absorbant.',
+            'Faites fondre votre réserve de graisse de canard pure (celle récupérée le samedi) dans votre plus grande marmite ou un grand faitout.',
+            'Plongez les cuisses dans la graisse. Elles doivent être <strong>complètement immergées</strong>.'
+          ] },
+        { title: 'Le Confisage traditionnel (3 heures)', start: 960, dur: 180, bg: true,
+          tasks: [
+            'Maintenez la graisse à de très petits frémissements (autour de <strong>85 °C - 90 °C max</strong>). La graisse ne doit surtout pas bouillir, sinon la viande va frire et durcir au lieu de confire.',
+            'Les cuisses sont prêtes lorsque la chair commence à se rétracter légèrement le long de l’os du pilon.'
+          ],
+          tip: ['En parallèle', 'Le confisage se surveille : enchaînez les rillettes et la stérilisation ci-dessous en jetant un œil régulier à la température.'],
+          calc: 'Confisage terminé à {end}.' },
+        { title: 'Finalisation des Rillettes', start: 960, dur: 60,
+          tasks: [
+            'Rallumez le feu sous votre marmite de rillettes de la veille juste pour liquéfier la graisse.',
+            'Sortez les morceaux à chaud. Désossez minutieusement les manchons et les cous.',
+            'Écrasez la viande à la fourchette (pas de mixeur). Ajustez la texture en ajoutant un peu de graisse de cuisson.'
+          ] },
+        { title: 'Mise en bocaux & Lancement de la Stérilisation', start: 1020, dur: 60,
+          tasks: [
+            'Mettez les rillettes dans vos bocaux stériles. Laissez 2 cm d’air en haut. Fermez-les hermétiquement.',
+            'Placez-les dans votre stérilisateur ou grande cocotte. Lancez la stérilisation pour 2 heures à 100 °C à partir de l’ébullition.'
+          ],
+          calc: 'Stérilisation terminée vers {steril}.' },
+        { title: 'Refroidissement et conditionnement', start: 1140, dur: 60, gapWord: 'Attente', gapNote: 'Le confit frémit, la stérilisation tourne.',
+          tasks: [
+            'Sortez délicatement les cuisses de la graisse chaude (attention, elles sont très fragiles et la chair se détache toute seule).',
+            'Déposez-les sur une grille ou une plaque pour les laisser <strong>refroidir complètement à température ambiante</strong>, puis passez-les un moment au réfrigérateur. <em>Il est crucial qu’elles soient froides et fermes pour que la mise sous vide ne les écrase pas en bouillie.</em>',
+            'Une fois froides, glissez les cuisses dans vos sachets, ajoutez une cuillère de graisse figée par sachet, puis <strong>scellez sous vide avant de les placer au congélateur</strong>.'
+          ] },
+        { title: 'En fin de soirée (ou le lendemain matin)', start: null, dur: null,
+          tasks: [
+            'Sortez vos 2 magrets du fumoir, enveloppez-les en torchon et mettez-les à sécher au frigo avec les autres.',
+            'Filtrez votre bouillon de carcasse (la graisse aura figé en surface, elle s’enlèvera d’un seul bloc).'
+          ] }
+      ]
+    }
+  ];
+
+  /* ---------- État (mémorisé sur l'appareil) ---------- */
+  function defaults() {
+    var o = {};
+    DAYS.forEach(function (d) { o[d.id] = d.steps.map(function (s) { return s.start; }); });
+    return o;
+  }
+  var S = { starts: defaults(), done: {} };
+  try {
+    var raw = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (raw && raw.starts) {
+      DAYS.forEach(function (d) {
+        var a = raw.starts[d.id];
+        var ok = Array.isArray(a) && a.length === d.steps.length && a.every(function (v, i) {
+          return d.steps[i].start == null ? v == null : Number.isFinite(v);
+        });
+        if (ok) S.starts[d.id] = a;
+      });
+      if (raw.done && typeof raw.done === 'object') S.done = raw.done;
+    }
+  } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  /* ---------- Rendu ---------- */
+  function tokHTML(str) {
+    return str.replace(/\{(\w+)\}/g, function (m, k) { return '<span class="tok" data-tok="' + k + '"></span>'; });
+  }
+
+  function stepHTML(d, di, s, si) {
+    var id = d.id + '-' + si;
+    var when;
+    if (s.start != null) {
+      when =
+        '<div class="when">' +
+          '<span class="lab">Début</span>' +
+          '<input class="tin" type="time" step="60" required data-d="' + di + '" data-s="' + si + '" aria-label="Heure de début : ' + s.title + '">' +
+          '<span class="tprint" data-role="tprint"></span>' +
+          '<span class="until"><span data-role="until"></span><span class="dur">' + fmtDur(s.dur) + '</span></span>' +
+          '<div class="nudge">' +
+            '<button type="button" class="mini" data-act="shift" data-by="-15" data-d="' + di + '" data-s="' + si + '" title="Avancer de 15 minutes cette étape et toutes les suivantes" aria-label="Avancer de 15 minutes cette étape et les suivantes">−15</button>' +
+            '<button type="button" class="mini" data-act="shift" data-by="15" data-d="' + di + '" data-s="' + si + '" title="Reculer de 15 minutes cette étape et toutes les suivantes" aria-label="Reculer de 15 minutes cette étape et les suivantes">+15</button>' +
+            '<button type="button" class="mini wide" data-act="now" data-d="' + di + '" data-s="' + si + '" title="Démarrer cette étape à l’heure actuelle et décaler les suivantes">Maintenant</button>' +
+          '</div>' +
+        '</div>';
+    } else {
+      when = '<div class="when"><span class="lab">Ensuite</span><span class="later">Fin de soirée<br>ou lendemain matin</span></div>';
+    }
+    var tasks = s.tasks.map(function (t, ti) {
+      return '<li><label class="task"><input type="checkbox" class="cb" data-task="' + id + '-' + ti + '"><span>' + tokHTML(t) + '</span></label></li>';
+    }).join('');
+    var tip = s.tip ? '<p class="note tip"><b class="lbl">' + s.tip[0] + '</b>' + s.tip[1] + '</p>' : '';
+    var calc = s.calc ? '<p class="note calc"><b class="lbl">Repère</b>' + tokHTML(s.calc) + '</p>' : '';
+    var gap = (si > 0 && s.start != null)
+      ? '<li class="gap" data-gap="' + id + '" hidden><span class="gl"></span>' + (s.gapNote ? '<span class="gn">' + s.gapNote + '</span>' : '') + '</li>'
+      : '';
+    return gap +
+      '<li class="step" data-id="' + id + '">' + when +
+        '<div class="what">' +
+          '<div class="what-head"><input type="checkbox" class="cb lg" data-step="' + id + '" aria-label="Étape terminée : ' + s.title + '"><h3>' + s.title + '</h3></div>' +
+          '<ul class="tasks">' + tasks + '</ul>' + tip + calc +
+        '</div>' +
+      '</li>';
+  }
+
+  function dayHTML(d, di) {
+    return '<section class="day" id="' + d.id + '" aria-labelledby="h-' + d.id + '">' +
+      '<header class="day-head">' +
+        '<div class="day-title"><h2 id="h-' + d.id + '">' + d.name + '</h2><p class="sub">' + d.sub + '</p></div>' +
+        '<p class="range" data-role="range"></p>' +
+      '</header>' +
+      '<div class="day-bar">' +
+        '<div class="bar"><i data-role="dbar"></i></div><span class="prog" data-role="dprog"></span>' +
+        '<div class="tools">' +
+          '<button type="button" class="mini" data-act="reset-times" data-d="' + di + '">Horaires d’origine</button>' +
+          '<button type="button" class="mini" data-act="clear" data-d="' + di + '">Tout décocher</button>' +
+        '</div>' +
+      '</div>' +
+      '<ol class="ticket">' + d.steps.map(function (s, si) { return stepHTML(d, di, s, si); }).join('') + '</ol>' +
+    '</section>';
+  }
+
+  app.innerHTML =
+    '<header class="masthead">' +
+      '<p class="eyebrow">Samedi + dimanche · de la découpe à la stérilisation</p>' +
+      '<h1>Week-end canard</h1>' +
+      '<p class="lede">Cochez les gestes au fil de la journée. Changez l’heure d’une étape, ou touchez « Maintenant » : toutes les étapes suivantes se décalent d’autant.</p>' +
+      '<ul class="chips"><li>10 canards</li><li>20 magrets dont 2 à fumer</li><li>20 cuisses</li><li>10 carcasses</li></ul>' +
+      '<div class="overall"><div class="bar"><i data-role="obar"></i></div><span class="prog" data-role="oprog"></span></div>' +
+    '</header>' +
+    DAYS.map(dayHTML).join('') +
+    '<p class="foot">Les horaires et les cases cochées sont mémorisés sur cet appareil. Pour imprimer, utilisez la commande Imprimer de votre navigateur (Ctrl ou Cmd + P) : les cases restent vides pour cocher au stylo.</p>';
+
+  /* ---------- Mise à jour ---------- */
+  function q(root, sel) { return root.querySelector(sel); }
+
+  function update() {
+    var allDone = 0, allTotal = 0;
+    app.querySelectorAll('[data-task]').forEach(function (c) { c.checked = !!S.done[c.dataset.task]; });
+
+    DAYS.forEach(function (d) {
+      var root = q(app, '#' + d.id);
+      var st = S.starts[d.id];
+      var first = null, last = null, prevEnd = null, dDone = 0, dTotal = 0;
+
+      d.steps.forEach(function (s, si) {
+        var id = d.id + '-' + si;
+        var li = q(root, '.step[data-id="' + id + '"]');
+
+        var n = s.tasks.filter(function (_, ti) { return S.done[id + '-' + ti]; }).length;
+        dDone += n; dTotal += s.tasks.length;
+        var cb = q(li, '[data-step]');
+        cb.checked = n === s.tasks.length;
+        cb.indeterminate = n > 0 && n < s.tasks.length;
+        li.classList.toggle('is-done', n === s.tasks.length);
+
+        if (s.start == null) return;
+        var start = st[si], end = start + s.dur;
+        q(li, '.tin').value = inputVal(start);
+        q(li, '[data-role="tprint"]').textContent = tod(start);
+        q(li, '[data-role="until"]').textContent = '→ ' + tod(end);
+        var ctx = { start: start, end: end, starts: S.starts };
+        li.querySelectorAll('.tok').forEach(function (t) { t.textContent = TOK[t.dataset.tok](ctx); });
+
+        var g = q(root, '.gap[data-gap="' + id + '"]');
+        if (g && prevEnd != null) {
+          var diff = start - prevEnd;
+          if (diff >= 10) {
+            g.hidden = false; g.classList.remove('over');
+            q(g, '.gl').textContent = (s.gapWord || 'Pause') + ' · ' + fmtDur(diff);
+          } else if (diff < 0) {
+            g.hidden = false; g.classList.add('over');
+            q(g, '.gl').textContent = 'Chevauchement · ' + fmtDur(-diff);
+          } else {
+            g.hidden = true;
+          }
+        }
+        prevEnd = s.bg ? start : end;
+        if (first == null) first = start;
+        last = last == null ? end : Math.max(last, end);
+      });
+
+      q(root, '[data-role="range"]').textContent = tod(first) + ' → ' + todL(last);
+      q(root, '[data-role="dprog"]').textContent = dDone + ' / ' + dTotal;
+      q(root, '[data-role="dbar"]').style.width = (dTotal ? 100 * dDone / dTotal : 0) + '%';
+      allDone += dDone; allTotal += dTotal;
+    });
+
+    q(app, '[data-role="oprog"]').textContent = allDone + ' / ' + allTotal + ' gestes';
+    q(app, '[data-role="obar"]').style.width = (allTotal ? 100 * allDone / allTotal : 0) + '%';
+  }
+
+  /* ---------- Décalages ---------- */
+  function shift(di, si, delta) {
+    var a = S.starts[DAYS[di].id];
+    for (var j = si; j < a.length; j++) if (a[j] != null) a[j] += delta;
+    save(); update();
+  }
+  function setStart(di, si, minutes) {
+    var old = S.starts[DAYS[di].id][si];
+    var next = minutes + 1440 * Math.round((old - minutes) / 1440);
+    shift(di, si, next - old);
+  }
+
+  /* ---------- Événements ---------- */
+  app.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.matches('input.tin')) {
+      if (!t.value) { update(); return; }
+      var p = t.value.split(':');
+      setStart(+t.dataset.d, +t.dataset.s, (+p[0]) * 60 + (+p[1]));
+    } else if (t.matches('input[data-task]')) {
+      if (t.checked) S.done[t.dataset.task] = 1; else delete S.done[t.dataset.task];
+      save(); update();
+    } else if (t.matches('input[data-step]')) {
+      var parts = t.dataset.step.split('-');
+      var d = DAYS.filter(function (x) { return x.id === parts[0]; })[0];
+      d.steps[+parts[1]].tasks.forEach(function (_, ti) {
+        var key = t.dataset.step + '-' + ti;
+        if (t.checked) S.done[key] = 1; else delete S.done[key];
+      });
+      save(); update();
+    }
+  });
+
+  app.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-act]');
+    if (!b) return;
+    var act = b.dataset.act, di = +b.dataset.d, si = +b.dataset.s;
+    if (act === 'shift') {
+      shift(di, si, +b.dataset.by);
+    } else if (act === 'now') {
+      var n = new Date();
+      setStart(di, si, n.getHours() * 60 + n.getMinutes());
+    } else if (act === 'reset-times') {
+      S.starts[DAYS[di].id] = DAYS[di].steps.map(function (s) { return s.start; });
+      save(); update();
+    } else if (act === 'clear') {
+      if (b.dataset.armed) {
+        var prefix = DAYS[di].id + '-';
+        Object.keys(S.done).forEach(function (k) { if (k.indexOf(prefix) === 0) delete S.done[k]; });
+        delete b.dataset.armed; b.textContent = 'Tout décocher'; b.classList.remove('warn');
+        save(); update();
+      } else {
+        b.dataset.armed = '1'; b.textContent = 'Confirmer ?'; b.classList.add('warn');
+        setTimeout(function () { delete b.dataset.armed; b.textContent = 'Tout décocher'; b.classList.remove('warn'); }, 3000);
+      }
+    }
+  });
+
+  update();
+})();
+</script>
+
+</body></html>

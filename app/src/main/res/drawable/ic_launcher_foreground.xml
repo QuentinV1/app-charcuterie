@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Emblème Poinçon & Monogramme A au Crochet centré dans la zone de sécurité (72dp) -->
+    <group
+        android:pivotX="0"
+        android:pivotY="0"
+        android:scaleX="0.21"
+        android:scaleY="0.21"
+        android:translateX="54"
+        android:translateY="54">
+
+        <!-- Filet extérieur fin du poinçon -->
+        <path
+            android:pathData="M -140,-58 L -58,-140 L 58,-140 L 140,-58 L 140,58 L 58,140 L -58,140 L -140,58 Z"
+            android:strokeWidth="2.5"
+            android:strokeColor="#DFBA6E"
+            android:strokeAlpha="0.5"
+            android:fillColor="#00000000" />
+
+        <!-- Corps du poinçon intérieur -->
+        <path
+            android:pathData="M -128,-53 L -53,-128 L 53,-128 L 128,-53 L 128,53 L 53,128 L -53,128 L -128,53 Z"
+            android:fillColor="#171513"
+            android:strokeWidth="3.0"
+            android:strokeColor="#DFBA6E" />
+
+        <!-- Grains d'or / fleur de sel aux 4 points cardinaux -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 0,-128 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0 M 128,0 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0 M 0,128 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0 M -128,0 m -3,0 a 3,3 0 1,1 6,0 a 3,3 0 1,1 -6,0" />
+
+        <!-- Étoile fleur de sel au zénith -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 0,-95 Q 0,-84 8,-84 Q 0,-84 0,-73 Q 0,-84 -8,-84 Q 0,-84 0,-95 Z" />
+
+        <!-- Monogramme A : Jambe gauche -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -44,68 L -8,-58 C -6,-62 -2,-64 0,-64 C 2,-64 6,-62 8,-58 L 14,-34 L 9,-34 L -2,-56 L -37,68 Z" />
+
+        <!-- Monogramme A : Empattement bas gauche -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -54,68 L -32,68 L -32,65 L -54,65 Z" />
+
+        <!-- Monogramme A : Jambe droite biseautée -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -2,-61 L 19,-61 L 56,68 L 40,68 L 29,29 L 6,29 L 13,11 L 24,11 L 10,-38 L 2,-61 Z" />
+
+        <!-- Monogramme A : Empattement bas droit -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 34,68 L 59,68 L 59,65 L 34,65 Z" />
+
+        <!-- Barre médiane formant le Crochet d'Affinage d'Orfèvre -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -21,11 C -8,11 16,11 19,11 C 19,11 22,24 18,37 C 13,50 -2,54 -10,46 C -16,40 -14,29 -6,26 C 0,22 6,27 5,32 C 3,35 0,35 -2,34 C -3,32 -2,29 2,29 C 3,29 6,32 3,37 C -2,43 -11,40 -8,30 C -6,24 6,19 13,29 C 16,35 14,16 14,16 L -21,16 Z" />
+
+        <!-- Fil d'affinage supérieur -->
+        <path
+            android:pathData="M 0,-64 L 0,-72"
+            android:strokeWidth="2.0"
+            android:strokeColor="#DFBA6E"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000" />
+    </group>
+</vector>

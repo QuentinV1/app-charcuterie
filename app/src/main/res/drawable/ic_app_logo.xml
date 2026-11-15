@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Fond Squircle Noir Ardoise & Caviar de Prestige -->
+    <path
+        android:pathData="M 128,16 L 384,16 C 448,16 496,64 496,128 L 496,384 C 496,448 448,496 384,496 L 128,496 C 64,496 16,448 16,384 L 16,128 C 16,64 64,16 128,16 Z"
+        android:strokeWidth="2.5"
+        android:strokeColor="#DFBA6E"
+        android:strokeAlpha="0.35">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="256"
+                android:startY="16"
+                android:endX="256"
+                android:endY="496"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#241E1C" />
+                <item android:offset="0.6" android:color="#141110" />
+                <item android:offset="1.0" android:color="#0A0808" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Groupe Emblème : Poinçon Octogonal & Monogramme A au Crochet -->
+    <group
+        android:pivotX="0"
+        android:pivotY="0"
+        android:scaleX="1.18"
+        android:scaleY="1.18"
+        android:translateX="256"
+        android:translateY="256">
+
+        <!-- Filet extérieur fin du poinçon -->
+        <path
+            android:pathData="M -140,-58 L -58,-140 L 58,-140 L 140,-58 L 140,58 L 58,140 L -58,140 L -140,58 Z"
+            android:strokeWidth="2"
+            android:strokeColor="#DFBA6E"
+            android:strokeAlpha="0.5"
+            android:fillColor="#00000000" />
+
+        <!-- Corps du poinçon intérieur -->
+        <path
+            android:pathData="M -128,-53 L -53,-128 L 53,-128 L 128,-53 L 128,53 L 53,128 L -53,128 L -128,53 Z"
+            android:fillColor="#171513"
+            android:strokeWidth="2.5"
+            android:strokeColor="#DFBA6E" />
+
+        <!-- Grains d'or / fleur de sel aux 4 points cardinaux -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 0,-128 m -2.5,0 a 2.5,2.5 0 1,1 5,0 a 2.5,2.5 0 1,1 -5,0 M 128,0 m -2.5,0 a 2.5,2.5 0 1,1 5,0 a 2.5,2.5 0 1,1 -5,0 M 0,128 m -2.5,0 a 2.5,2.5 0 1,1 5,0 a 2.5,2.5 0 1,1 -5,0 M -128,0 m -2.5,0 a 2.5,2.5 0 1,1 5,0 a 2.5,2.5 0 1,1 -5,0" />
+
+        <!-- Étoile fleur de sel au zénith -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 0,-95 Q 0,-84 8,-84 Q 0,-84 0,-73 Q 0,-84 -8,-84 Q 0,-84 0,-95 Z" />
+
+        <!-- Monogramme A : Jambe gauche -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -44,68 L -8,-58 C -6,-62 -2,-64 0,-64 C 2,-64 6,-62 8,-58 L 14,-34 L 9,-34 L -2,-56 L -37,68 Z" />
+
+        <!-- Monogramme A : Empattement bas gauche -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -54,68 L -32,68 L -32,65 L -54,65 Z" />
+
+        <!-- Monogramme A : Jambe droite biseautée -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -2,-61 L 19,-61 L 56,68 L 40,68 L 29,29 L 6,29 L 13,11 L 24,11 L 10,-38 L 2,-61 Z" />
+
+        <!-- Monogramme A : Empattement bas droit -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M 34,68 L 59,68 L 59,65 L 34,65 Z" />
+
+        <!-- Barre médiane formant le Crochet d'Affinage d'Orfèvre -->
+        <path
+            android:fillColor="#DFBA6E"
+            android:pathData="M -21,11 C -8,11 16,11 19,11 C 19,11 22,24 18,37 C 13,50 -2,54 -10,46 C -16,40 -14,29 -6,26 C 0,22 6,27 5,32 C 3,35 0,35 -2,34 C -3,32 -2,29 2,29 C 3,29 6,32 3,37 C -2,43 -11,40 -8,30 C -6,24 6,19 13,29 C 16,35 14,16 14,16 L -21,16 Z" />
+
+        <!-- Fil d'affinage supérieur -->
+        <path
+            android:pathData="M 0,-64 L 0,-72"
+            android:strokeWidth="1.8"
+            android:strokeColor="#DFBA6E"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000" />
+    </group>
+</vector>
