@@ -6,6 +6,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -36,6 +37,11 @@ import com.quentin.charcuterie.ui.screens.ParametresScreen
 import com.quentin.charcuterie.ui.screens.ProjetsScreen
 import com.quentin.charcuterie.ui.screens.RecettesScreen
 import com.quentin.charcuterie.ui.theme.AtelierCharcuterieTheme
+import com.quentin.charcuterie.update.UpdateAvailableDialog
+import com.quentin.charcuterie.update.UpdateInfo
+import com.quentin.charcuterie.update.UpdateManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -47,6 +53,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             AtelierCharcuterieTheme {
                 val context = androidx.compose.ui.platform.LocalContext.current
+                val scope = rememberCoroutineScope()
+                var updateDispo by remember { mutableStateOf<UpdateInfo?>(null) }
+                var verifEnCours by remember { mutableStateOf(false) }
+
                 val notifPermissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission()
                 ) { }
@@ -60,6 +70,14 @@ class MainActivity : ComponentActivity() {
                         if (!granted) {
                             notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    delay(1500)
+                    val found = UpdateManager.checkForUpdate(context, isManual = false)
+                    if (found != null) {
+                        updateDispo = found
                     }
                 }
 
@@ -265,10 +283,47 @@ class MainActivity : ComponentActivity() {
                             )
                             2 -> CoursesScreen(viewModel = viewModel)
                             3 -> CommandesGlobalScreen(viewModel = viewModel)
-                            4 -> ParametresScreen(viewModel = viewModel)
+                            4 -> ParametresScreen(
+                                viewModel = viewModel,
+                                versionActuelle = UpdateManager.CURRENT_VERSION,
+                                verifMiseAJourEnCours = verifEnCours,
+                                onVerifierMiseAJour = {
+                                    if (!verifEnCours) {
+                                        verifEnCours = true
+                                        Toast.makeText(context, "Recherche de mise à jour sur Git…", Toast.LENGTH_SHORT).show()
+                                        scope.launch {
+                                            val found = UpdateManager.checkForUpdate(context, isManual = true)
+                                            verifEnCours = false
+                                            if (found != null) {
+                                                updateDispo = found
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Votre application est à jour (v${UpdateManager.CURRENT_VERSION})",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                        }
+                                    }
+                                }
+                            )
                             5 -> CaveScreen(viewModel = viewModel)
                         }
                     }
+                }
+
+                updateDispo?.let { info ->
+                    UpdateAvailableDialog(
+                        updateInfo = info,
+                        currentVersion = UpdateManager.CURRENT_VERSION,
+                        onDismissLater = {
+                            UpdateManager.dismissVersion(context, info.version)
+                            updateDispo = null
+                        },
+                        onFinishedOrDismissed = {
+                            updateDispo = null
+                        }
+                    )
                 }
             }
         }

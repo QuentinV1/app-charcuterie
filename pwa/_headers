@@ -1,7 +1,12 @@
-# Configuration des en-têtes HTTP pour Netlify (L'Affinoir PWA)
+# Configuration des en-têtes HTTP (L'Affinoir PWA)
 
-# 1. Service Worker : INTERDICTION TOTALE DE MISE EN CACHE
+# 1. Service Worker & Version : INTERDICTION TOTALE DE MISE EN CACHE
 /sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+/version.json
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
@@ -12,8 +17,14 @@
   Pragma: no-cache
   Expires: 0
 
-# 3. HTML : Revalidation obligatoire pour charger immédiatement les nouveautés
+# 3. HTML, JS & CSS principaux : Revalidation obligatoire pour charger immédiatement les nouveautés
 /index.html
+  Cache-Control: no-cache, must-revalidate
+
+/app.js
+  Cache-Control: no-cache, must-revalidate
+
+/style.css
   Cache-Control: no-cache, must-revalidate
 
 /

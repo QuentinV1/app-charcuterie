@@ -1,0 +1,8 @@
+{
+  "name": "laffinoir",
+  "version": "1.1.0",
+  "versionCode": 2,
+  "apkUrl": "https://github.com/QuentinV1/app-charcuterie/raw/main/LAffinoir.apk",
+  "standaloneUrl": "https://github.com/QuentinV1/app-charcuterie/raw/main/pwa/laffinoir-standalone.html",
+  "notes": "Mise à jour automatique via Git (Android & PWA), rafraîchissement réseau prioritaire (Network-First) et vérificateur de version intégré."
+}

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.quentin.charcuterie.data.ParametreEntity
 import com.quentin.charcuterie.data.RecetteVarianteEntity
 import com.quentin.charcuterie.ui.CharcuterieViewModel
+import com.quentin.charcuterie.update.UpdateManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,7 +41,12 @@ import java.util.Locale
 // ÉCRAN RÉGLAGES : 1. OPTIONS & TARIFS | 2. PARAMÉTRAGE DES LOTS D'ASSAISONNEMENT
 // ============================================================================================
 @Composable
-fun ParametresScreen(viewModel: CharcuterieViewModel) {
+fun ParametresScreen(
+    viewModel: CharcuterieViewModel,
+    versionActuelle: String = UpdateManager.CURRENT_VERSION,
+    verifMiseAJourEnCours: Boolean = false,
+    onVerifierMiseAJour: () -> Unit = {}
+) {
     val parametres by viewModel.parametres.collectAsState()
     val recettes by viewModel.recettes.collectAsState()
 
@@ -163,6 +169,69 @@ fun ParametresScreen(viewModel: CharcuterieViewModel) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(top = 18.dp, bottom = 100.dp)
             ) {
+                // Carte Application & Mises à jour automatiques (Git)
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(
+                                        Icons.Default.SystemUpdate,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Application & Mises à jour (Git)", style = MaterialTheme.typography.titleMedium)
+                                }
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        text = "v$versionActuelle",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                "L'application vérifie automatiquement les nouvelles versions sur GitHub (branche main et Releases) à chaque lancement.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Button(
+                                onClick = onVerifierMiseAJour,
+                                enabled = !verifMiseAJourEnCours,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                if (verifMiseAJourEnCours) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Vérification en cours…")
+                                } else {
+                                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Vérifier les mises à jour")
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Carte Sauvegarde & Export JSON Mobile
                 item {
                     Card(

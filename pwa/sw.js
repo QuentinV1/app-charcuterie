@@ -1,9 +1,10 @@
-const CACHE_NAME = 'laffinoir-v7';
+const CACHE_NAME = 'laffinoir-v8';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './version.json',
   './modules/catalog.js',
   './modules/state.js',
   './modules/photos.js',
@@ -27,7 +28,6 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Force le téléchargement réseau sans utiliser l'éventuel cache HTTP intermédiaire
       return cache.addAll(
         ASSETS.map((url) => new Request(url, { cache: 'reload' }))
       );
@@ -45,8 +45,40 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Stratégie Network-First avec mise à jour du cache et fallback hors-ligne
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  if (e.request.cache === 'only-if-cached' && e.request.mode !== 'same-origin') return;
+
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  const networkRequest = e.request.mode === 'navigate'
+    ? e.request
+    : new Request(e.request, { cache: 'no-cache' });
+
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+    fetch(networkRequest)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(e.request, { ignoreSearch: true });
+        if (cached) return cached;
+        if (e.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return undefined;
+      })
   );
 });
