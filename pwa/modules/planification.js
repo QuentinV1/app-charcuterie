@@ -34,11 +34,13 @@ export function actualiserAffichageModeSalage() {
     const isSv = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE;
     btnRec.style.border = isSv ? '1px solid var(--border)' : '1.5px solid var(--primary)';
     btnRec.style.background = isSv ? 'var(--surface-subtle)' : 'var(--primary-light)';
-    btnRec.classList.toggle('active', !isSv);
+    btnRec.style.color = 'var(--text-main)';
+    if (elRec) elRec.style.color = isSv ? 'var(--text-muted)' : 'var(--primary)';
 
     btnSv.style.border = isSv ? '1.5px solid var(--primary)' : '1px solid var(--border)';
     btnSv.style.background = isSv ? 'var(--primary-light)' : 'var(--surface-subtle)';
-    btnSv.classList.toggle('active', isSv);
+    btnSv.style.color = 'var(--text-main)';
+    if (elSv) elSv.style.color = isSv ? 'var(--primary)' : 'var(--text-muted)';
   }
   if (elRes) {
     const dureeSelH = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE ? dureeSvH : dureeRecH;
