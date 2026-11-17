@@ -176,7 +176,7 @@ export function fermerModals() {
 }
 
 // === SYSTÈME DE MISE À JOUR AUTOMATIQUE VIA GIT (PWA & APK) ===
-const CURRENT_APP_VERSION = '1.1.0';
+const CURRENT_APP_VERSION = '1.2.0';
 const GITHUB_REPO = 'QuentinV1/app-charcuterie';
 const UPDATE_DISMISSED_KEY = 'laffinoir_update_dismissed';
 const DEFAULT_APK_URL = `https://github.com/${GITHUB_REPO}/raw/main/LAffinoir.apk`;
