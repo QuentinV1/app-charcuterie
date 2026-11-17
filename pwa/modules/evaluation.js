@@ -50,7 +50,7 @@ export function sauvegarderEvaluationModal() {
   const record = {
     id: idx >= 0 ? appState.evaluations[idx].id : ('eval_' + Date.now()),
     projetId: p.id,
-    recetteId: p.recetteId,
+    recetteId: p.recettePrincipaleId || p.recetteId,
     nomRecette: p.nomRecettePrincipale || p.nom,
     date: new Date().toISOString().slice(0, 10),
     noteGlobale,

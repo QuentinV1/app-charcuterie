@@ -18,13 +18,24 @@ export function genererSvgCourbePesees(lot, perteCiblePct = 35, dateDebutProjet 
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
 
-  const points = [{ label: 'J0', perte: 0, poids: pInit, date: dateDebutProjet || analyse.historique[0].date }];
-  const t0 = new Date(points[0].date).getTime();
+  const toLocalDay = (d) => {
+    if (!d) return new Date();
+    const s = String(d);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, day] = s.split('-').map(Number);
+      return new Date(y, m - 1, day);
+    }
+    const dt = new Date(s);
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  };
 
-  analyse.historique.forEach((pes, idx) => {
-    const j = Math.max(0, Math.round((new Date(pes.date).getTime() - t0) / 86400000));
+  const points = [{ label: 'J0', perte: 0, poids: pInit, date: dateDebutProjet || analyse.historique[0].date }];
+  const t0 = toLocalDay(points[0].date).getTime();
+
+  analyse.historique.forEach((pes) => {
+    const j = Math.max(0, Math.round((toLocalDay(pes.date).getTime() - t0) / 86400000));
     const perte = Math.max(0, ((pInit - pes.poidsGrammes) / pInit) * 100);
-    points.push({ label: `J${j || idx + 1}`, perte, poids: pes.poidsGrammes, date: pes.date });
+    points.push({ label: `J${j}`, perte, poids: pes.poidsGrammes, date: pes.date });
   });
 
   const maxPerte = Math.max(perteCiblePct + 5, ...points.map(pt => pt.perte + 5), 40);
@@ -79,7 +90,8 @@ export function ouvrirModalPeseeLotProjet(idx) {
   const p = appState.projets.find(x => x.id === uiState.projetActuelId);
   if (!p || !p.lots || !p.lots[idx]) return;
   const lot = p.lots[idx];
-  const recette = appState.recettes.find(r => r.id === p.recetteId || r.code === p.recetteId);
+  const recId = p.recettePrincipaleId || p.recetteId;
+  const recette = appState.recettes.find(r => r.id === recId || r.code === recId);
   const perteCible = recette && recette.perteCiblePct > 0 ? recette.perteCiblePct : 35;
 
   document.getElementById('modal-pesee-proj-id').value = p.id;
@@ -207,13 +219,20 @@ export function supprimerPeseeHistorique(peseeId) {
   lot.historiquePesees = (lot.historiquePesees || []).filter(x => x.id !== peseeId);
   if (lot.historiquePesees.length > 0) {
     const sorted = [...lot.historiquePesees].sort((a, b) => new Date(a.date) - new Date(b.date));
-    lot.poidsActuelGrammes = sorted[sorted.length - 1].poidsGrammes;
+    const last = sorted[sorted.length - 1];
+    lot.poidsActuelGrammes = last.poidsGrammes;
+    const msg = last.note || last.commentaire || '';
+    lot.commentaire = msg;
+    lot.observations = msg;
   } else {
     lot.poidsActuelGrammes = 0;
+    lot.commentaire = '';
+    lot.observations = '';
   }
   sauvegarderDonnees();
 
-  const recette = appState.recettes.find(r => r.id === p.recetteId || r.code === p.recetteId);
+  const recId = p.recettePrincipaleId || p.recetteId;
+  const recette = appState.recettes.find(r => r.id === recId || r.code === recId);
   const perteCible = recette && recette.perteCiblePct > 0 ? recette.perteCiblePct : 35;
   rendreHistoriqueEtCourbeModal(lot, perteCible, p.dateDebut);
   if (typeof window.rendreProductionProjet === 'function') window.rendreProductionProjet(p);
@@ -222,18 +241,40 @@ export function supprimerPeseeHistorique(peseeId) {
 export function ouvrirModalAjouterLotProjet() {
   const p = appState.projets.find(x => x.id === uiState.projetActuelId);
   if (!p) return;
-  const nom = prompt('Nom du lot (ex: Piment d\'Espelette, Poivre noir) :');
-  if (!nom) return;
-  const qte = parseFloat(prompt('Quantité (pièces ou kg) :', '2') || '2');
-  const epices = parseFloat(prompt('Épices par unité (g) :', '15') || '15');
+
+  const uniteDefaut = (p.lots && p.lots[0] && p.lots[0].unite) ? p.lots[0].unite : 'pièce';
+  const inputVariante = document.getElementById('lot-projet-variante');
+  const inputQte = document.getElementById('lot-projet-quantite');
+  const inputUnite = document.getElementById('lot-projet-unite');
+  const inputEpices = document.getElementById('lot-projet-epices');
+  if (inputVariante) inputVariante.value = '';
+  if (inputQte) inputQte.value = '2';
+  if (inputUnite) inputUnite.value = uniteDefaut;
+  if (inputEpices) inputEpices.value = '15';
+
+  document.getElementById('modal-ajout-lot-projet')?.classList.add('active');
+}
+
+export function confirmerAjoutLotProjet() {
+  const p = appState.projets.find(x => x.id === uiState.projetActuelId);
+  if (!p) return;
+
+  const nom = (document.getElementById('lot-projet-variante')?.value || '').trim();
+  if (!nom) {
+    alert('Veuillez saisir un nom de lot.');
+    return;
+  }
+  const qte = Math.max(0.1, parseFloat(document.getElementById('lot-projet-quantite')?.value) || 2);
+  const unite = (document.getElementById('lot-projet-unite')?.value || '').trim() || 'pièce';
+  const epices = Math.max(0, parseFloat(document.getElementById('lot-projet-epices')?.value) || 0);
 
   if (!p.lots) p.lots = [];
   p.lots.push({
     nomProduit: p.nomRecettePrincipale || 'Charcuterie',
-    variante: nom.trim(),
+    variante: nom,
     quantitePrevue: qte,
     quantiteReelle: qte,
-    unite: 'pièce',
+    unite: unite,
     epicesUtiliseesGrammes: qte * epices,
     poidsInitialGrammes: 0,
     poidsActuelGrammes: 0,
@@ -242,5 +283,6 @@ export function ouvrirModalAjouterLotProjet() {
     noteSur5: 0
   });
   sauvegarderDonnees();
+  if (typeof window.fermerModals === 'function') window.fermerModals();
   if (typeof window.rendreProductionProjet === 'function') window.rendreProductionProjet(p);
 }

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.quentin.charcuterie.data.*
+import com.quentin.charcuterie.domain.CalculateurCharcuterie
 import com.quentin.charcuterie.domain.ModeSalage
 import com.quentin.charcuterie.domain.SalageHelper
 import com.quentin.charcuterie.notifications.ReminderReceiver
@@ -221,6 +222,9 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
             val estSwitchRecouvrement = modeSalage == ModeSalage.RECOUVREMENT_SEL && nativeMode == ModeSalage.SOUS_VIDE
             var selSousVideAjoute = false
             var grosSelAjoute = false
+            val poidsKgParUnite = CalculateurCharcuterie.poidsUnitaireKgPourRecette(r)
+            val aEpicesParLot = lotsEntities.any { it.epicesUtiliseesGrammes > 0 && it.variante != "Standard" }
+            val regexEpiceGenerique = Regex("([ée]pice|poivre|paprika|piment|herbe|geni[èe]vre|laurier|thym|romarin|muscade|coriandre|girofle)")
 
             recetteComplete.ingredients.forEach { ing ->
                 val nomLow = ing.nomIngredient.lowercase()
@@ -275,21 +279,33 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     return@forEach
                 }
 
+                val categorieIng = when {
+                    ing.nomIngredient.contains("sel", true) || ing.nomIngredient.contains("sucre", true) || ing.nomIngredient.contains("dextrose", true) -> "SEL_SUCRE"
+                    ing.nomIngredient.contains("boyau", true) -> "CONSOMMABLES"
+                    else -> "EPICES"
+                }
+                if (aEpicesParLot && categorieIng == "EPICES" && regexEpiceGenerique.containsMatchIn(nomLow)) {
+                    return@forEach
+                }
+
                 val qTotale = when (ing.modeCalcul) {
-                    "PAR_PIECE", "PAR_KG_MATIERE" -> ing.quantite * quantiteBase
-                    "POURCENT_POIDS" -> ing.quantite * quantiteBase // ing.quantite est en g/kg (ex: 30g pour 3%)
-                    "PAR_KG_MELEE" -> ing.quantite * quantiteBase
+                    "PAR_PIECE", "PAR_KG_MATIERE", "PAR_KG_MELEE" -> ing.quantite * quantiteBase
+                    "POURCENT_POIDS" -> {
+                        val facteurPct = if (ing.unite == "%") 10.0 else 1.0
+                        ing.quantite * facteurPct * quantiteBase * poidsKgParUnite
+                    }
                     else -> ing.quantite
                 }
-                val uniteAffichee = if (ing.unite == "g" && qTotale >= 1000.0) "kg" else ing.unite
-                val qAffichee = if (ing.unite == "g" && qTotale >= 1000.0) qTotale / 1000.0 else qTotale
-                val coutEstime = if (ing.unite == "g") (qTotale / 1000.0) * ing.prixKgOuUniteEstime else qTotale * ing.prixKgOuUniteEstime
+                val uniteBaseIng = if (ing.modeCalcul == "POURCENT_POIDS" && ing.unite == "%") "g" else ing.unite
+                val uniteAffichee = if (uniteBaseIng == "g" && qTotale >= 1000.0) "kg" else uniteBaseIng
+                val qAffichee = if (uniteBaseIng == "g" && qTotale >= 1000.0) qTotale / 1000.0 else qTotale
+                val coutEstime = if (uniteBaseIng == "g") (qTotale / 1000.0) * ing.prixKgOuUniteEstime else qTotale * ing.prixKgOuUniteEstime
                 coursesGenerees.add(
                     ProjetCourseEntity(
                         projetId = projetId,
                         nomProjet = nomProjet.ifBlank { r.nom },
                         nomIngredient = ing.nomIngredient,
-                        categorie = if (ing.nomIngredient.contains("sel", true) || ing.nomIngredient.contains("sucre", true)) "SEL_SUCRE" else "EPICES",
+                        categorie = categorieIng,
                         quantiteRequise = qAffichee,
                         unite = uniteAffichee,
                         prixEstimeTotal = coutEstime
@@ -357,9 +373,13 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
     fun decalerEtapeEtSuivantes(projetId: Long, ordreDepart: Int, deltaMinutes: Int) {
         viewModelScope.launch {
             val toutes = dao.getEtapesForProjet(projetId)
+            val dateDebutMillis = dao.getProjetComplet(projetId)?.projet?.dateDebutMillis
+                ?: toutes.minOfOrNull { it.debutPrevuMillis } ?: System.currentTimeMillis()
             val modifiees = toutes.map { e ->
                 if (e.ordre >= ordreDepart) {
-                    e.copy(debutPrevuMillis = e.debutPrevuMillis + deltaMinutes * 60_000L)
+                    val newDebut = e.debutPrevuMillis + deltaMinutes * 60_000L
+                    val jourNum = ((newDebut - dateDebutMillis) / 86_400_000L).toInt().coerceAtLeast(0) + 1
+                    e.copy(debutPrevuMillis = newDebut, jourLibelle = "Jour $jourNum")
                 } else e
             }
             dao.insertProjetEtapes(modifiees)
@@ -596,6 +616,7 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     PhotoStorageHelper.supprimerFichierPhoto(photo.cheminFichier)
                 }
             }
+            dao.deleteEvaluationForProjet(projet.id)
             dao.deleteProjet(projet)
         }
     }
@@ -776,6 +797,16 @@ class CharcuterieViewModel(application: Application) : AndroidViewModel(applicat
                     prixReelPaye = prixReel ?: course.prixReelPaye
                 )
             )
+        }
+    }
+
+    fun basculerCoursesGroupees(ids: List<Long>) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            val all = dao.getAllCoursesOnce().filter { it.id in ids }
+            if (all.isEmpty()) return@launch
+            val nouveauStatut = !all.all { it.achete }
+            all.forEach { dao.updateProjetCourse(it.copy(achete = nouveauStatut)) }
         }
     }
 

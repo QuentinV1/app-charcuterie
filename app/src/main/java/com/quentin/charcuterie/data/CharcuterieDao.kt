@@ -53,6 +53,9 @@ interface CharcuterieDao {
     @Query("SELECT * FROM ingredients ORDER BY categorie, nom")
     fun observeIngredients(): Flow<List<IngredientEntity>>
 
+    @Query("SELECT * FROM ingredients ORDER BY categorie, nom")
+    suspend fun getAllIngredientsOnce(): List<IngredientEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIngredients(items: List<IngredientEntity>)
 
@@ -175,6 +178,9 @@ interface CharcuterieDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProjetEtapes(items: List<ProjetEtapeEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProjetEtape(item: ProjetEtapeEntity): Long
 
     @Update
     suspend fun updateProjetEtape(item: ProjetEtapeEntity)

@@ -240,3 +240,138 @@ export function supprimerRecetteParId(id) {
   rendreRecettes();
   if (typeof window.initialiserSelectRecettesLotsParam === 'function') window.initialiserSelectRecettesLotsParam();
 }
+
+export function ouvrirModalCreerRecette() {
+  const modal = document.getElementById('modal-creer-recette');
+  if (!modal) return;
+  document.getElementById('cr-nom').value = '';
+  document.getElementById('cr-famille').value = 'Porc';
+  document.getElementById('cr-perte').value = '35';
+  document.getElementById('cr-desc').value = '';
+  const ingList = document.getElementById('cr-ingredients-list');
+  const etapesList = document.getElementById('cr-etapes-list');
+  if (ingList) ingList.innerHTML = '';
+  if (etapesList) etapesList.innerHTML = '';
+  ajouterLigneIngredient('Sel fin', '28', 'g', 'POURCENT_POIDS');
+  ajouterLigneEtape('Salage & Assaisonnement', '2', 'jours', 'Frotter la pièce avec le mélange sel et épices puis mettre au frais.');
+  modal.classList.add('active');
+}
+
+export function ajouterLigneIngredient(nom = '', quantite = '', unite = 'g', typeCalcul = 'POURCENT_POIDS') {
+  const list = document.getElementById('cr-ingredients-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'cr-ing-row';
+  row.style.cssText = 'display:grid; grid-template-columns:1.5fr 0.7fr 0.7fr 1.1fr auto; gap:6px; margin-bottom:6px; align-items:center;';
+  row.innerHTML = `
+    <input type="text" class="form-control cr-ing-nom" placeholder="Ingrédient" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.82rem;">
+    <input type="number" step="0.1" class="form-control cr-ing-qte" placeholder="Qté" value="${escapeHtml(String(quantite))}" style="padding:7px 8px; font-size:0.82rem;">
+    <select class="form-control cr-ing-unite" style="padding:7px 6px; font-size:0.82rem;">
+      <option value="g" ${unite === 'g' ? 'selected' : ''}>g</option>
+      <option value="kg" ${unite === 'kg' ? 'selected' : ''}>kg</option>
+      <option value="mL" ${unite === 'mL' ? 'selected' : ''}>mL</option>
+      <option value="pièce" ${unite === 'pièce' ? 'selected' : ''}>pièce</option>
+    </select>
+    <select class="form-control cr-ing-mode" style="padding:7px 6px; font-size:0.82rem;">
+      <option value="POURCENT_POIDS" ${typeCalcul === 'POURCENT_POIDS' ? 'selected' : ''}>par kg</option>
+      <option value="PAR_UNITE" ${typeCalcul === 'PAR_UNITE' ? 'selected' : ''}>par unité</option>
+      <option value="FIXE" ${typeCalcul === 'FIXE' ? 'selected' : ''}>fixe</option>
+    </select>
+    <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="color:var(--danger); padding:4px 6px;" title="Supprimer">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+export function ajouterLigneEtape(titre = '', duree = '1', uniteDuree = 'jours', instructions = '') {
+  const list = document.getElementById('cr-etapes-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'cr-etape-row';
+  row.style.cssText = 'background:var(--surface-subtle); border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px;';
+  row.innerHTML = `
+    <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
+      <input type="text" class="form-control cr-etape-titre" placeholder="Titre de l'étape" value="${escapeHtml(titre)}" style="flex:2; padding:7px 8px; font-size:0.82rem;">
+      <input type="number" min="0" step="1" class="form-control cr-etape-duree" value="${escapeHtml(String(duree))}" style="width:62px; padding:7px 6px; font-size:0.82rem;">
+      <select class="form-control cr-etape-unite" style="width:86px; padding:7px 6px; font-size:0.82rem;">
+        <option value="heures" ${uniteDuree === 'heures' ? 'selected' : ''}>heures</option>
+        <option value="jours" ${uniteDuree === 'jours' ? 'selected' : ''}>jours</option>
+        <option value="semaines" ${uniteDuree === 'semaines' ? 'selected' : ''}>sem.</option>
+      </select>
+      <button type="button" class="btn-icon" onclick="this.closest('.cr-etape-row').remove()" style="color:var(--danger); padding:4px 6px;" title="Supprimer">✕</button>
+    </div>
+    <input type="text" class="form-control cr-etape-instr" placeholder="Instructions (optionnel)" value="${escapeHtml(instructions)}" style="padding:7px 8px; font-size:0.8rem;">
+  `;
+  list.appendChild(row);
+}
+
+export function sauvegarderRecettePersonnalisee() {
+  const nom = (document.getElementById('cr-nom').value || '').trim();
+  if (!nom) {
+    alert('Veuillez saisir un nom de recette.');
+    return;
+  }
+  const famille = document.getElementById('cr-famille').value || 'Porc';
+  const perteParsed = parseFloat(document.getElementById('cr-perte').value);
+  const perteCiblePct = (!Number.isNaN(perteParsed) && perteParsed >= 0) ? perteParsed : 35;
+  const description = (document.getElementById('cr-desc').value || '').trim();
+
+  const ingredients = Array.from(document.querySelectorAll('#cr-ingredients-list .cr-ing-row')).map(row => {
+    const ingNom = (row.querySelector('.cr-ing-nom')?.value || '').trim();
+    const qte = parseFloat(row.querySelector('.cr-ing-qte')?.value || '0') || 0;
+    const unite = row.querySelector('.cr-ing-unite')?.value || 'g';
+    const typeCalcul = row.querySelector('.cr-ing-mode')?.value || 'POURCENT_POIDS';
+    return {
+      nom: ingNom,
+      quantite: qte,
+      unite,
+      typeCalcul,
+      categorieCourses: 'Épices & Assaisonnement',
+      prixKgOuUniteEstime: 0
+    };
+  }).filter(i => i.nom && i.quantite > 0);
+
+  let offsetMin = 0;
+  const etapes = Array.from(document.querySelectorAll('#cr-etapes-list .cr-etape-row')).map((row, idx) => {
+    const titre = (row.querySelector('.cr-etape-titre')?.value || '').trim();
+    const dureeVal = Math.max(0, parseFloat(row.querySelector('.cr-etape-duree')?.value || '1') || 0);
+    const uniteDuree = row.querySelector('.cr-etape-unite')?.value || 'jours';
+    const instr = (row.querySelector('.cr-etape-instr')?.value || '').trim();
+    const mult = uniteDuree === 'heures' ? 60 : (uniteDuree === 'semaines' ? 7 * 1440 : 1440);
+    const dureeMin = Math.round(dureeVal * mult);
+    const jourNum = Math.floor(offsetMin / 1440) + 1;
+    const etape = {
+      ordre: idx + 1,
+      titre: titre || `Étape ${idx + 1}`,
+      instructions: instr,
+      offsetDebutMinutes: offsetMin,
+      dureeMinutes: dureeMin,
+      jourLibelle: `Jour ${jourNum}`,
+      astuce: ''
+    };
+    offsetMin += dureeMin;
+    return etape;
+  });
+
+  const code = 'custom_' + Date.now();
+  const nouvelleRecette = {
+    id: code,
+    code,
+    nom,
+    famille,
+    typeRecette: 'Personnalisée',
+    uniteBase: 'kg',
+    quantiteBaseDefaut: 1,
+    description: description || 'Recette personnalisée',
+    perteCiblePct,
+    ingredients,
+    etapes,
+    variantes: [],
+    sortiesDecoupe: []
+  };
+
+  appState.recettes.unshift(nouvelleRecette);
+  sauvegarderDonnees();
+  rendreRecettes();
+  if (typeof window.initialiserSelectRecettesLotsParam === 'function') window.initialiserSelectRecettesLotsParam();
+  window.fermerModals();
+}

@@ -41,7 +41,7 @@ export function rendreProjets() {
             </div>
             <div style="font-weight: 800; font-size: 1.05rem;">${escapeHtml(p.nom)}</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top:2px;">
-              Démarré le ${dateFormatted} · ${p.quantiteBasePrevue || p.quantite || 1} ${escapeHtml(p.unite || 'pièces')}
+              Démarré le ${dateFormatted} · ${(() => { const q = p.quantiteBasePrevue || p.quantite || 1; const u = p.unite || 'pièces'; const uPl = (q > 1 && ['canard', 'pièce', 'magret'].includes(u.toLowerCase())) ? u + 's' : u; return `${q} ${escapeHtml(uPl)}`; })()}
             </div>
           </div>
           <div style="text-align:right;">
@@ -167,12 +167,17 @@ export function decalerEtapePWA(etapeIdx, deltaMinutes) {
   const p = appState.projets.find(x => x.id === uiState.projetActuelId);
   if (!p || !Array.isArray(p.etapes) || !p.etapes[etapeIdx]) return;
   const baseOrdre = p.etapes[etapeIdx].ordre;
+  const baseProjetMs = p.dateDebut ? new Date(p.dateDebut).getTime() : Date.now();
   p.etapes.forEach((s, i) => {
     const concerne = (baseOrdre != null && s.ordre != null) ? (s.ordre >= baseOrdre) : (i >= etapeIdx);
     if (concerne) {
       s.debutPrevuMillis = getEtapeDebutMillisPWA(p, s) + deltaMinutes * 60000;
       if (Number.isFinite(Number(s.offsetDebutMinutes))) {
         s.offsetDebutMinutes = Math.round(Number(s.offsetDebutMinutes) + deltaMinutes);
+      }
+      if (Number.isFinite(baseProjetMs)) {
+        const jourNum = Math.max(1, Math.floor((s.debutPrevuMillis - baseProjetMs) / 86400000) + 1);
+        s.jourLibelle = `Jour ${jourNum}`;
       }
     }
   });
@@ -204,6 +209,7 @@ export function basculerEtapeProjetActuel(etapeIdx) {
 export function basculerStatutProjetActuel() {
   const p = appState.projets.find(x => x.id === uiState.projetActuelId);
   if (!p) return;
+  if (p.statut !== 'TERMINE' && !confirm(`Marquer la session « ${p.nom} » comme terminée ?`)) return;
   p.statut = (p.statut === 'TERMINE') ? 'EN_COURS' : 'TERMINE';
   sauvegarderDonnees();
   ouvrirDetailProjet(p.id);
@@ -216,6 +222,8 @@ export function supprimerProjetActuel() {
   const idASupprimer = uiState.projetActuelId;
   appState.projets = appState.projets.filter(p => p.id !== idASupprimer);
   appState.courses = appState.courses.filter(c => c.projetId !== idASupprimer);
+  appState.commandes = (appState.commandes || []).filter(c => c.projetId !== idASupprimer);
+  appState.evaluations = (appState.evaluations || []).filter(e => e.projetId !== idASupprimer);
   supprimerPhotosProjetIDB(idASupprimer);
   sauvegarderDonnees();
   window.naviguerVers('projets');
@@ -225,7 +233,9 @@ export function rendreProductionProjet(p) {
   const sortiesContainer = document.getElementById('proj-sorties-container');
   const lotsContainer = document.getElementById('proj-lots-list');
 
-  const sorties = p.sortiesDecoupe || [];
+  const sorties = (p.sortiesDecoupe || [])
+    .map((s, idx) => ({ s, idx }))
+    .filter(({ s }) => s.actif !== false);
   if (sorties.length > 0) {
     sortiesContainer.innerHTML = `
       <div class="card">
@@ -234,11 +244,11 @@ export function rendreProductionProjet(p) {
         <table class="bilan-table">
           <thead><tr><th>Produit</th><th>Prévu</th><th>Réel</th><th>Unité</th><th></th></tr></thead>
           <tbody>
-            ${sorties.map((s, idx) => `
+            ${sorties.map(({ s, idx }) => `
               <tr>
                 <td style="font-weight:600;">${escapeHtml(s.nom)}</td>
                 <td>${s.quantitePrevue || 0}</td>
-                <td><input type="number" id="sortie-qte-${idx}" value="${s.quantiteReelle || s.quantitePrevue || 0}" step="0.5" style="width:70px; padding:4px 6px; border:1px solid var(--border); border-radius:4px;"></td>
+                <td><input type="number" id="sortie-qte-${idx}" value="${s.quantiteReelle ?? s.quantitePrevue ?? 0}" step="0.5" style="width:70px; padding:4px 6px; border:1px solid var(--border); border-radius:4px;"></td>
                 <td>${escapeHtml(s.unite)}</td>
                 <td><button class="btn btn-secondary btn-sm" onclick="enregistrerSortieReelle(${idx})">OK</button></td>
               </tr>
@@ -258,7 +268,8 @@ export function rendreProductionProjet(p) {
     return;
   }
 
-  const recette = appState.recettes.find(r => r.id === p.recetteId || r.code === p.recetteId);
+  const recId = p.recettePrincipaleId || p.recetteId;
+  const recette = appState.recettes.find(r => r.id === recId || r.code === recId);
   const cible = (recette && recette.perteCiblePct > 0) ? recette.perteCiblePct : (p.perteCiblePct || p.perteCible || 35);
 
   lotsContainer.innerHTML = lots.map((lot, idx) => {

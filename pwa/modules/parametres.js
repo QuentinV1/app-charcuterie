@@ -59,7 +59,8 @@ export function sauvegarderParametreModal() {
   const cle = document.getElementById('edit-param-cle').value;
   const p = appState.parametres.find(x => x.cle === cle);
   if (!p) return;
-  p.valeur = parseFloat(document.getElementById('edit-param-valeur').value) || p.valeur;
+  const parsedVal = parseFloat(document.getElementById('edit-param-valeur').value);
+  if (!Number.isNaN(parsedVal)) p.valeur = parsedVal;
   sauvegarderDonnees();
   if (typeof window.fermerModals === 'function') window.fermerModals();
   rendreParametres();

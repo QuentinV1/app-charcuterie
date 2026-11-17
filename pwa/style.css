@@ -221,6 +221,7 @@ body {
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 
@@ -340,7 +341,7 @@ body {
   max-width: 580px;
   max-height: 88vh;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  padding: 20px;
+  padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
   display: flex;
@@ -622,6 +623,7 @@ body.dark-mode {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 .btn-theme-toggle:hover {

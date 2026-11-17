@@ -8,7 +8,7 @@ import {
 } from './modules/photos.js';
 import {
   ouvrirModalPeseeLotProjet, calculerPeseeModal, confirmerEnregistrementPesee,
-  supprimerPeseeHistorique, ouvrirModalAjouterLotProjet
+  supprimerPeseeHistorique, ouvrirModalAjouterLotProjet, confirmerAjoutLotProjet
 } from './modules/pesees.js';
 import {
   rendreJournalCave, ajouterReleveCave, supprimerReleveCave, setCaveMetrique
@@ -26,7 +26,8 @@ import {
 import {
   rendreRecettes, setFamilleFiltre, basculerAfficherMasquees, filtrerRecettes,
   ouvrirFicheRecette, basculerMasquageDepuisFiche, planifierDepuisFiche,
-  supprimerRecetteDirect, supprimerRecetteDepuisFiche, supprimerRecetteParId
+  supprimerRecetteDirect, supprimerRecetteDepuisFiche, supprimerRecetteParId,
+  ouvrirModalCreerRecette, ajouterLigneIngredient, ajouterLigneEtape, sauvegarderRecettePersonnalisee
 } from './modules/recettes.js';
 import {
   ouvrirModalPlanifier, selectionnerRecetteDropdown, rendreLignesLotsPlanification,
@@ -36,14 +37,14 @@ import {
   effacerRechercheRecettes, filtrerRecettesDropdown, selectionnerModeSalage
 } from './modules/planification.js';
 import {
-  rendreCourses, basculerAchatCourse, nettoyerCoursesAchetees, ouvrirModalModifierCourse,
+  rendreCourses, setCoursesModeVue, basculerAchatCourse, basculerAchatGroupeCourses, nettoyerCoursesAchetees, ouvrirModalModifierCourse,
   sauvegarderCourseModifiee, supprimerCourseActuelle, ouvrirModalAjoutCourseManuel, confirmerAjoutCourseManuel
 } from './modules/courses.js';
 import {
   rendreRevente, basculerPaiementCommande, basculerLivraisonCommande, supprimerCommande,
-  ouvrirModalNouvelleCommande, recalculerTotalCommandeModal, mettreAJourProduitsDepuisProjetModal,
+  ouvrirModalNouvelleCommande, ouvrirModalModifierCommande, recalculerTotalCommandeModal, mettreAJourProduitsDepuisProjetModal,
   remplirSuggestionsClientsModal, sauvegarderCommandeModal, rendreClients,
-  ouvrirModalClient, sauvegarderClientModal, supprimerClient
+  ouvrirModalClient, ouvrirModalModifierClient, sauvegarderClientModal, supprimerClient
 } from './modules/revente.js';
 import {
   basculerSousOngletParametres, rendreParametres, ouvrirModalModifierParam, sauvegarderParametreModal,
@@ -464,6 +465,7 @@ Object.assign(window, {
   confirmerEnregistrementPesee,
   supprimerPeseeHistorique,
   ouvrirModalAjouterLotProjet,
+  confirmerAjoutLotProjet,
   // Cave
   rendreJournalCave,
   ajouterReleveCave,
@@ -497,6 +499,10 @@ Object.assign(window, {
   supprimerRecetteDirect,
   supprimerRecetteDepuisFiche,
   supprimerRecetteParId,
+  ouvrirModalCreerRecette,
+  ajouterLigneIngredient,
+  ajouterLigneEtape,
+  sauvegarderRecettePersonnalisee,
   // Planification
   ouvrirModalPlanifier,
   selectionnerRecetteDropdown,
@@ -515,7 +521,9 @@ Object.assign(window, {
   filtrerRecettesDropdown,
   // Courses
   rendreCourses,
+  setCoursesModeVue,
   basculerAchatCourse,
+  basculerAchatGroupeCourses,
   nettoyerCoursesAchetees,
   ouvrirModalModifierCourse,
   sauvegarderCourseModifiee,
@@ -528,12 +536,14 @@ Object.assign(window, {
   basculerLivraisonCommande,
   supprimerCommande,
   ouvrirModalNouvelleCommande,
+  ouvrirModalModifierCommande,
   recalculerTotalCommandeModal,
   mettreAJourProduitsDepuisProjetModal,
   remplirSuggestionsClientsModal,
   sauvegarderCommandeModal,
   rendreClients,
   ouvrirModalClient,
+  ouvrirModalModifierClient,
   sauvegarderClientModal,
   supprimerClient,
   // Paramètres

@@ -115,7 +115,7 @@ export function chargerDonnees() {
       if (appState.lastBackupAt === undefined) appState.lastBackupAt = null;
 
       appState.projets = appState.projets.filter(p => p.id && !String(p.id).includes('demo') && !(p.nom || '').includes('(Exemple)'));
-      appState.courses = appState.courses.filter(c => c.projetId && !String(c.projetId).includes('demo'));
+      appState.courses = appState.courses.filter(c => !c.projetId || !String(c.projetId).includes('demo'));
       migrerLotsPesees(appState.projets);
     } catch (e) {
       console.error('Erreur chargement localStorage:', e);
@@ -143,11 +143,16 @@ export function initialiserDonneesDefaut() {
   sauvegarderDonnees();
 }
 
+let _quotaAlertShown = false;
 export function sauvegarderDonnees() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   } catch (e) {
     console.error('Erreur sauvegarde localStorage:', e);
+    if (!_quotaAlertShown && (e.name === 'QuotaExceededError' || e.code === 22)) {
+      _quotaAlertShown = true;
+      alert('Attention : espace de stockage local saturé. Exportez une sauvegarde JSON dans Réglages pour éviter toute perte de données.');
+    }
   }
   if (typeof window.mettreAJourBadgeCourses === 'function') {
     window.mettreAJourBadgeCourses();
@@ -297,9 +302,17 @@ function normaliserBackupAndroid(data) {
 
       const lots = (pb.lots || []).map((l, lIdx) => {
         const lid = String(l.id ?? '');
-        const hist = Array.isArray(l.historiquePesees)
+        const pInit = Number(l.poidsInitialGrammes) || 0;
+        const hist = (Array.isArray(l.historiquePesees)
           ? l.historiquePesees
-          : (peseesParLot[lid] || []);
+          : (peseesParLot[lid] || [])
+        ).map(ps => {
+          const poids = Number(ps.poidsGrammes) || 0;
+          const pertePct = ps.pertePct !== undefined
+            ? ps.pertePct
+            : (pInit > 0 ? Math.max(0, Number((((pInit - poids) / pInit) * 100).toFixed(1))) : 0);
+          return { ...ps, pertePct };
+        });
         return {
           ...l,
           id: lid || `lot_imp_${idx}_${lIdx}`,
@@ -405,6 +418,9 @@ export function importerDonnees(event) {
         }
 
         Object.assign(appState, cleanData);
+        if (!Array.isArray(appState.recettes)) appState.recettes = JSON.parse(JSON.stringify(CATALOGUE_BASE));
+        if (!Array.isArray(appState.recettesSupprimees)) appState.recettesSupprimees = [];
+        if (!Array.isArray(appState.parametres)) appState.parametres = JSON.parse(JSON.stringify(PARAMETRES_DEFAUT));
         if (!Array.isArray(appState.caveReleves)) appState.caveReleves = [];
         if (!Array.isArray(appState.evaluations)) appState.evaluations = [];
         if (!Array.isArray(appState.clients)) appState.clients = [];

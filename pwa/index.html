@@ -143,6 +143,11 @@
         </div>
       </div>
 
+      <div class="chips-row" id="courses-mode-chips" style="margin-bottom:12px;">
+        <button class="chip active" id="chip-courses-groupee" onclick="setCoursesModeVue('groupee')">Vue groupée (fusionnée)</button>
+        <button class="chip" id="chip-courses-session" onclick="setCoursesModeVue('session')">Par session</button>
+      </div>
+
       <div id="courses-container">
         <!-- Rendered by JS grouped by project -->
       </div>
@@ -711,6 +716,38 @@
       <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:10px;">
         <div style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">Historique des pesées</div>
         <div id="modal-pesee-historique" style="max-height:150px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter un Lot en session -->
+  <div class="modal-overlay" id="modal-ajout-lot-projet">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Ajouter un lot</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du lot / variante *</label>
+        <input type="text" id="lot-projet-variante" class="form-control" placeholder="Ex: Piment d'Espelette, Poivre noir, Fumé...">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Quantité</label>
+          <input type="number" step="0.5" min="0.5" id="lot-projet-quantite" class="form-control" value="2">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Unité</label>
+          <input type="text" id="lot-projet-unite" class="form-control" value="pièce" placeholder="pièce, kg...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Épices par unité (g)</label>
+        <input type="number" step="1" min="0" id="lot-projet-epices" class="form-control" value="15">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerAjoutLotProjet()">Ajouter le lot</button>
       </div>
     </div>
   </div>

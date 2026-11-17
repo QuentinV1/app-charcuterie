@@ -1,5 +1,5 @@
 import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr } from './state.js';
-import { CalculateurCharcuterie } from './calculateur.js';
+import { CalculateurCharcuterie, poidsUnitaireKgRecette } from './calculateur.js';
 import { rendreRappelEvaluationPlanification } from './evaluation.js';
 import {
   MODE_SALAGE, modeSalageParDefaut, formaterDureeSalage,
@@ -118,24 +118,33 @@ export function selectionnerRecetteDropdown(recId) {
   }
 
   // Lots prédéfinis
+  lastPlanQuantiteBase = r.quantiteDefaut || 1;
   modeSalageSelectionne = modeSalageParDefaut(r);
   lotsDraftPlanification = [];
   if (r.variantes && r.variantes.length > 0) {
-    const qBase = r.quantiteDefaut || 1;
-    const qParLot = Math.max(1, Math.floor((qBase * (r.sortiesDecoupe && r.sortiesDecoupe[0] ? r.sortiesDecoupe[0].rendementParUniteBase : 1)) / r.variantes.length));
+    const qBase = lastPlanQuantiteBase;
+    const totalUnites = qBase * (r.sortiesDecoupe && r.sortiesDecoupe[0] ? r.sortiesDecoupe[0].rendementParUniteBase : 1);
+    const nVar = r.variantes.length;
+    const baseParLot = Math.floor(totalUnites / nVar);
+    let reste = Math.round(totalUnites - baseParLot * nVar);
     r.variantes.forEach(v => {
+      const qLot = Math.max(0, baseParLot + (reste > 0 ? 1 : 0));
+      if (reste > 0) reste--;
       lotsDraftPlanification.push({
         variante: v.nom,
-        quantite: qParLot,
+        quantite: qLot || 1,
+        baseQuantite: qLot || 1,
         unite: (r.sortiesDecoupe && r.sortiesDecoupe[0]) ? r.sortiesDecoupe[0].unite : (r.uniteBase || 'pièce'),
         epicesGrammesParUnite: v.epicesGrammesParUnite || 15,
         dureeSalageHeuresSpecifique: v.dureeSalageHeuresSpecifique ?? null
       });
     });
   } else {
+    const qDef = r.quantiteDefaut || 1;
     lotsDraftPlanification.push({
       variante: 'Standard',
-      quantite: r.quantiteDefaut || 1,
+      quantite: qDef,
+      baseQuantite: qDef,
       unite: r.uniteBase || 'kg',
       epicesGrammesParUnite: 0,
       dureeSalageHeuresSpecifique: null
@@ -173,6 +182,8 @@ export function ajouterLigneLotPlanification() {
   actualiserEstimationPlanification();
 }
 
+let lastPlanQuantiteBase = 1;
+
 export function supprimerLigneLotPlanification(idx) {
   lotsDraftPlanification.splice(idx, 1);
   rendreLignesLotsPlanification();
@@ -184,18 +195,32 @@ export function actualiserEstimationPlanification() {
   if (!r) return;
   actualiserAffichageModeSalage();
 
-  const qBase = parseFloat(document.getElementById('plan-quantite').value) || 1.0;
+  const rawQBase = document.getElementById('plan-quantite').value.trim();
+  const parsedQBase = parseFloat(rawQBase);
+  const qBase = (!Number.isNaN(parsedQBase) && parsedQBase > 0) ? parsedQBase : (lastPlanQuantiteBase || 1.0);
+  if (rawQBase !== '' && !Number.isNaN(parsedQBase) && parsedQBase > 0 && lastPlanQuantiteBase > 0 && lotsDraftPlanification.length > 0) {
+    const ratio = parsedQBase / lastPlanQuantiteBase;
+    lotsDraftPlanification.forEach(lot => {
+      const baseQ = lot.baseQuantite ?? lot.quantite;
+      const scaled = baseQ * ratio;
+      lot.quantite = (lot.unite === 'kg' || lot.unite === 'L')
+        ? Math.round(scaled * 100) / 100
+        : Math.max(1, Math.round(scaled));
+    });
+    rendreLignesLotsPlanification();
+  }
   const prixMatiere = parseFloat(document.getElementById('plan-prix-matiere').value) || 0;
-  const margePct = parseFloat(document.getElementById('plan-marge').value) || 10.0;
+  const margeParsed = parseFloat(document.getElementById('plan-marge').value);
+  const margePct = Number.isNaN(margeParsed) ? 10.0 : margeParsed;
 
   const codesCoches = new Set();
   document.querySelectorAll('#plan-sorties-checklist input[type="checkbox"]').forEach(chk => {
     if (chk.checked) codesCoches.add(chk.getAttribute('data-code'));
   });
 
-  const est = CalculateurCharcuterie.estimerPrixUnitairePlanification(r, qBase, prixMatiere, codesCoches, margePct);
-  document.getElementById('plan-est-cout').innerHTML = `Coût de revient estimé : <strong>${est.coutRevientUnitaireEstime.toFixed(2)} € / ${est.uniteProduitPrincipal}</strong>`;
-  document.getElementById('plan-est-prix').innerHTML = `Prix conseillé : <strong style="color:var(--primary);">${est.prixReventeConseilleUnitaire.toFixed(2)} € / ${est.uniteProduitPrincipal}</strong>`;
+  const est = CalculateurCharcuterie.estimerPrixUnitairePlanification(r, qBase, prixMatiere, codesCoches, margePct, modeSalageSelectionne);
+  document.getElementById('plan-est-cout').innerHTML = `Coût de revient estimé : <strong>${est.coutRevientUnitaireEstime.toFixed(2)} € / ${escapeHtml(est.uniteProduitPrincipal)}</strong>`;
+  document.getElementById('plan-est-prix').innerHTML = `Prix conseillé : <strong style="color:var(--primary);">${est.prixReventeConseilleUnitaire.toFixed(2)} € / ${escapeHtml(est.uniteProduitPrincipal)}</strong>`;
 }
 
 export function confirmerPlanification() {
@@ -295,6 +320,9 @@ export function confirmerPlanification() {
   let selSousVideAjoute = false;
   let grosSelAjoute = false;
   const prixSelKg = getValeurParametre('PRIX_SEL_KG', 1.0);
+  const poidsKgParUnite = poidsUnitaireKgRecette(r);
+  const aEpicesParLot = lots.some(lot => lot.epicesUtiliseesGrammes > 0 && lot.variante !== 'Standard');
+  const estEpiceGenerique = (nomIng) => /([ée]pice|poivre|paprika|piment|herbe|geni[èe]vre|laurier|thym|romarin|muscade|coriandre|girofle)/.test(nomIng);
 
   (r.ingredients || []).forEach(ing => {
     const nomLow = (ing.nomIngredient || ing.nom || '').toLowerCase();
@@ -353,16 +381,25 @@ export function confirmerPlanification() {
       return;
     }
 
-    let qTot = ing.quantite || 0;
-    if (['PAR_PIECE', 'PAR_KG_MATIERE', 'POURCENT_POIDS', 'PAR_KG_MELEE'].includes(ing.modeCalcul)) {
-      qTot = ing.quantite * qBase;
-    }
-    const qAffichee = (ing.unite === 'g' && qTot >= 1000) ? (qTot / 1000) : qTot;
-    const uniteAffichee = (ing.unite === 'g' && qTot >= 1000) ? 'kg' : ing.unite;
-    const prixEst = (ing.unite === 'g') ? (qTot / 1000) * (ing.prixKgOuUniteEstime || 1.5) : qTot * (ing.prixKgOuUniteEstime || 1.5);
-
     const nomBas = (ing.nomIngredient || ing.nom || '').toLowerCase();
     const cat = (nomBas.includes('sel') || nomBas.includes('sucre') || nomBas.includes('dextrose')) ? 'SEL_SUCRE' : (nomBas.includes('boyau') ? 'CONSOMMABLES' : 'EPICES');
+    if (aEpicesParLot && cat === 'EPICES' && estEpiceGenerique(nomBas)) {
+      return;
+    }
+
+    let qTot = ing.quantite || 0;
+    let uniteIng = ing.unite;
+    if (ing.modeCalcul === 'POURCENT_POIDS') {
+      const facteurPct = ing.unite === '%' ? 10.0 : 1.0;
+      qTot = ing.quantite * facteurPct * qBase * poidsKgParUnite;
+      if (ing.unite === '%') uniteIng = 'g';
+    } else if (['PAR_PIECE', 'PAR_KG_MATIERE', 'PAR_KG_MELEE'].includes(ing.modeCalcul)) {
+      qTot = ing.quantite * qBase;
+    }
+    const qAffichee = (uniteIng === 'g' && qTot >= 1000) ? (qTot / 1000) : qTot;
+    const uniteAffichee = (uniteIng === 'g' && qTot >= 1000) ? 'kg' : uniteIng;
+    const prixUnitEst = ing.prixKgOuUniteEstime ?? 1.5;
+    const prixEst = (uniteIng === 'g') ? (qTot / 1000) * prixUnitEst : qTot * prixUnitEst;
 
     coursesGenerees.push({
       id: 'c_' + Math.random().toString(36).slice(2, 9),

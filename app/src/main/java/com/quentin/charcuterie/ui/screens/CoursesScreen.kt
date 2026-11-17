@@ -24,7 +24,57 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.quentin.charcuterie.data.ProjetCourseEntity
 import com.quentin.charcuterie.ui.CharcuterieViewModel
+import kotlin.math.roundToInt
+
+private data class CourseFusionnee(
+    val cle: String,
+    val nomIngredient: String,
+    val categorie: String,
+    val quantiteAffichee: Double,
+    val uniteAffichee: String,
+    val prixTotal: Double,
+    val tousAchetes: Boolean,
+    val sessions: List<String>,
+    val items: List<ProjetCourseEntity>
+)
+
+private fun normaliserCoursePourFusion(c: ProjetCourseEntity): Triple<Double, String, String> {
+    val u = c.unite.trim().lowercase()
+    return when (u) {
+        "kg" -> Triple(c.quantiteRequise * 1000.0, "masse", c.unite)
+        "g" -> Triple(c.quantiteRequise, "masse", c.unite)
+        "l" -> Triple(c.quantiteRequise * 1000.0, "volume", c.unite)
+        "cl" -> Triple(c.quantiteRequise * 10.0, "volume", c.unite)
+        "ml" -> Triple(c.quantiteRequise, "volume", c.unite)
+        else -> Triple(c.quantiteRequise, "raw:$u", c.unite)
+    }
+}
+
+private fun formaterQteFusionnee(qBase: Double, fam: String, uniteOrig: String): Pair<Double, String> {
+    return when (fam) {
+        "masse" -> if (qBase >= 1000.0) {
+            ((qBase / 1000.0 * 100.0).roundToInt() / 100.0) to "kg"
+        } else {
+            ((qBase * 10.0).roundToInt() / 10.0) to "g"
+        }
+        "volume" -> if (qBase >= 1000.0) {
+            ((qBase / 1000.0 * 100.0).roundToInt() / 100.0) to "L"
+        } else {
+            ((qBase * 10.0).roundToInt() / 10.0) to "ml"
+        }
+        else -> ((qBase * 100.0).roundToInt() / 100.0) to uniteOrig
+    }
+}
+
+private fun libelleCategorieCourse(cat: String): String = when (cat) {
+    "VIANDE" -> "Viandes & Matière première"
+    "SEL_SUCRE" -> "Sel & Sucre"
+    "EPICES" -> "Épices & Aromates"
+    "CONSOMMABLES" -> "Consommables"
+    else -> "Autres"
+}
 
 // ============================================================================================
 // ÉCRAN LISTE DE COURSES (MODERNE, REGROUPÉ PAR PROJET, MODIFIABLE & VIDABLE)
@@ -38,8 +88,9 @@ fun CoursesScreen(viewModel: CharcuterieViewModel) {
         (parametres.find { it.cle == "ACTIVER_PRIX" }?.valeur ?: 1.0) >= 0.5
     }
     var showAddDialog by remember { mutableStateOf(false) }
-    var courseAEditer by remember { mutableStateOf<com.quentin.charcuterie.data.ProjetCourseEntity?>(null) }
+    var courseAEditer by remember { mutableStateOf<ProjetCourseEntity?>(null) }
     var showConfirmDeleteAchetes by remember { mutableStateOf(false) }
+    var vueGroupee by remember { mutableStateOf(true) }
 
     val restantAAcheter = courses.filter { !it.achete }
     val totalEstimeRestant = restantAAcheter.sumOf { it.prixEstimeTotal }
@@ -48,6 +99,36 @@ fun CoursesScreen(viewModel: CharcuterieViewModel) {
     // Regroupement par projet
     val coursesParProjet = remember(courses) {
         courses.groupBy { it.nomProjet.ifBlank { "Articles divers" } }
+    }
+
+    // Vue groupée / dédupliquée par ingrédient + catégorie
+    val coursesFusionneesParCategorie = remember(courses) {
+        val grouped = courses.groupBy { c ->
+            val nomNorm = c.nomIngredient.trim().lowercase().replace(Regex("\\s+"), " ")
+            val (_, fam, _) = normaliserCoursePourFusion(c)
+            "$nomNorm||$fam"
+        }.map { (cle, list) ->
+            val first = list.first()
+            val (_, fam, uniteOrig) = normaliserCoursePourFusion(first)
+            val qBaseTotal = list.sumOf { normaliserCoursePourFusion(it).first }
+            val (qAff, uAff) = formaterQteFusionnee(qBaseTotal, fam, uniteOrig)
+            val prixTot = list.sumOf { if (it.achete && it.prixReelPaye > 0) it.prixReelPaye else it.prixEstimeTotal }
+            CourseFusionnee(
+                cle = cle,
+                nomIngredient = first.nomIngredient,
+                categorie = first.categorie.ifBlank { "AUTRE" },
+                quantiteAffichee = qAff,
+                uniteAffichee = uAff,
+                prixTotal = prixTot,
+                tousAchetes = list.all { it.achete },
+                sessions = list.map { it.nomProjet.ifBlank { "Articles divers" } }.distinct(),
+                items = list
+            )
+        }
+        val ordre = listOf("VIANDE", "SEL_SUCRE", "EPICES", "CONSOMMABLES", "AUTRE")
+        grouped.groupBy { it.categorie }
+            .toList()
+            .sortedBy { (cat, _) -> ordre.indexOf(cat).let { if (it == -1) 99 else it } }
     }
 
     LazyColumn(
@@ -139,6 +220,26 @@ fun CoursesScreen(viewModel: CharcuterieViewModel) {
             }
         }
 
+        if (courses.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = vueGroupee,
+                        onClick = { vueGroupee = true },
+                        label = { Text("Vue groupée (fusionnée)") }
+                    )
+                    FilterChip(
+                        selected = !vueGroupee,
+                        onClick = { vueGroupee = false },
+                        label = { Text("Par session") }
+                    )
+                }
+            }
+        }
+
         if (courses.isEmpty()) {
             item {
                 Card(
@@ -154,10 +255,122 @@ fun CoursesScreen(viewModel: CharcuterieViewModel) {
                     )
                 }
             }
-        }
+        } else if (vueGroupee) {
+            coursesFusionneesParCategorie.forEach { (categorie, itemsFusionnes) ->
+                item(key = "cat_$categorie") {
+                    val totalCat = itemsFusionnes.filter { !it.tousAchetes }.sumOf { it.prixTotal }
+                    val achetesCat = itemsFusionnes.count { it.tousAchetes }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(8.dp)
+                            ) {}
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = libelleCategorieCourse(categorie),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (optionPrixActive) "${itemsFusionnes.size - achetesCat}/${itemsFusionnes.size} restant · ${formatEuro(totalCat)}"
+                                else "${itemsFusionnes.size - achetesCat}/${itemsFusionnes.size} restant",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
 
-        // Affichage groupé par projet
-        coursesParProjet.forEach { (nomProjet, itemsDuProjet) ->
+                items(itemsFusionnes, key = { "fusion_${it.cle}" }) { grp ->
+                    val qStr = if (grp.quantiteAffichee % 1.0 == 0.0) grp.quantiteAffichee.toInt().toString() else grp.quantiteAffichee.toString()
+                    val sessionsLabel = if (grp.sessions.size > 1) "${grp.sessions.size} sessions (${grp.sessions.joinToString(", ")})" else grp.sessions.firstOrNull().orEmpty()
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (grp.tousAchetes) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.surface
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (grp.items.size == 1) courseAEditer = grp.items.first()
+                                    else viewModel.basculerCoursesGroupees(grp.items.map { it.id })
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = grp.tousAchetes,
+                                onCheckedChange = { viewModel.basculerCoursesGroupees(grp.items.map { it.id }) }
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = grp.nomIngredient,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    textDecoration = if (grp.tousAchetes) TextDecoration.LineThrough else TextDecoration.None,
+                                    color = if (grp.tousAchetes) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "$qStr ${grp.uniteAffichee} · $sessionsLabel",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Column(horizontalAlignment = Alignment.End) {
+                                if (optionPrixActive) {
+                                    Text(
+                                        text = formatEuro(grp.prixTotal),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (grp.tousAchetes) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                if (grp.items.size == 1) {
+                                    IconButton(
+                                        onClick = { courseAEditer = grp.items.first() },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.Edit,
+                                            contentDescription = "Modifier",
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Affichage groupé par projet
+            coursesParProjet.forEach { (nomProjet, itemsDuProjet) ->
             item(key = "header_$nomProjet") {
                 val totalProjet = itemsDuProjet.filter { !it.achete }.sumOf { it.prixEstimeTotal }
                 val achetesProjet = itemsDuProjet.count { it.achete }
@@ -256,6 +469,7 @@ fun CoursesScreen(viewModel: CharcuterieViewModel) {
                     }
                 }
             }
+        }
         }
     }
 

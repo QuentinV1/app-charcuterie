@@ -41,7 +41,7 @@ export function rendreRevente() {
             <div>
               <div style="font-weight:800; font-size:0.95rem;">${escapeHtml(cmd.nomAcheteur || cmd.client || 'Client')}</div>
               <div style="font-size:0.82rem; color:var(--text); margin-top:2px;">
-                ${cmd.quantite || 1} ${escapeHtml(cmd.unite || 'pièce(s)')} · <strong>${escapeHtml(cmd.produit || 'Produit')}</strong>
+                ${(() => { const q = cmd.quantite || 1; const u = cmd.unite || 'pièce'; const uPl = (q > 1 && u === 'pièce') ? 'pièces' : u; return `${q} ${escapeHtml(uPl)}`; })()} · <strong>${escapeHtml(cmd.produit || 'Produit')}</strong>
               </div>
               <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
                 ${cmd.moyenPaiement ? escapeHtml(cmd.moyenPaiement) + ' · ' : ''}${cmd.livre ? 'Livré' : 'À livrer'}
@@ -56,6 +56,9 @@ export function rendreRevente() {
           </div>
           ${cmd.commentaire ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; font-style:italic;">« ${escapeHtml(cmd.commentaire)} »</div>` : ''}
           <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:10px; border-top:1px solid var(--border-light); padding-top:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierCommande('${escapeJsStr(cmd.id)}')">
+              ✎ Modifier
+            </button>
             <button class="btn btn-secondary btn-sm" onclick="basculerLivraisonCommande('${escapeJsStr(cmd.id)}')">
               ${cmd.livre ? 'Marquer non livré' : '✓ Marquer livré'}
             </button>
@@ -152,8 +155,10 @@ export function sauvegarderCommandeModal() {
   }
   const produit = (document.getElementById('cmd-produit').value || '').trim() || 'Charcuterie';
   const qte = parseFloat(document.getElementById('cmd-qte').value) || 1;
-  const unit = parseFloat(document.getElementById('cmd-prix-unit').value) || 0;
-  const total = parseFloat(document.getElementById('cmd-prix').value) || (qte * unit);
+  const unitParsed = parseFloat(document.getElementById('cmd-prix-unit').value);
+  const unit = Number.isNaN(unitParsed) ? 0 : unitParsed;
+  const totalParsed = parseFloat(document.getElementById('cmd-prix').value);
+  const total = Number.isNaN(totalParsed) ? (qte * unit) : totalParsed;
   const moyen = document.getElementById('cmd-moyen').value;
   const paye = document.getElementById('cmd-paye').value === 'true';
   const livre = document.getElementById('cmd-livre').checked;
@@ -168,6 +173,8 @@ export function sauvegarderCommandeModal() {
   if (editId) {
     const cmd = appState.commandes.find(c => c.id === editId);
     if (cmd) {
+      cmd.projetId = projId || null;
+      cmd.projetNom = proj ? proj.nom : '';
       cmd.nomAcheteur = clientNom;
       cmd.client = clientNom;
       cmd.produit = produit;
@@ -232,7 +239,7 @@ export function rendreClients() {
   }
 
   container.innerHTML = list.map(c => {
-    const cmds = appState.commandes.filter(cmd => (cmd.nomAcheteur || cmd.client || '').toLowerCase() === c.nom.toLowerCase());
+    const cmds = appState.commandes.filter(cmd => (cmd.nomAcheteur || cmd.client || '').trim().toLowerCase() === c.nom.trim().toLowerCase());
     const totalAchats = cmds.reduce((acc, cmd) => acc + (cmd.montantTotal || cmd.prix || 0), 0);
 
     return `
@@ -242,11 +249,30 @@ export function rendreClients() {
             <div style="font-weight:700; font-size:1rem;">${escapeHtml(c.nom)}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">${cmds.length} commande${cmds.length > 1 ? 's' : ''} · Total : ${totalAchats.toFixed(2)} €</div>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="supprimerClient('${escapeJsStr(c.id)}')" style="color:var(--danger);">✕</button>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierClient('${escapeJsStr(c.id)}')" title="Modifier">✎</button>
+            <button class="btn btn-secondary btn-sm" onclick="supprimerClient('${escapeJsStr(c.id)}')" style="color:var(--danger);" title="Supprimer">✕</button>
+          </div>
         </div>
       </div>
     `;
   }).join('');
+}
+
+export function ouvrirModalModifierCommande(id) {
+  const cmd = (appState.commandes || []).find(c => c.id === id);
+  if (!cmd) return;
+  ouvrirModalNouvelleCommande(cmd.projetId || null);
+  document.getElementById('cmd-edit-id').value = cmd.id;
+  document.getElementById('cmd-client-nom').value = cmd.nomAcheteur || cmd.client || '';
+  document.getElementById('cmd-produit').value = cmd.produit || '';
+  document.getElementById('cmd-qte').value = cmd.quantite ?? 1;
+  document.getElementById('cmd-prix-unit').value = cmd.prixUnitaire ?? 0;
+  document.getElementById('cmd-prix').value = (cmd.montantTotal ?? cmd.prix ?? 0).toFixed(2);
+  document.getElementById('cmd-moyen').value = cmd.moyenPaiement || 'Wero / Paylib';
+  document.getElementById('cmd-paye').value = cmd.paye ? 'true' : 'false';
+  document.getElementById('cmd-livre').checked = !!cmd.livre;
+  document.getElementById('cmd-comm').value = cmd.commentaire || '';
 }
 
 export function ouvrirModalClient() {
@@ -255,13 +281,37 @@ export function ouvrirModalClient() {
   document.getElementById('modal-client').classList.add('active');
 }
 
+export function ouvrirModalModifierClient(id) {
+  const c = (appState.clients || []).find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('client-edit-id').value = c.id;
+  document.getElementById('client-nom-input').value = c.nom || '';
+  document.getElementById('modal-client').classList.add('active');
+}
+
 export function sauvegarderClientModal() {
   const nom = (document.getElementById('client-nom-input').value || '').trim();
   if (!nom) return;
-  enregistrerClientSiNouveau(nom);
+  const editId = document.getElementById('client-edit-id').value;
+  if (editId) {
+    const client = (appState.clients || []).find(c => c.id === editId);
+    if (client) {
+      const ancienNom = (client.nom || '').trim().toLowerCase();
+      client.nom = nom;
+      (appState.commandes || []).forEach(cmd => {
+        if ((cmd.nomAcheteur || cmd.client || '').trim().toLowerCase() === ancienNom) {
+          cmd.nomAcheteur = nom;
+          cmd.client = nom;
+        }
+      });
+    }
+  } else {
+    enregistrerClientSiNouveau(nom);
+  }
   sauvegarderDonnees();
   window.fermerModals();
   rendreClients();
+  rendreRevente();
 }
 
 export function supprimerClient(id) {

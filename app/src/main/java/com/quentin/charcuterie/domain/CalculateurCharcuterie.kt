@@ -4,6 +4,7 @@ import com.quentin.charcuterie.data.ProjetComplet
 import com.quentin.charcuterie.data.ProjetLotEntity
 import com.quentin.charcuterie.data.ProjetPeseeEntity
 import com.quentin.charcuterie.data.RecetteComplete
+import com.quentin.charcuterie.data.RecetteEntity
 import kotlin.math.ceil
 import kotlin.math.max
 
@@ -136,9 +137,10 @@ object CalculateurCharcuterie {
                 val partRatio = refTot / valeurRefTotale
                 val partMatiere = coutMatierePremiere * partRatio
 
-                // Pour les magrets, frais = sel (0.5 kg/magret) + épices (0.015 kg/magret) comme dans Magret_Seché.html
+                // Pour les magrets, frais = sel (0.5 kg/magret en recouvrement, 0.015 kg sous vide) + épices (0.015 kg/magret)
                 val fraisTotaux = if (s.codeSortie == "magret") {
-                    val selKg = s.quantiteReelle * 0.50
+                    val selKgPerMagret = if (p.modeSalage == ModeSalage.SOUS_VIDE.code) 0.015 else 0.50
+                    val selKg = s.quantiteReelle * selKgPerMagret
                     val epicesKg = s.quantiteReelle * 0.015
                     selKg * p.prixSelKg + epicesKg * p.prixEpicesKg
                 } else {
@@ -219,9 +221,10 @@ object CalculateurCharcuterie {
         codesSortiesCochees: Set<String>,
         majorationDefautPct: Double = 10.0,
         prixSelKg: Double = 1.0,
-        prixEpicesKg: Double = 25.0
+        prixEpicesKg: Double = 25.0,
+        modeSalage: ModeSalage = ModeSalage.RECOUVREMENT_SEL
     ): EstimationPrixPlanification {
-        val qBase = quantiteBase.coerceAtLeast(1.0)
+        val qBase = quantiteBase.coerceAtLeast(0.1)
         val coutMatiere = qBase * prixUnitaireMatiere
         val coef = 1.0 + (majorationDefautPct / 100.0)
 
@@ -229,11 +232,12 @@ object CalculateurCharcuterie {
         if (sortiesActives.isNotEmpty()) {
             val valeurRefTot = sortiesActives.sumOf { (qBase * it.rendementParUniteBase) * it.valeurRefBoutiqueUnitaire }.coerceAtLeast(0.01)
             val cible = sortiesActives.find { it.codeSortie == "magret" } ?: sortiesActives.first()
-            val qProduit = (qBase * cible.rendementParUniteBase).coerceAtLeast(1.0)
+            val qProduit = (qBase * cible.rendementParUniteBase).coerceAtLeast(0.1)
             val refTotCible = qProduit * cible.valeurRefBoutiqueUnitaire
             val partMatiere = coutMatiere * (refTotCible / valeurRefTot)
+            val selKgPerMagret = if (modeSalage == ModeSalage.SOUS_VIDE) 0.015 else 0.50
             val fraisTot = if (cible.codeSortie == "magret") {
-                qProduit * (0.50 * prixSelKg + 0.015 * prixEpicesKg)
+                qProduit * (selKgPerMagret * prixSelKg + 0.015 * prixEpicesKg)
             } else {
                 qProduit * cible.fraisTransfoUnitaire
             }
@@ -246,12 +250,18 @@ object CalculateurCharcuterie {
             )
         }
 
+        val poidsKgParUnite = poidsUnitaireKgPourRecette(recetteComplete.recette)
         val coutIngredients = recetteComplete.ingredients.sumOf { ing ->
             val qTot = when (ing.modeCalcul) {
-                "PAR_PIECE", "PAR_KG_MATIERE", "POURCENT_POIDS", "PAR_KG_MELEE" -> ing.quantite * qBase
+                "POURCENT_POIDS" -> {
+                    val facteurPct = if (ing.unite == "%") 10.0 else 1.0
+                    ing.quantite * facteurPct * qBase * poidsKgParUnite
+                }
+                "PAR_PIECE", "PAR_KG_MATIERE", "PAR_KG_MELEE" -> ing.quantite * qBase
                 else -> ing.quantite
             }
-            if (ing.unite == "g") (qTot / 1000.0) * ing.prixKgOuUniteEstime else qTot * ing.prixKgOuUniteEstime
+            val uniteCalc = if (ing.modeCalcul == "POURCENT_POIDS" && ing.unite == "%") "g" else ing.unite
+            if (uniteCalc == "g") (qTot / 1000.0) * ing.prixKgOuUniteEstime else qTot * ing.prixKgOuUniteEstime
         }
         val coutUnit = (coutMatiere + coutIngredients) / qBase
         return EstimationPrixPlanification(
@@ -260,6 +270,15 @@ object CalculateurCharcuterie {
             coutRevientUnitaireEstime = coutUnit,
             prixReventeConseilleUnitaire = coutUnit * coef
         )
+    }
+
+    fun estUnitePiece(unite: String?): Boolean {
+        val u = unite?.trim()?.lowercase().orEmpty()
+        return u == "pièce" || u == "piece" || u == "pièces" || u == "pieces"
+    }
+
+    fun poidsUnitaireKgPourRecette(recette: RecetteEntity): Double {
+        return if (estUnitePiece(recette.uniteBase)) 0.5 else 1.0
     }
 
     data class AnalyseCourbePesees(
@@ -307,10 +326,14 @@ object CalculateurCharcuterie {
                     break
                 }
             }
+            val first = hist.first()
             val last = hist.last()
-            val joursTotaux = max(1.0, (last.dateMillis - t0) / dayMs)
-            if (perteActuelle > 0.5) {
-                vitesse = perteActuelle / joursTotaux
+            val tStartRate = if (hist.size >= 2) first.dateMillis else t0
+            val perteStart = if (hist.size >= 2) max(0.0, ((pInit - first.poidsGrammes) / pInit) * 100.0) else 0.0
+            val joursTotaux = max(1.0, (last.dateMillis - tStartRate) / dayMs)
+            val deltaPerte = max(0.0, perteActuelle - perteStart)
+            if (perteActuelle > 0.5 && deltaPerte > 0.0) {
+                vitesse = deltaPerte / joursTotaux
                 if (perteActuelle < cible && vitesse > 0.0) {
                     val joursRestants = ceil((cible - perteActuelle) / vitesse).toLong()
                     estFinMillis = last.dateMillis + joursRestants * 86_400_000L

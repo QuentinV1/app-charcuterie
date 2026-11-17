@@ -28,7 +28,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CaveReleveEntity::class,
         ProjetEvaluationEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -155,6 +155,33 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `projet_evaluations_new` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`projetId` INTEGER NOT NULL, " +
+                        "`recetteId` INTEGER NOT NULL, " +
+                        "`nomRecette` TEXT NOT NULL, " +
+                        "`dateMillis` INTEGER NOT NULL, " +
+                        "`noteGlobale` INTEGER NOT NULL DEFAULT 5, " +
+                        "`texture` TEXT NOT NULL DEFAULT 'Équilibrée / Fondante', " +
+                        "`salinite` TEXT NOT NULL DEFAULT 'Parfaite', " +
+                        "`aromes` TEXT NOT NULL DEFAULT 'Équilibrés', " +
+                        "`commentaire` TEXT NOT NULL DEFAULT '', " +
+                        "FOREIGN KEY(`projetId`) REFERENCES `projets`(`id`) ON DELETE CASCADE)"
+                )
+                db.execSQL(
+                    "INSERT INTO `projet_evaluations_new` (`id`, `projetId`, `recetteId`, `nomRecette`, `dateMillis`, `noteGlobale`, `texture`, `salinite`, `aromes`, `commentaire`) " +
+                        "SELECT `id`, `projetId`, `recetteId`, `nomRecette`, `dateMillis`, `noteGlobale`, `texture`, `salinite`, `aromes`, `commentaire` FROM `projet_evaluations` " +
+                        "WHERE `projetId` IN (SELECT `id` FROM `projets`)"
+                )
+                db.execSQL("DROP TABLE `projet_evaluations`")
+                db.execSQL("ALTER TABLE `projet_evaluations_new` RENAME TO `projet_evaluations`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_projet_evaluations_projetId` ON `projet_evaluations`(`projetId`)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -162,7 +189,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "atelier_charcuterie.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

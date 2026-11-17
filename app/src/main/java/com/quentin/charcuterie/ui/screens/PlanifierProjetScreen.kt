@@ -193,6 +193,36 @@ internal fun PlanifierProjetScreen(
             }
         }
     }
+    var baseQuantiteRef by remember(selectedRecette.recette.id) {
+        mutableDoubleStateOf(selectedRecette.recette.quantiteDefaut.coerceAtLeast(0.1))
+    }
+    val baseQteParVariante = remember(selectedRecette.recette.id) {
+        mutableStateMapOf<String, Double>().apply {
+            qteParVariante.forEach { (k, v) ->
+                put(k, v.replace(",", ".").toDoubleOrNull() ?: 0.0)
+            }
+        }
+    }
+
+    fun mettreAJourQuantiteBase(nouvelleStr: String) {
+        quantiteBase = nouvelleStr
+        val newQ = nouvelleStr.replace(",", ".").toDoubleOrNull() ?: return
+        if (newQ <= 0.0 || baseQuantiteRef <= 0.0) return
+        val ratio = newQ / baseQuantiteRef
+        val uniteLot = selectedRecette.sortiesDecoupe.firstOrNull()?.unite ?: selectedRecette.recette.uniteBase
+        qteParVariante.keys.toList().forEach { key ->
+            val baseVal = baseQteParVariante[key] ?: (qteParVariante[key]?.replace(",", ".")?.toDoubleOrNull() ?: 0.0)
+            if (baseVal > 0.0) {
+                val scaled = baseVal * ratio
+                qteParVariante[key] = if (uniteLot == "kg" || uniteLot == "L") {
+                    val rounded = (scaled * 100.0).let { kotlin.math.round(it) } / 100.0
+                    if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
+                } else {
+                    kotlin.math.round(scaled).toInt().coerceAtLeast(1).toString()
+                }
+            }
+        }
+    }
 
     // Lots supplémentaires personnalisés ajoutés manuellement pendant la planification
     val lotsPersonnalises = remember(selectedRecette.recette.id) {
@@ -694,7 +724,7 @@ internal fun PlanifierProjetScreen(
                                 onClick = {
                                     val actuel = quantiteBase.replace(",", ".").toDoubleOrNull() ?: 1.0
                                     val nouveau = (actuel - 1.0).coerceAtLeast(1.0)
-                                    quantiteBase = if (nouveau % 1.0 == 0.0) nouveau.toInt().toString() else nouveau.toString()
+                                    mettreAJourQuantiteBase(if (nouveau % 1.0 == 0.0) nouveau.toInt().toString() else nouveau.toString())
                                 }
                             ) {
                                 Icon(Icons.Default.Remove, contentDescription = "Moins")
@@ -702,7 +732,7 @@ internal fun PlanifierProjetScreen(
 
                             OutlinedTextField(
                                 value = quantiteBase,
-                                onValueChange = { quantiteBase = it },
+                                onValueChange = { mettreAJourQuantiteBase(it) },
                                 label = { Text("Quantité (${selectedRecette.recette.uniteBase})") },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -714,7 +744,7 @@ internal fun PlanifierProjetScreen(
                                 onClick = {
                                     val actuel = quantiteBase.replace(",", ".").toDoubleOrNull() ?: 1.0
                                     val nouveau = actuel + 1.0
-                                    quantiteBase = if (nouveau % 1.0 == 0.0) nouveau.toInt().toString() else nouveau.toString()
+                                    mettreAJourQuantiteBase(if (nouveau % 1.0 == 0.0) nouveau.toInt().toString() else nouveau.toString())
                                 }
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = "Plus")
@@ -994,7 +1024,19 @@ internal fun PlanifierProjetScreen(
                                             Spacer(Modifier.width(8.dp))
                                             OutlinedTextField(
                                                 value = qteParVariante[v.nom] ?: "0",
-                                                onValueChange = { qteParVariante[v.nom] = it },
+                                                onValueChange = {
+                                                    qteParVariante[v.nom] = it
+                                                    val parsed = it.replace(",", ".").toDoubleOrNull()
+                                                    if (parsed != null) {
+                                                        val curQBase = quantiteBase.replace(",", ".").toDoubleOrNull()
+                                                        if (curQBase != null && curQBase > 0.0) {
+                                                            baseQuantiteRef = curQBase
+                                                            qteParVariante.forEach { (k, valStr) ->
+                                                                baseQteParVariante[k] = valStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+                                                            }
+                                                        }
+                                                    }
+                                                },
                                                 label = { Text("Qté") },
                                                 singleLine = true,
                                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

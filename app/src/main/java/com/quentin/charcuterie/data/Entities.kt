@@ -388,7 +388,18 @@ data class CaveReleveEntity(
     val note: String = ""
 )
 
-@Entity(tableName = "projet_evaluations")
+@Entity(
+    tableName = "projet_evaluations",
+    foreignKeys = [
+        ForeignKey(
+            entity = ProjetEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["projetId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("projetId")]
+)
 data class ProjetEvaluationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val projetId: Long,

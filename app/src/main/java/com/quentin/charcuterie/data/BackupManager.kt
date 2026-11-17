@@ -23,10 +23,11 @@ object BackupManager {
     )
 
     data class BackupMobilePayload(
-        val schemaVersion: Int = 3,
+        val schemaVersion: Int = 4,
         val source: String = "L_AFFINOIR_ANDROID",
         val exportedAt: Long = System.currentTimeMillis(),
         val parametres: List<ParametreEntity> = emptyList(),
+        val ingredients: List<IngredientEntity> = emptyList(),
         val recettes: List<RecetteCompleteBackup> = emptyList(),
         val clients: List<ClientEntity> = emptyList(),
         val caveReleves: List<CaveReleveEntity> = emptyList(),
@@ -41,7 +42,8 @@ object BackupManager {
         val sortiesDecoupe: List<ProjetSortieDecoupeEntity> = emptyList(),
         val lots: List<ProjetLotEntity> = emptyList(),
         val etapes: List<ProjetEtapeEntity> = emptyList(),
-        val pesees: List<ProjetPeseeEntity> = emptyList()
+        val pesees: List<ProjetPeseeEntity> = emptyList(),
+        val photosEtapes: List<ProjetEtapePhotoEntity> = emptyList()
     )
 
     private fun JsonObject.str(key: String, default: String = ""): String {
@@ -103,11 +105,13 @@ object BackupManager {
                 sortiesDecoupe = pc.sortiesDecoupe,
                 lots = pc.lots,
                 etapes = pc.etapes,
-                pesees = pc.pesees
+                pesees = pc.pesees,
+                photosEtapes = pc.photosEtapes
             )
         }
         val payload = BackupMobilePayload(
             parametres = dao.getParametresList(),
+            ingredients = dao.getAllIngredientsOnce(),
             recettes = recettesComplets,
             clients = dao.getAllClientsOnce(),
             caveReleves = dao.getAllCaveRelevesOnce(),
@@ -161,6 +165,29 @@ object BackupManager {
                     )
                 }
                 if (toUpsert.isNotEmpty()) dao.insertParametres(toUpsert)
+            }
+
+            // 1b. Ingrédients personnalisés (sans doublons)
+            if (root.has("ingredients") && root.get("ingredients").isJsonArray) {
+                val existingIngs = dao.getAllIngredientsOnce().map { it.nom.trim().lowercase() }.toMutableSet()
+                val toInsert = mutableListOf<IngredientEntity>()
+                root.getAsJsonArray("ingredients").forEach { el ->
+                    if (!el.isJsonObject) return@forEach
+                    val obj = el.asJsonObject
+                    val nom = obj.str("nom").trim()
+                    if (nom.isBlank() || !existingIngs.add(nom.lowercase())) return@forEach
+                    toInsert.add(
+                        IngredientEntity(
+                            id = 0,
+                            nom = nom,
+                            categorie = obj.str("categorie", "AUTRE"),
+                            unite = obj.str("unite", "kg"),
+                            prixUnitaire = obj.dbl("prixUnitaire", 0.0),
+                            stockActuel = obj.dbl("stockActuel", 0.0)
+                        )
+                    )
+                }
+                if (toInsert.isNotEmpty()) dao.insertIngredients(toInsert)
             }
 
             // 2. Recettes (Android nested ou PWA plat)
@@ -474,29 +501,57 @@ object BackupManager {
                     }
 
                     // Étapes
+                    val etapeIdMap = mutableMapOf<Long, Long>()
                     if (obj.has("etapes") && obj.get("etapes").isJsonArray) {
-                        val etapes = obj.getAsJsonArray("etapes").mapIndexedNotNull { idx, ee ->
-                            if (!ee.isJsonObject) return@mapIndexedNotNull null
+                        obj.getAsJsonArray("etapes").forEachIndexed { idx, ee ->
+                            if (!ee.isJsonObject) return@forEachIndexed
                             val eo = ee.asJsonObject
                             val titre = eo.str("titre").trim()
-                            if (titre.isBlank()) return@mapIndexedNotNull null
-                            ProjetEtapeEntity(
-                                id = 0,
-                                projetId = newProjId,
-                                ordre = eo.intVal("ordre", idx + 1),
-                                jourLibelle = eo.str("jourLibelle", "Jour 1"),
-                                titre = titre,
-                                instructions = eo.str("instructions"),
-                                astuce = eo.str("astuce"),
-                                debutPrevuMillis = eo.lng("debutPrevuMillis", dateDebutMillis),
-                                dureeMinutes = eo.intVal("dureeMinutes", 60),
-                                varianteCible = eo.str("varianteCible"),
-                                terminee = eo.bool("terminee", eo.bool("fait", false)),
-                                rappelProgramme = false,
-                                noteEtape = eo.str("noteEtape")
+                            if (titre.isBlank()) return@forEachIndexed
+                            val oldEtapeId = eo.lng("id", -1L)
+                            val newEtapeId = dao.insertProjetEtape(
+                                ProjetEtapeEntity(
+                                    id = 0,
+                                    projetId = newProjId,
+                                    ordre = eo.intVal("ordre", idx + 1),
+                                    jourLibelle = eo.str("jourLibelle", "Jour 1"),
+                                    titre = titre,
+                                    instructions = eo.str("instructions"),
+                                    astuce = eo.str("astuce"),
+                                    debutPrevuMillis = eo.lng("debutPrevuMillis", dateDebutMillis),
+                                    dureeMinutes = eo.intVal("dureeMinutes", 60),
+                                    varianteCible = eo.str("varianteCible"),
+                                    terminee = eo.bool("terminee", eo.bool("fait", false)),
+                                    rappelProgramme = false,
+                                    noteEtape = eo.str("noteEtape")
+                                )
                             )
+                            if (oldEtapeId > 0L) etapeIdMap[oldEtapeId] = newEtapeId
                         }
-                        if (etapes.isNotEmpty()) dao.insertProjetEtapes(etapes)
+                    }
+
+                    // Photos d'étapes
+                    if (obj.has("photosEtapes") && obj.get("photosEtapes").isJsonArray) {
+                        obj.getAsJsonArray("photosEtapes").forEach { phe ->
+                            if (!phe.isJsonObject) return@forEach
+                            val pho = phe.asJsonObject
+                            val chemin = pho.str("cheminFichier").trim()
+                            if (chemin.isBlank()) return@forEach
+                            val mappedEtapeId = etapeIdMap[pho.lng("etapeId", -1L)] ?: etapeIdMap.values.firstOrNull()
+                            if (mappedEtapeId != null) {
+                                dao.insertProjetEtapePhoto(
+                                    ProjetEtapePhotoEntity(
+                                        id = 0,
+                                        etapeId = mappedEtapeId,
+                                        projetId = newProjId,
+                                        cheminFichier = chemin,
+                                        legende = pho.str("legende"),
+                                        tailleOctets = pho.lng("tailleOctets", 0L),
+                                        dateAjoutMillis = pho.lng("dateAjoutMillis", System.currentTimeMillis())
+                                    )
+                                )
+                            }
+                        }
                     }
 
                     // Pesées (format Android)
@@ -597,7 +652,6 @@ object BackupManager {
                         ?: existingProjets.find {
                             projetNom.isNotBlank() && it.projet.nom.trim().equals(projetNom, ignoreCase = true)
                         }?.projet?.id
-                        ?: existingProjets.firstOrNull()?.projet?.id
 
                     if (targetProjId == null) return@forEach
 

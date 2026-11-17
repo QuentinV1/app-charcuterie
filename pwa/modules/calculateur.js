@@ -1,8 +1,18 @@
 // Calculateur économique et analytique (Courbe de perte de poids, croûtage, prédiction)
 import { appState, getValeurParametre } from './state.js';
 
+export function estUnitePiece(unite) {
+  const u = (unite || '').trim().toLowerCase();
+  return u === 'pièce' || u === 'piece' || u === 'pièces' || u === 'pieces';
+}
+
+export function poidsUnitaireKgRecette(recette) {
+  if (!estUnitePiece(recette?.uniteBase)) return 1.0;
+  return (recette?.poidsUnitaireKg && recette.poidsUnitaireKg > 0) ? recette.poidsUnitaireKg : 0.5;
+}
+
 export const CalculateurCharcuterie = {
-  estimerPrixUnitairePlanification: function(recette, quantiteBase, prixUnitaireMatiere, codesSortiesCochees, majorationPct = 10.0) {
+  estimerPrixUnitairePlanification: function(recette, quantiteBase, prixUnitaireMatiere, codesSortiesCochees, majorationPct = 10.0, modeSalage = 'RECOUVREMENT') {
     const qBase = Math.max(0.1, quantiteBase || 1.0);
     const coutMatiere = qBase * (prixUnitaireMatiere || 0);
     const coef = 1.0 + ((majorationPct || 10.0) / 100.0);
@@ -23,8 +33,9 @@ export const CalculateurCharcuterie = {
       const prixSelKg = getValeurParametre('PRIX_SEL_KG', 1.0);
       const prixEpicesKg = getValeurParametre('PRIX_EPICES_KG', 25.0);
 
+      const selKgParMagret = modeSalage === 'SOUS_VIDE' ? 0.015 : 0.50;
       const fraisTot = (cible.codeSortie === 'magret')
-        ? qProduit * (0.50 * prixSelKg + 0.015 * prixEpicesKg)
+        ? qProduit * (selKgParMagret * prixSelKg + 0.015 * prixEpicesKg)
         : qProduit * (cible.fraisTransfoUnitaire || 0);
 
       const coutUnit = (partMatiere + fraisTot) / qProduit;
@@ -37,12 +48,17 @@ export const CalculateurCharcuterie = {
     }
 
     let coutIngredients = 0;
+    const poidsKgParUnite = poidsUnitaireKgRecette(recette);
     (recette.ingredients || []).forEach(ing => {
       let qTot = ing.quantite || 0;
-      if (['PAR_PIECE', 'PAR_KG_MATIERE', 'POURCENT_POIDS', 'PAR_KG_MELEE'].includes(ing.modeCalcul)) {
+      if (ing.modeCalcul === 'POURCENT_POIDS') {
+        const facteurPct = ing.unite === '%' ? 10.0 : 1.0;
+        qTot = ing.quantite * facteurPct * qBase * poidsKgParUnite;
+      } else if (['PAR_PIECE', 'PAR_KG_MATIERE', 'PAR_KG_MELEE'].includes(ing.modeCalcul)) {
         qTot = ing.quantite * qBase;
       }
-      const coutIng = (ing.unite === 'g') ? (qTot / 1000.0) * (ing.prixKgOuUniteEstime || 0) : qTot * (ing.prixKgOuUniteEstime || 0);
+      const uniteCalc = (ing.modeCalcul === 'POURCENT_POIDS' && ing.unite === '%') ? 'g' : ing.unite;
+      const coutIng = (uniteCalc === 'g') ? (qTot / 1000.0) * (ing.prixKgOuUniteEstime || 0) : qTot * (ing.prixKgOuUniteEstime || 0);
       coutIngredients += coutIng;
     });
 
@@ -60,7 +76,7 @@ export const CalculateurCharcuterie = {
     const coutMatierePremiere = qBase * (projet.prixUnitaireMatiereBase || 0);
     const margeCoef = 1.0 + ((projet.margeTravailPct || 10.0) / 100.0);
 
-    const sortiesActives = (projet.sortiesDecoupe || []).filter(s => s.actif && (s.quantiteReelle > 0 || s.quantitePrevue > 0));
+    const sortiesActives = (projet.sortiesDecoupe || []).filter(s => s.actif && ((s.quantiteReelle != null && s.quantiteReelle !== '' ? Number(s.quantiteReelle) : s.quantitePrevue) > 0));
 
     const coursesProjet = (appState.courses || []).filter(c => c.projetId === projet.id || c.nomProjet === projet.nom);
     const commandesProjet = (appState.commandes || []).filter(c => c.projetId === projet.id || c.projetNom === projet.nom);
@@ -69,10 +85,10 @@ export const CalculateurCharcuterie = {
     const cmdPaye = commandesProjet.filter(c => c.paye).reduce((acc, c) => acc + (c.montantTotal || 0), 0);
 
     if (sortiesActives.length === 0) {
-      const totalLots = (projet.lots || []).reduce((acc, l) => acc + (l.quantiteReelle > 0 ? l.quantiteReelle : l.quantitePrevue), 0) || Math.max(1, qBase);
+      const totalLots = (projet.lots || []).reduce((acc, l) => acc + (l.quantiteReelle != null && l.quantiteReelle !== '' ? Number(l.quantiteReelle) : l.quantitePrevue), 0) || Math.max(1, qBase);
       const coutCoursesHorsViande = coursesProjet
         .filter(c => c.categorie !== 'VIANDE')
-        .reduce((acc, c) => acc + (c.prixReelPaye > 0 ? c.prixReelPaye : (c.prixEstimeTotal || 0)), 0);
+        .reduce((acc, c) => acc + (c.prixReelPaye > 0 ? c.prixReelPaye : (c.prix ?? c.prixEstimeTotal ?? 0)), 0);
 
       const coutTotal = coutMatierePremiere + coutCoursesHorsViande;
       const coutUnit = coutTotal / totalLots;
@@ -108,7 +124,7 @@ export const CalculateurCharcuterie = {
 
     let valeurRefTotale = 0;
     sortiesActives.forEach(s => {
-      const q = s.quantiteReelle > 0 ? s.quantiteReelle : s.quantitePrevue;
+      const q = (s.quantiteReelle != null && s.quantiteReelle !== '') ? Number(s.quantiteReelle) : s.quantitePrevue;
       valeurRefTotale += q * (s.valeurRefUnitaire || 0);
     });
     valeurRefTotale = Math.max(0.01, valeurRefTotale);
@@ -121,14 +137,14 @@ export const CalculateurCharcuterie = {
     const prixEpicesKg = getValeurParametre('PRIX_EPICES_KG', 25.0);
 
     const lignes = sortiesActives.map(s => {
-      const q = s.quantiteReelle > 0 ? s.quantiteReelle : s.quantitePrevue;
+      const q = (s.quantiteReelle != null && s.quantiteReelle !== '') ? Number(s.quantiteReelle) : s.quantitePrevue;
       const refTot = q * (s.valeurRefUnitaire || 0);
       const partRatio = refTot / valeurRefTotale;
       const partMatiere = coutMatierePremiere * partRatio;
 
       let fraisTotaux = 0;
       if (s.codeSortie === 'magret') {
-        const selKg = q * 0.50;
+        const selKg = q * (projet.modeSalage === 'SOUS_VIDE' ? 0.015 : 0.50);
         const epicesKg = q * 0.015;
         fraisTotaux = selKg * prixSelKg + epicesKg * prixEpicesKg;
       } else {
@@ -209,7 +225,7 @@ export function analyserCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = 
     : (lot.poidsActuelGrammes || pInit);
 
   const poidsCibleG = pInit > 0 ? Math.round(pInit * (1 - perteCiblePct / 100)) : 0;
-  const perteActuellePct = pInit > 0 && dernierPoids > 0 ? (((pInit - dernierPoids) / pInit) * 100) : 0;
+  const perteActuellePct = pInit > 0 && dernierPoids > 0 ? Math.max(0, ((pInit - dernierPoids) / pInit) * 100) : 0;
   const resteG = pInit > 0 && dernierPoids > 0 ? Math.max(0, Math.round(dernierPoids - poidsCibleG)) : 0;
 
   let risqueCroutage = false;
@@ -217,13 +233,24 @@ export function analyserCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = 
   let vitessePctParJour = 0;
   let dateEstimeeFin = null;
 
+  const toLocalDayMs = (d) => {
+    if (!d) return Date.now();
+    const s = String(d);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, day] = s.split('-').map(Number);
+      return new Date(y, m - 1, day).getTime();
+    }
+    const dt = new Date(s);
+    return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+  };
+
   if (pInit > 0 && historique.length > 0) {
     const refDateStr = dateDebutProjet || historique[0].date;
-    const t0 = new Date(refDateStr).getTime();
+    const t0 = toLocalDayMs(refDateStr);
 
     // Vérifier croûtage : perte > 15% dans les 7 premiers jours
     for (const pes of historique) {
-      const jours = Math.max(0, (new Date(pes.date).getTime() - t0) / 86400000);
+      const jours = Math.max(0, (toLocalDayMs(pes.date) - t0) / 86400000);
       const perte = ((pInit - pes.poidsGrammes) / pInit) * 100;
       if (jours <= 7 && perte > 15) {
         risqueCroutage = true;
@@ -232,12 +259,16 @@ export function analyserCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = 
       }
     }
 
-    // Calcul vitesse et estimation date fin
+    // Calcul vitesse et estimation date fin (depuis la 1re pesée d'affinage si >= 2 pesées)
+    const premierePesee = historique[0];
     const dernierePesee = historique[historique.length - 1];
-    const tLast = new Date(dernierePesee.date).getTime();
-    const joursTotaux = Math.max(1, (tLast - t0) / 86400000);
-    if (perteActuellePct > 0.5 && joursTotaux >= 1) {
-      vitessePctParJour = perteActuellePct / joursTotaux;
+    const tLast = toLocalDayMs(dernierePesee.date);
+    const tStartRate = historique.length >= 2 ? toLocalDayMs(premierePesee.date) : t0;
+    const perteStart = historique.length >= 2 ? Math.max(0, ((pInit - premierePesee.poidsGrammes) / pInit) * 100) : 0;
+    const joursTotaux = Math.max(1, (tLast - tStartRate) / 86400000);
+    const deltaPerte = Math.max(0, perteActuellePct - perteStart);
+    if (perteActuellePct > 0.5 && joursTotaux >= 1 && deltaPerte > 0) {
+      vitessePctParJour = deltaPerte / joursTotaux;
       if (perteActuellePct < perteCiblePct && vitessePctParJour > 0) {
         const joursRestants = Math.ceil((perteCiblePct - perteActuellePct) / vitessePctParJour);
         const estDate = new Date(tLast + joursRestants * 86400000);

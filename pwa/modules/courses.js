@@ -1,7 +1,54 @@
 import { appState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+
+let coursesModeVue = 'groupee';
+
+export function setCoursesModeVue(mode) {
+  coursesModeVue = mode === 'session' ? 'session' : 'groupee';
+  const chipG = document.getElementById('chip-courses-groupee');
+  const chipS = document.getElementById('chip-courses-session');
+  if (chipG) chipG.classList.toggle('active', coursesModeVue === 'groupee');
+  if (chipS) chipS.classList.toggle('active', coursesModeVue === 'session');
+  rendreCourses();
+}
+
+function normaliserUnitePourFusion(qte, unite) {
+  const u = (unite || '').trim().toLowerCase();
+  const q = Number(qte) || 0;
+  if (u === 'kg') return { qteBase: q * 1000, fam: 'masse', uniteOrig: unite };
+  if (u === 'g') return { qteBase: q, fam: 'masse', uniteOrig: unite };
+  if (u === 'l') return { qteBase: q * 1000, fam: 'volume', uniteOrig: unite };
+  if (u === 'cl') return { qteBase: q * 10, fam: 'volume', uniteOrig: unite };
+  if (u === 'ml') return { qteBase: q, fam: 'volume', uniteOrig: unite };
+  return { qteBase: q, fam: `raw:${u}`, uniteOrig: unite };
+}
+
+function formaterQuantiteFusionnee(qteBase, fam, uniteOrig) {
+  if (fam === 'masse') {
+    if (qteBase >= 1000) return { qte: parseFloat((qteBase / 1000).toFixed(2)), unite: 'kg' };
+    return { qte: parseFloat(qteBase.toFixed(1)), unite: 'g' };
+  }
+  if (fam === 'volume') {
+    if (qteBase >= 1000) return { qte: parseFloat((qteBase / 1000).toFixed(2)), unite: 'L' };
+    return { qte: parseFloat(qteBase.toFixed(1)), unite: 'ml' };
+  }
+  return { qte: parseFloat(qteBase.toFixed(2)), unite: uniteOrig || '' };
+}
+
+const LIBELLES_CATEGORIES = {
+  VIANDE: '🥩 Viandes & Matière première',
+  SEL_SUCRE: '🧂 Sel & Sucre',
+  EPICES: '🌿 Épices & Aromates',
+  CONSOMMABLES: '📦 Consommables',
+  AUTRE: '🛒 Autres'
+};
+
 export function rendreCourses() {
   const container = document.getElementById('courses-container');
   const totalDesc = document.getElementById('courses-total-desc');
+  const chipG = document.getElementById('chip-courses-groupee');
+  const chipS = document.getElementById('chip-courses-session');
+  if (chipG) chipG.classList.toggle('active', coursesModeVue === 'groupee');
+  if (chipS) chipS.classList.toggle('active', coursesModeVue === 'session');
 
   const courses = appState.courses || [];
   const nbRestants = courses.filter(c => !c.achete).length;
@@ -24,6 +71,91 @@ export function rendreCourses() {
     return;
   }
 
+  if (coursesModeVue === 'groupee') {
+    // Fusionner les ingrédients identiques (nom + famille d'unité) entre sessions
+    const fusionMap = new Map();
+    courses.forEach(c => {
+      const nomNorm = (c.nom || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const { qteBase, fam, uniteOrig } = normaliserUnitePourFusion(c.qte, c.unite);
+      const key = `${nomNorm}||${fam}`;
+      const projNom = c.nomProjet || c.projetNom || 'Articles libres';
+      if (!fusionMap.has(key)) {
+        fusionMap.set(key, {
+          nom: c.nom,
+          categorie: c.categorie || 'AUTRE',
+          fam,
+          uniteOrig,
+          qteBaseTotal: 0,
+          prixTotal: 0,
+          ids: [],
+          sessions: new Set(),
+          tousAchetes: true
+        });
+      }
+      const grp = fusionMap.get(key);
+      grp.qteBaseTotal += qteBase;
+      grp.prixTotal += (c.prixReelPaye ?? c.prix ?? 0);
+      grp.ids.push(c.id);
+      grp.sessions.add(projNom);
+      if (!c.achete) grp.tousAchetes = false;
+    });
+
+    const parCategorie = {};
+    fusionMap.forEach(grp => {
+      const cat = grp.categorie || 'AUTRE';
+      if (!parCategorie[cat]) parCategorie[cat] = [];
+      parCategorie[cat].push(grp);
+    });
+
+    const ordreCats = ['VIANDE', 'SEL_SUCRE', 'EPICES', 'CONSOMMABLES', 'AUTRE'];
+    const catsTriees = Object.keys(parCategorie).sort((a, b) => {
+      const ia = ordreCats.indexOf(a);
+      const ib = ordreCats.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+
+    container.innerHTML = catsTriees.map(cat => {
+      const items = parCategorie[cat];
+      const sTotal = items.reduce((acc, i) => acc + i.prixTotal, 0);
+      const catTitre = LIBELLES_CATEGORIES[cat] || cat;
+
+      return `
+        <div class="card" style="padding:14px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-bottom:1px solid var(--border-light); padding-bottom:8px; margin-bottom:10px;">
+            <div style="font-weight:800; font-size:0.95rem; color:var(--primary);">${escapeHtml(catTitre)}</div>
+            ${prixActif ? `<div style="font-size:0.8rem; font-weight:700; white-space:nowrap;">${sTotal.toFixed(2)} €</div>` : ''}
+          </div>
+          <div>
+            ${items.map(it => {
+              const { qte, unite } = formaterQuantiteFusionnee(it.qteBaseTotal, it.fam, it.uniteOrig);
+              const sessionsArr = Array.from(it.sessions);
+              const sessionsLabel = sessionsArr.length > 1
+                ? `${sessionsArr.length} sessions (${sessionsArr.join(', ')})`
+                : sessionsArr[0];
+              const idsJoined = it.ids.join(',');
+              return `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-light);">
+                  <label style="display:flex; align-items:center; gap:10px; cursor:pointer; flex:1;">
+                    <input type="checkbox" ${it.tousAchetes ? 'checked' : ''} onchange="basculerAchatGroupeCourses('${escapeJsStr(idsJoined)}')" style="width:18px; height:18px; accent-color:var(--primary);">
+                    <div style="${it.tousAchetes ? 'text-decoration:line-through; opacity:0.6;' : ''}">
+                      <span style="font-weight:600; font-size:0.88rem;">${escapeHtml(it.nom)}</span>
+                      <div style="font-size:0.75rem; color:var(--text-muted);">${qte} ${escapeHtml(unite)} · ${escapeHtml(sessionsLabel)}</div>
+                    </div>
+                  </label>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    ${prixActif ? `<span style="font-weight:700; font-size:0.85rem; white-space:nowrap; color:${it.tousAchetes ? 'var(--text-muted)' : 'var(--text)'};">${it.prixTotal.toFixed(2)} €</span>` : ''}
+                    ${it.ids.length === 1 ? `<button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierCourse('${escapeJsStr(it.ids[0])}')" style="padding:4px 8px;">✎</button>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+    return;
+  }
+
   // Grouper par session
   const groupes = {};
   courses.forEach(c => {
@@ -38,9 +170,9 @@ export function rendreCourses() {
 
     return `
       <div class="card" style="padding:14px; margin-bottom:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-light); padding-bottom:8px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-bottom:1px solid var(--border-light); padding-bottom:8px; margin-bottom:10px;">
           <div style="font-weight:800; font-size:0.95rem; color:var(--primary);">${escapeHtml(projNom)}</div>
-          ${prixActif ? `<div style="font-size:0.8rem; font-weight:700;">${sTotal.toFixed(2)} €</div>` : ''}
+          ${prixActif ? `<div style="font-size:0.8rem; font-weight:700; white-space:nowrap;">${sTotal.toFixed(2)} €</div>` : ''}
         </div>
 
         <div>
@@ -54,7 +186,7 @@ export function rendreCourses() {
                 </div>
               </label>
               <div style="display:flex; align-items:center; gap:8px;">
-                ${prixActif ? `<span style="font-weight:700; font-size:0.85rem; color:${it.achete ? 'var(--text-muted)' : 'var(--text)'};">${(it.prixReelPaye || it.prix || 0).toFixed(2)} €</span>` : ''}
+                ${prixActif ? `<span style="font-weight:700; font-size:0.85rem; white-space:nowrap; color:${it.achete ? 'var(--text-muted)' : 'var(--text)'};">${(it.prixReelPaye ?? it.prix ?? 0).toFixed(2)} €</span>` : ''}
                 <button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierCourse('${escapeJsStr(it.id)}')" style="padding:4px 8px;">✎</button>
               </div>
             </div>
@@ -71,6 +203,19 @@ export function basculerAchatCourse(id) {
   item.achete = !item.achete;
   sauvegarderDonnees();
   rendreCourses();
+  if (typeof window.mettreAJourBadgeCourses === 'function') window.mettreAJourBadgeCourses();
+}
+
+export function basculerAchatGroupeCourses(idsCsv) {
+  const ids = new Set(String(idsCsv || '').split(',').filter(Boolean));
+  if (ids.size === 0) return;
+  const items = appState.courses.filter(c => ids.has(c.id));
+  if (items.length === 0) return;
+  const nouveauStatut = !items.every(i => i.achete);
+  items.forEach(i => { i.achete = nouveauStatut; });
+  sauvegarderDonnees();
+  rendreCourses();
+  if (typeof window.mettreAJourBadgeCourses === 'function') window.mettreAJourBadgeCourses();
 }
 
 export function nettoyerCoursesAchetees() {
