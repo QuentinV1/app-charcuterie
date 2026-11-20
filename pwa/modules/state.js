@@ -293,29 +293,11 @@ export async function verifierPersistanceStockage() {
   }
   uiState.storagePersisted = persisted;
 
-  const hasData = (appState.projets && appState.projets.length > 0) ||
-    (appState.caveReleves && appState.caveReleves.length > 0);
   const now = Date.now();
   const lastBackup = appState.lastBackupAt ? new Date(appState.lastBackupAt).getTime() : 0;
   const daysSinceBackup = lastBackup ? Math.floor((now - lastBackup) / (1000 * 60 * 60 * 24)) : null;
-  const needsBackupAlert = hasData && (!lastBackup || daysSinceBackup >= 21);
 
-  const banner = document.getElementById('ios-backup-banner');
-  if (banner) {
-    if (needsBackupAlert) {
-      banner.style.display = 'flex';
-      const msgEl = document.getElementById('ios-backup-banner-msg');
-      if (msgEl) {
-        msgEl.textContent = lastBackup
-          ? `Dernière sauvegarde JSON il y a ${daysSinceBackup} jours. Pensez à exporter vos données.`
-          : 'Pensez à exporter une sauvegarde JSON pour protéger vos sessions et photos sur iOS.';
-      }
-    } else {
-      banner.style.display = 'none';
-    }
-  }
-
-  return { supported, persisted, daysSinceBackup, needsBackupAlert };
+  return { supported, persisted, daysSinceBackup };
 }
 
 export async function exporterDonnees() {
@@ -340,9 +322,6 @@ export async function exporterDonnees() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-  const banner = document.getElementById('ios-backup-banner');
-  if (banner) banner.style.display = 'none';
 }
 
 function millisToIsoDate(ms, fullIso = false) {

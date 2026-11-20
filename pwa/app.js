@@ -61,7 +61,12 @@ import {
   ouvrirModalModifierVariante, sauvegarderVarianteModal, supprimerVariante
 } from './modules/parametres.js';
 
-export function naviguerVers(vueId) {
+let isRestoringHistory = false;
+let ignoreNextPopstate = false;
+
+export function naviguerVers(vueId, options = {}) {
+  const prevView = document.querySelector('.view.active')?.id?.replace('view-', '') || null;
+
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -86,6 +91,73 @@ export function naviguerVers(vueId) {
 
   mettreAJourBadgeCourses();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (!options.fromPopstate && !isRestoringHistory && window.history?.pushState) {
+    const state = {
+      view: vueId,
+      projetId: vueId === 'projet-detail' ? (uiState.projetActuelId || null) : null
+    };
+    if (options.replaceHistory) {
+      window.history.replaceState(state, '', `#${vueId}`);
+    } else if (vueId !== prevView || (vueId === 'projet-detail' && state.projetId !== window.history.state?.projetId)) {
+      window.history.pushState(state, '', `#${vueId}`);
+    }
+  }
+}
+
+function initialiserNavigationRetour() {
+  if (!window.history?.pushState) return;
+
+  const observer = new MutationObserver(() => {
+    const hasOpenModal = !!document.querySelector('.modal-overlay.active');
+    if (hasOpenModal) {
+      if (!window.history.state?.modal) {
+        window.history.pushState(
+          { ...(window.history.state || { view: 'projets' }), modal: true },
+          '',
+          window.location.hash || '#projets'
+        );
+      }
+    } else if (window.history.state?.modal) {
+      ignoreNextPopstate = true;
+      window.history.back();
+    }
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  window.addEventListener('popstate', (e) => {
+    if (ignoreNextPopstate) {
+      ignoreNextPopstate = false;
+      return;
+    }
+
+    if (document.querySelector('.modal-overlay.active')) {
+      fermerModals();
+      return;
+    }
+
+    const targetView = e.state?.view;
+    if (targetView) {
+      isRestoringHistory = true;
+      try {
+        if (targetView === 'projet-detail' && e.state.projetId && appState.projets?.some(p => p.id === e.state.projetId)) {
+          ouvrirDetailProjet(e.state.projetId);
+        } else {
+          naviguerVers(targetView === 'projet-detail' ? 'projets' : targetView, { fromPopstate: true });
+        }
+      } finally {
+        isRestoringHistory = false;
+      }
+    } else {
+      const currentView = document.querySelector('.view.active')?.id?.replace('view-', '');
+      if (currentView && currentView !== 'projets') {
+        naviguerVers('projets', { replaceHistory: true });
+      }
+    }
+  });
 }
 
 export function initialiserTheme() {
@@ -665,7 +737,8 @@ document.addEventListener('DOMContentLoaded', () => {
   chargerDonnees();
   initialiserTheme();
   verifierPersistanceStockage();
-  naviguerVers('projets');
+  initialiserNavigationRetour();
+  naviguerVers('projets', { replaceHistory: true });
 
   observerAuth(async (user) => {
     const btnAuth = document.getElementById('btn-auth-header');

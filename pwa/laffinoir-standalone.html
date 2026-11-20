@@ -1084,10 +1084,6 @@ body.dark-mode .app-header {
 
   <!-- Main Content Views -->
   <main>
-    <div id="ios-backup-banner" style="display:none; align-items:center; justify-content:space-between; gap:10px; background:#FFF8E1; color:#5D4037; border:1px solid #FFE082; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:0.8rem;">
-      <span id="ios-backup-banner-msg">Pensez à exporter une sauvegarde JSON.</span>
-      <button class="btn btn-primary btn-sm" onclick="exporterDonnees()" style="white-space:nowrap;">Sauvegarder</button>
-    </div>
     <!-- 1. VUE PROJETS (Liste des sessions) -->
     <section id="view-projets" class="view active">
       <div class="view-header">
@@ -7054,29 +7050,11 @@ async function verifierPersistanceStockage() {
   }
   uiState.storagePersisted = persisted;
 
-  const hasData = (appState.projets && appState.projets.length > 0) ||
-    (appState.caveReleves && appState.caveReleves.length > 0);
   const now = Date.now();
   const lastBackup = appState.lastBackupAt ? new Date(appState.lastBackupAt).getTime() : 0;
   const daysSinceBackup = lastBackup ? Math.floor((now - lastBackup) / (1000 * 60 * 60 * 24)) : null;
-  const needsBackupAlert = hasData && (!lastBackup || daysSinceBackup >= 21);
 
-  const banner = document.getElementById('ios-backup-banner');
-  if (banner) {
-    if (needsBackupAlert) {
-      banner.style.display = 'flex';
-      const msgEl = document.getElementById('ios-backup-banner-msg');
-      if (msgEl) {
-        msgEl.textContent = lastBackup
-          ? `Dernière sauvegarde JSON il y a ${daysSinceBackup} jours. Pensez à exporter vos données.`
-          : 'Pensez à exporter une sauvegarde JSON pour protéger vos sessions et photos sur iOS.';
-      }
-    } else {
-      banner.style.display = 'none';
-    }
-  }
-
-  return { supported, persisted, daysSinceBackup, needsBackupAlert };
+  return { supported, persisted, daysSinceBackup };
 }
 async function exporterDonnees() {
   const photos = await exporterToutesPhotosIDB();
@@ -7100,9 +7078,6 @@ async function exporterDonnees() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-  const banner = document.getElementById('ios-backup-banner');
-  if (banner) banner.style.display = 'none';
 }
 
 function millisToIsoDate(ms, fullIso = false) {
@@ -11224,7 +11199,12 @@ function supprimerVariante(recId, idx) {
 
 // --- app.js ---
 // L'Affinoir - Point d'entrée modulaire ES6 (PWA iPhone & Web)
-function naviguerVers(vueId) {
+let isRestoringHistory = false;
+let ignoreNextPopstate = false;
+
+function naviguerVers(vueId, options = {}) {
+  const prevView = document.querySelector('.view.active')?.id?.replace('view-', '') || null;
+
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -11249,6 +11229,73 @@ function naviguerVers(vueId) {
 
   mettreAJourBadgeCourses();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (!options.fromPopstate && !isRestoringHistory && window.history?.pushState) {
+    const state = {
+      view: vueId,
+      projetId: vueId === 'projet-detail' ? (uiState.projetActuelId || null) : null
+    };
+    if (options.replaceHistory) {
+      window.history.replaceState(state, '', `#${vueId}`);
+    } else if (vueId !== prevView || (vueId === 'projet-detail' && state.projetId !== window.history.state?.projetId)) {
+      window.history.pushState(state, '', `#${vueId}`);
+    }
+  }
+}
+
+function initialiserNavigationRetour() {
+  if (!window.history?.pushState) return;
+
+  const observer = new MutationObserver(() => {
+    const hasOpenModal = !!document.querySelector('.modal-overlay.active');
+    if (hasOpenModal) {
+      if (!window.history.state?.modal) {
+        window.history.pushState(
+          { ...(window.history.state || { view: 'projets' }), modal: true },
+          '',
+          window.location.hash || '#projets'
+        );
+      }
+    } else if (window.history.state?.modal) {
+      ignoreNextPopstate = true;
+      window.history.back();
+    }
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  window.addEventListener('popstate', (e) => {
+    if (ignoreNextPopstate) {
+      ignoreNextPopstate = false;
+      return;
+    }
+
+    if (document.querySelector('.modal-overlay.active')) {
+      fermerModals();
+      return;
+    }
+
+    const targetView = e.state?.view;
+    if (targetView) {
+      isRestoringHistory = true;
+      try {
+        if (targetView === 'projet-detail' && e.state.projetId && appState.projets?.some(p => p.id === e.state.projetId)) {
+          ouvrirDetailProjet(e.state.projetId);
+        } else {
+          naviguerVers(targetView === 'projet-detail' ? 'projets' : targetView, { fromPopstate: true });
+        }
+      } finally {
+        isRestoringHistory = false;
+      }
+    } else {
+      const currentView = document.querySelector('.view.active')?.id?.replace('view-', '');
+      if (currentView && currentView !== 'projets') {
+        naviguerVers('projets', { replaceHistory: true });
+      }
+    }
+  });
 }
 function initialiserTheme() {
   const saved = localStorage.getItem('laffinoir-theme');
@@ -11809,7 +11856,8 @@ document.addEventListener('DOMContentLoaded', () => {
   chargerDonnees();
   initialiserTheme();
   verifierPersistanceStockage();
-  naviguerVers('projets');
+  initialiserNavigationRetour();
+  naviguerVers('projets', { replaceHistory: true });
 
   observerAuth(async (user) => {
     const btnAuth = document.getElementById('btn-auth-header');
