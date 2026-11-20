@@ -57,12 +57,28 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Strict family whitelist with verified email requirement to prevent
+    // email spoofing on self-signup.
+    function isAllowedUser() {
+      return isAuthenticated() &&
+             request.auth.token.email_verified == true &&
+             request.auth.token.email != null &&
+             request.auth.token.email.lower() in [
+               'quentin.vaslin@gmail.com',
+               'vaslin.pascal@wanadoo.fr',
+               'pa.vaslin@bouygues-construction.com',
+               'clementvaslin@gmail.com',
+               'delisle-margaux@hotmail.com'
+             ];
+    }
+
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
+      return isAllowedUser() &&
+             request.auth.token.email.lower() == 'quentin.vaslin@gmail.com';
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAllowedUser() && request.auth.uid == userId;
     }
 
     function hasRequiredFields(fields) {
@@ -101,6 +117,7 @@ service cloud.firestore {
 
     function isValidOptionalBool(field) {
       return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
              request.resource.data[field] is bool;
     }
 
@@ -254,6 +271,14 @@ service cloud.firestore {
 
     function isValidSetting(data) {
       return isValidUserSubdocBase(data) &&
+             hasOnlyAllowedFields([
+               'id', 'createdAt', 'updatedAt',
+               'parametres', 'recettesSupprimees', 'lastBackupAt',
+               'cle', 'libelle', 'description', 'unite'
+             ]) &&
+             isValidOptionalList('parametres', 200) &&
+             isValidOptionalList('recettesSupprimees', 200) &&
+             isValidOptionalTimestampOrDateStr('lastBackupAt') &&
              isValidOptionalString('cle', 0, 100) &&
              isValidOptionalString('libelle', 0, 200) &&
              isValidOptionalString('description', 0, 1000) &&
@@ -264,37 +289,36 @@ service cloud.firestore {
     // Collection Rules
     // ===============================================================
 
-    // 1. Global base recipes (readable by any authenticated user; writable by owner or admin)
+    // 1. Global base recipes (readable by allowed family users; writable by owner or admin)
     match /charcuterie_base_recipes/{recipeId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
+      allow read: if isAllowedUser();
+      allow create: if isAllowedUser() &&
                        isValidBaseRecipe(request.resource.data) &&
                        (request.resource.data.ownerUid == request.auth.uid || isAdmin());
-      allow update: if isAuthenticated() &&
+      allow update: if isAllowedUser() &&
                        isValidBaseRecipe(request.resource.data) &&
                        (resource.data.ownerUid == request.auth.uid || isAdmin()) &&
                        areImmutableFieldsUnchanged(['ownerUid', 'createdAt']);
-      allow delete: if isAuthenticated() &&
+      allow delete: if isAllowedUser() &&
                        (resource.data.ownerUid == request.auth.uid || isAdmin());
     }
 
     // 2. User personal & modified recipes (owner full access; shared emails read-only)
     match /charcuterie_user_recipes/{recipeId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAllowedUser() && (
         resource.data.ownerUid == request.auth.uid ||
-        (request.auth.token.email != null &&
-         resource.data.sharedWithEmails is list &&
+        (resource.data.sharedWithEmails is list &&
          request.auth.token.email.lower() in resource.data.sharedWithEmails)
       );
-      allow create: if isAuthenticated() &&
+      allow create: if isAllowedUser() &&
                        request.resource.data.ownerUid == request.auth.uid &&
                        isValidUserRecipe(request.resource.data);
-      allow update: if isAuthenticated() &&
+      allow update: if isAllowedUser() &&
                        resource.data.ownerUid == request.auth.uid &&
                        request.resource.data.ownerUid == resource.data.ownerUid &&
                        areImmutableFieldsUnchanged(['ownerUid', 'createdAt']) &&
                        isValidUserRecipe(request.resource.data);
-      allow delete: if isAuthenticated() &&
+      allow delete: if isAllowedUser() &&
                        resource.data.ownerUid == request.auth.uid;
     }
 

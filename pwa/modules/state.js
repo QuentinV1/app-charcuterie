@@ -183,7 +183,7 @@ export function sauvegarderDonnees(skipCloud = false) {
   if (typeof window.mettreAJourBadgeCourses === 'function') {
     window.mettreAJourBadgeCourses();
   }
-  if (!skipCloud && !_suppressCloudSync && estConnecteFirebase()) {
+  if (!skipCloud && !_suppressCloudSync && estConnecteFirebase() && cloudState.initialSyncDone) {
     clearTimeout(_syncTimer);
     cloudState.syncStatus = 'syncing';
     cloudState.syncError = null;
@@ -237,12 +237,18 @@ export function reconstruireCatalogueFusionne() {
 export async function activerSyncCloud() {
   if (!estConnecteFirebase()) return;
   reinitialiserEtatCloud();
-  await seedRecettesBaseSiVide();
+  cloudState.syncStatus = 'syncing';
+  try {
+    await seedRecettesBaseSiVide();
+  } catch (err) {
+    console.warn('Seed recettes base:', err);
+  }
 
   const user = getFirebaseUser();
   const currentUid = user ? user.uid : null;
   const previousUid = localStorage.getItem(LAST_UID_KEY);
   const isNewDeviceLogin = !!(currentUid && previousUid !== currentUid);
+  let needsPushAfterInit = false;
 
   const collectionMap = {
     projects: 'projets',
@@ -282,8 +288,8 @@ export async function activerSyncCloud() {
         cloudState.syncedCols[colName] = true;
 
         if (list.length === 0 && localItems.length > 0) {
-          // Serveur réellement vide et données locales présentes : pousser vers le cloud
-          sauvegarderDonnees(false);
+          // Serveur réellement vide et données locales présentes : pousser vers le cloud après init complète
+          needsPushAfterInit = true;
         } else if (list.length > 0 && localItems.length > 0 && isNewDeviceLogin) {
           // Première connexion sur cet appareil : fusionner serveur + éléments locaux absents du serveur
           const serverIds = new Set(list.map(i => String(i.id)));
@@ -295,7 +301,7 @@ export async function activerSyncCloud() {
           sauvegarderDonnees(true);
           _suppressCloudSync = false;
           if (localOnly.length > 0) {
-            sauvegarderDonnees(false);
+            needsPushAfterInit = true;
           }
         } else {
           _suppressCloudSync = true;
@@ -310,6 +316,10 @@ export async function activerSyncCloud() {
           cloudState.syncStatus = 'synced';
           cloudState.lastSyncedAt = new Date().toISOString();
           if (currentUid) localStorage.setItem(LAST_UID_KEY, currentUid);
+          if (needsPushAfterInit) {
+            needsPushAfterInit = false;
+            sauvegarderDonnees(false);
+          }
         }
       } else {
         _suppressCloudSync = true;
@@ -337,6 +347,14 @@ export async function activerSyncCloud() {
       sauvegarderDonnees(true);
       _suppressCloudSync = false;
       reconstruireCatalogueFusionne();
+    },
+    onSyncError: (err) => {
+      cloudState.syncStatus = 'error';
+      if (err?.code === 'permission-denied') {
+        cloudState.syncError = 'Accès Firestore refusé (vérifiez que votre e-mail est bien vérifié et autorisé).';
+      } else {
+        cloudState.syncError = err?.message || 'Erreur de synchronisation Firestore';
+      }
     }
   });
 }

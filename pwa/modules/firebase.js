@@ -85,6 +85,9 @@ export async function inscriptionEmail(email, password) {
   const instance = await initFirebase();
   if (!instance) throw new Error('Firebase indisponible hors-ligne.');
   const cred = await instance.authMod.createUserWithEmailAndPassword(instance.auth, email.trim(), password);
+  if (cred.user && instance.authMod.sendEmailVerification) {
+    instance.authMod.sendEmailVerification(cred.user).catch(() => {});
+  }
   return cred.user;
 }
 
@@ -160,7 +163,8 @@ export function demarrerSyncFirestore({
   onUserRecipes,
   onSharedRecipes,
   onCollectionUpdate,
-  onSettingsUpdate
+  onSettingsUpdate,
+  onSyncError
 }) {
   arreterListenersFirestore();
   if (!fb || !currentUser) return;
@@ -168,13 +172,17 @@ export function demarrerSyncFirestore({
   const { collection, doc, onSnapshot, query, where } = fb.fsMod;
   const uid = currentUser.uid;
   const email = (currentUser.email || '').toLowerCase();
+  const handleErr = (label, err) => {
+    console.warn(`Sync ${label}:`, err);
+    if (typeof onSyncError === 'function') onSyncError(err, label);
+  };
 
   // 1. Recettes de base globales
   unsubListeners.push(
     onSnapshot(collection(fb.db, 'charcuterie_base_recipes'), (snap) => {
       const list = snap.docs.map(d => ({ ...d.data(), id: d.id, _source: 'base' }));
       onBaseRecipes(list);
-    }, (err) => console.warn('Sync base_recipes:', err))
+    }, (err) => handleErr('base_recipes', err))
   );
 
   // 2. Recettes perso & modifiées de l'utilisateur
@@ -182,7 +190,7 @@ export function demarrerSyncFirestore({
     onSnapshot(query(collection(fb.db, 'charcuterie_user_recipes'), where('ownerUid', '==', uid)), (snap) => {
       const list = snap.docs.map(d => ({ ...d.data(), id: d.id, _source: 'user' }));
       onUserRecipes(list);
-    }, (err) => console.warn('Sync user_recipes:', err))
+    }, (err) => handleErr('user_recipes', err))
   );
 
   // 3. Recettes partagées avec l'utilisateur par email
@@ -193,7 +201,7 @@ export function demarrerSyncFirestore({
           .map(d => ({ ...d.data(), id: d.id, _source: 'shared' }))
           .filter(r => r.ownerUid !== uid);
         onSharedRecipes(list);
-      }, (err) => console.warn('Sync shared_recipes:', err))
+      }, (err) => handleErr('shared_recipes', err))
     );
   }
 
@@ -204,7 +212,7 @@ export function demarrerSyncFirestore({
       onSnapshot(collection(fb.db, 'charcuterie_users', uid, colName), (snap) => {
         const list = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         onCollectionUpdate(colName, list, snap.metadata.fromCache);
-      }, (err) => console.warn(`Sync ${colName}:`, err))
+      }, (err) => handleErr(colName, err))
     );
   });
 
@@ -214,7 +222,7 @@ export function demarrerSyncFirestore({
       if (snap.exists()) {
         onSettingsUpdate(snap.data());
       }
-    }, (err) => console.warn('Sync settings:', err))
+    }, (err) => handleErr('settings', err))
   );
 }
 
