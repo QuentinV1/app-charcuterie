@@ -91,6 +91,22 @@ export async function inscriptionEmail(email, password) {
   return cred.user;
 }
 
+export async function renvoyerEmailVerification() {
+  const instance = await initFirebase();
+  if (!instance || !instance.auth.currentUser) throw new Error('Aucun utilisateur connecté.');
+  if (instance.auth.currentUser.emailVerified) return false;
+  await instance.authMod.sendEmailVerification(instance.auth.currentUser);
+  return true;
+}
+
+export async function rechargerUtilisateurFirebase() {
+  const instance = await initFirebase();
+  if (!instance || !instance.auth.currentUser) return null;
+  await instance.auth.currentUser.reload();
+  currentUser = instance.auth.currentUser;
+  return currentUser;
+}
+
 export async function connexionGoogle() {
   const instance = await initFirebase();
   if (!instance) throw new Error('Firebase indisponible hors-ligne.');

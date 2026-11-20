@@ -5,7 +5,8 @@ import {
   activerSyncCloud, forcerSyncCloud, reinitialiserEtatCloud
 } from './modules/state.js';
 import {
-  observerAuth, getFirebaseUser, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase
+  observerAuth, getFirebaseUser, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase,
+  renvoyerEmailVerification, rechargerUtilisateurFirebase
 } from './modules/firebase.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA
@@ -564,6 +565,11 @@ export function ouvrirModalAuth() {
 function majStatutSyncModal() {
   const statusEl = document.getElementById('auth-sync-status');
   const syncErrEl = document.getElementById('auth-sync-error-msg');
+  const unverifiedBox = document.getElementById('auth-unverified-box');
+  const user = getFirebaseUser();
+  if (unverifiedBox) {
+    unverifiedBox.style.display = (user && !user.emailVerified) ? 'block' : 'none';
+  }
   if (!statusEl) return;
 
   if (cloudState.syncStatus === 'syncing') {
@@ -645,6 +651,45 @@ export async function deconnexionCloud() {
   rafraichirVueActive();
 }
 
+export async function renvoyerVerificationCloud() {
+  const msgEl = document.getElementById('auth-unverified-msg');
+  const btn = document.getElementById('btn-resend-verif');
+  if (btn) btn.disabled = true;
+  try {
+    const sent = await renvoyerEmailVerification();
+    if (msgEl) {
+      msgEl.textContent = sent
+        ? 'E-mail de vérification envoyé ! Vérifiez votre boîte de réception (et les spams), puis cliquez sur « J\'ai vérifié ».'
+        : 'Votre adresse est déjà vérifiée.';
+    }
+  } catch (e) {
+    if (msgEl) msgEl.textContent = e?.message || 'Impossible d\'envoyer l\'e-mail de vérification.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+export async function verifierStatutEmailCloud() {
+  const msgEl = document.getElementById('auth-unverified-msg');
+  const btn = document.getElementById('btn-check-verif');
+  if (btn) btn.disabled = true;
+  try {
+    const user = await rechargerUtilisateurFirebase();
+    if (user?.emailVerified) {
+      await user.getIdToken(true);
+      await activerSyncCloud();
+      majStatutSyncModal();
+      rafraichirVueActive();
+    } else if (msgEl) {
+      msgEl.textContent = 'Adresse toujours non vérifiée. Cliquez d\'abord sur le lien reçu par e-mail.';
+    }
+  } catch (e) {
+    if (msgEl) msgEl.textContent = e?.message || 'Erreur lors de la vérification.';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 // Exposer sur window pour les handlers inline du HTML (onclick, oninput, onchange)
 Object.assign(window, {
   rafraichirVueActive,
@@ -653,6 +698,8 @@ Object.assign(window, {
   soumettreAuthEmail,
   soumettreAuthGoogle,
   deconnexionCloud,
+  renvoyerVerificationCloud,
+  verifierStatutEmailCloud,
   ouvrirModalPartageRecette,
   ajouterPartageEmailRecette,
   supprimerPartageEmailRecette,

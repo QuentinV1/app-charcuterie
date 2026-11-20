@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laffinoir-v15';
+const CACHE_NAME = 'laffinoir-v16';
 const ASSETS = [
   './',
   './index.html',
