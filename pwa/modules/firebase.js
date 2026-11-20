@@ -203,7 +203,7 @@ export function demarrerSyncFirestore({
     unsubListeners.push(
       onSnapshot(collection(fb.db, 'charcuterie_users', uid, colName), (snap) => {
         const list = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-        onCollectionUpdate(colName, list);
+        onCollectionUpdate(colName, list, snap.metadata.fromCache);
       }, (err) => console.warn(`Sync ${colName}:`, err))
     );
   });
@@ -290,9 +290,10 @@ export async function deleteBaseRecipeFirestore(recipeId) {
 export async function syncUserCollectionDoc(colName, item) {
   if (!fb || !currentUser || !item || !item.id) return;
   const { doc, setDoc } = fb.fsMod;
+  const normalized = { ...item, id: String(item.id) };
   await setDoc(
     doc(fb.db, 'charcuterie_users', currentUser.uid, colName, String(item.id)),
-    cleanForFirestore(item)
+    cleanForFirestore(normalized)
   );
 }
 
@@ -319,7 +320,7 @@ export async function syncAllUserDataToFirestore(appState) {
   for (const [colName, items] of mapping) {
     const colRef = collection(fb.db, 'charcuterie_users', uid, colName);
     const existingSnap = await getDocs(colRef);
-    const currentIds = new Set(items.map(i => String(i.id)));
+    const currentIds = new Set(items.filter(i => i && i.id).map(i => String(i.id)));
 
     const batch = writeBatch(fb.db);
     existingSnap.docs.forEach(d => {
@@ -329,7 +330,8 @@ export async function syncAllUserDataToFirestore(appState) {
     });
     items.forEach(item => {
       if (item && item.id) {
-        batch.set(doc(colRef, String(item.id)), cleanForFirestore(item));
+        const normalized = { ...item, id: String(item.id) };
+        batch.set(doc(colRef, String(item.id)), cleanForFirestore(normalized));
       }
     });
     await batch.commit();

@@ -352,6 +352,7 @@ export function rendreProductionProjet(p) {
       <div class="card">
         <div style="font-weight:700; margin-bottom:6px;">Sorties de découpe obtenues</div>
         <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Ajustez les quantités réelles obtenues (ex: litres de graisse, magrets) :</p>
+        <div class="table-scroll">
         <table class="bilan-table">
           <thead><tr><th>Produit</th><th>Prévu</th><th>Réel</th><th>Unité</th><th></th></tr></thead>
           <tbody>
@@ -372,6 +373,7 @@ export function rendreProductionProjet(p) {
             `).join('')}
           </tbody>
         </table>
+        </div>
       </div>
     `;
   } else {
@@ -524,6 +526,7 @@ export function rendreBudgetProjet(p) {
         <div style="font-weight:700;">Détail par produit valorisé</div>
         <span style="font-size:0.72rem; color:var(--text-muted);">Tap sur un prix pour ajuster</span>
       </div>
+      <div class="table-scroll">
       <table class="bilan-table">
         <thead>
           <tr>
@@ -544,6 +547,7 @@ export function rendreBudgetProjet(p) {
           `).join('')}
         </tbody>
       </table>
+      </div>
     </div>
 
     ${rendreCarteEvaluationProjet(p)}

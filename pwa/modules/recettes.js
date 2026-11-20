@@ -127,6 +127,7 @@ export function ouvrirFicheRecette(id) {
   if (r.sortiesDecoupe && r.sortiesDecoupe.length > 0) {
     html += `
       <div style="font-weight:700; font-size:0.9rem; margin-top:14px; margin-bottom:6px;">Parties valorisées & Rendements</div>
+      <div class="table-scroll">
       <table class="bilan-table">
         <thead><tr><th>Sortie</th><th>Rendement / ${escapeHtml(r.uniteBase || 'unité')}</th><th>Réf boutique</th></tr></thead>
         <tbody>
@@ -139,6 +140,7 @@ export function ouvrirFicheRecette(id) {
           `).join('')}
         </tbody>
       </table>
+      </div>
     `;
   }
 

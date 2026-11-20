@@ -1,11 +1,11 @@
 // L'Affinoir - Point d'entrée modulaire ES6 (PWA iPhone & Web)
 import {
-  appState, uiState, chargerDonnees, initialiserDonneesDefaut, sauvegarderDonnees,
+  appState, uiState, cloudState, chargerDonnees, initialiserDonneesDefaut, sauvegarderDonnees,
   getValeurParametre, verifierPersistanceStockage, exporterDonnees, importerDonnees, reinitialiserDonnees,
-  activerSyncCloud
+  activerSyncCloud, forcerSyncCloud, reinitialiserEtatCloud
 } from './modules/state.js';
 import {
-  observerAuth, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase
+  observerAuth, getFirebaseUser, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase
 } from './modules/firebase.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA
@@ -173,12 +173,20 @@ export function basculerTheme() {
   appliquerTheme(!isDark);
 }
 
+const SVG_SUN = '<svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+const SVG_MOON = '<svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const SVG_CLOUD = '<svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
+const SVG_USER = '<svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+
 export function appliquerTheme(isDark) {
   document.body.classList.toggle('dark-mode', isDark);
   document.body.classList.toggle('light-mode', !isDark);
   const btn = document.getElementById('btn-theme-toggle');
   if (btn) {
-    btn.innerText = isDark ? '☀️ Clair' : '🌙 Cave';
+    const iconSvg = isDark ? SVG_SUN : SVG_MOON;
+    const text = isDark ? 'Clair' : 'Cave';
+    btn.innerHTML = `${iconSvg}<span class="btn-text">${text}</span>`;
+    btn.title = isDark ? 'Passer en mode clair' : 'Passer en mode Cave';
   }
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute('content', isDark ? '#1A1614' : '#C84B31');
@@ -532,7 +540,70 @@ export function rafraichirVueActive() {
 export function ouvrirModalAuth() {
   const errEl = document.getElementById('auth-error-msg');
   if (errEl) errEl.style.display = 'none';
+  const syncErrEl = document.getElementById('auth-sync-error-msg');
+  if (syncErrEl) syncErrEl.style.display = 'none';
+
+  const user = getFirebaseUser();
+  const loggedOutPanel = document.getElementById('auth-logged-out-panel');
+  const loggedInPanel = document.getElementById('auth-logged-in-panel');
+
+  if (user && loggedOutPanel && loggedInPanel) {
+    loggedOutPanel.style.display = 'none';
+    loggedInPanel.style.display = 'block';
+    const emailEl = document.getElementById('auth-connected-email');
+    if (emailEl) emailEl.textContent = user.email || user.displayName || user.uid;
+    majStatutSyncModal();
+  } else if (loggedOutPanel && loggedInPanel) {
+    loggedOutPanel.style.display = 'block';
+    loggedInPanel.style.display = 'none';
+  }
+
   document.getElementById('modal-auth')?.classList.add('active');
+}
+
+function majStatutSyncModal() {
+  const statusEl = document.getElementById('auth-sync-status');
+  const syncErrEl = document.getElementById('auth-sync-error-msg');
+  if (!statusEl) return;
+
+  if (cloudState.syncStatus === 'syncing') {
+    statusEl.textContent = 'Synchronisation en cours…';
+    statusEl.style.color = 'var(--accent)';
+  } else if (cloudState.syncStatus === 'error') {
+    statusEl.textContent = 'Erreur de synchronisation';
+    statusEl.style.color = 'var(--danger)';
+    if (syncErrEl && cloudState.syncError) {
+      syncErrEl.textContent = cloudState.syncError;
+      syncErrEl.style.display = 'block';
+    }
+  } else if (cloudState.initialSyncDone || cloudState.syncStatus === 'synced') {
+    const nbProj = (appState.projets || []).length;
+    statusEl.textContent = `Synchronisé (${nbProj} session${nbProj > 1 ? 's' : ''} en cours)`;
+    statusEl.style.color = 'var(--secondary)';
+  } else {
+    statusEl.textContent = 'Connexion au Cloud…';
+    statusEl.style.color = 'var(--text-muted)';
+  }
+}
+
+export async function synchroniserMaintenant() {
+  const btn = document.getElementById('btn-force-sync');
+  const syncErrEl = document.getElementById('auth-sync-error-msg');
+  if (syncErrEl) syncErrEl.style.display = 'none';
+  if (btn) btn.disabled = true;
+  majStatutSyncModal();
+  try {
+    await forcerSyncCloud();
+    majStatutSyncModal();
+  } catch (e) {
+    majStatutSyncModal();
+    if (syncErrEl) {
+      syncErrEl.textContent = e?.message || 'Impossible de synchroniser.';
+      syncErrEl.style.display = 'block';
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 export async function soumettreAuthEmail(isRegister) {
@@ -569,6 +640,8 @@ export async function soumettreAuthGoogle() {
 export async function deconnexionCloud() {
   if (!confirm('Se déconnecter du compte Cloud ?')) return;
   await deconnexionFirebase();
+  reinitialiserEtatCloud();
+  fermerModals();
   rafraichirVueActive();
 }
 
@@ -576,6 +649,7 @@ export async function deconnexionCloud() {
 Object.assign(window, {
   rafraichirVueActive,
   ouvrirModalAuth,
+  synchroniserMaintenant,
   soumettreAuthEmail,
   soumettreAuthGoogle,
   deconnexionCloud,
@@ -745,10 +819,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAuth) {
       if (user) {
         const label = (user.email || user.displayName || 'Cloud').split('@')[0];
-        btnAuth.innerText = `👤 ${label}`;
+        btnAuth.innerHTML = SVG_USER;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'btn-text';
+        textSpan.textContent = label;
+        btnAuth.appendChild(textSpan);
+        btnAuth.classList.add('is-authenticated');
         btnAuth.title = `Connecté : ${user.email || user.uid}`;
       } else {
-        btnAuth.innerText = '☁️ Connexion';
+        btnAuth.innerHTML = `${SVG_CLOUD}<span class="btn-text">Connexion</span>`;
+        btnAuth.classList.remove('is-authenticated');
         btnAuth.title = 'Se connecter au Cloud';
       }
     }

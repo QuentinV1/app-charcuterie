@@ -2,17 +2,30 @@
 import { CATALOGUE_BASE, PARAMETRES_DEFAUT, INGREDIENTS_CATALOGUE_DEFAUT } from './catalog.js';
 import { exporterToutesPhotosIDB, importerPhotosIDB } from './photos.js';
 import {
-  estConnecteFirebase, seedRecettesBaseSiVide, demarrerSyncFirestore, syncAllUserDataToFirestore
+  estConnecteFirebase, getFirebaseUser, seedRecettesBaseSiVide, demarrerSyncFirestore, syncAllUserDataToFirestore
 } from './firebase.js';
 
 export const STORAGE_KEY = 'laffinoir_data_v2';
+const LAST_UID_KEY = 'laffinoir_last_uid';
 
 export const cloudState = {
   baseRecipes: [],
   userRecipes: [],
   sharedRecipes: [],
-  initialSyncDone: false
+  initialSyncDone: false,
+  syncedCols: {},
+  syncStatus: 'idle', // 'idle' | 'syncing' | 'synced' | 'error'
+  syncError: null,
+  lastSyncedAt: null
 };
+
+export function reinitialiserEtatCloud() {
+  cloudState.initialSyncDone = false;
+  cloudState.syncedCols = {};
+  cloudState.syncStatus = 'idle';
+  cloudState.syncError = null;
+  cloudState.lastSyncedAt = null;
+}
 
 let _suppressCloudSync = false;
 let _syncTimer = null;
@@ -172,8 +185,18 @@ export function sauvegarderDonnees(skipCloud = false) {
   }
   if (!skipCloud && !_suppressCloudSync && estConnecteFirebase()) {
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(() => {
-      syncAllUserDataToFirestore(appState).catch(err => console.warn('Sync Firestore:', err));
+    cloudState.syncStatus = 'syncing';
+    cloudState.syncError = null;
+    _syncTimer = setTimeout(async () => {
+      try {
+        await syncAllUserDataToFirestore(appState);
+        cloudState.syncStatus = 'synced';
+        cloudState.lastSyncedAt = new Date().toISOString();
+      } catch (err) {
+        console.warn('Sync Firestore:', err);
+        cloudState.syncStatus = 'error';
+        cloudState.syncError = err?.message || 'Erreur de synchronisation Firestore';
+      }
     }, 450);
   }
 }
@@ -213,7 +236,13 @@ export function reconstruireCatalogueFusionne() {
 
 export async function activerSyncCloud() {
   if (!estConnecteFirebase()) return;
+  reinitialiserEtatCloud();
   await seedRecettesBaseSiVide();
+
+  const user = getFirebaseUser();
+  const currentUid = user ? user.uid : null;
+  const previousUid = localStorage.getItem(LAST_UID_KEY);
+  const isNewDeviceLogin = !!(currentUid && previousUid !== currentUid);
 
   const collectionMap = {
     projects: 'projets',
@@ -224,7 +253,6 @@ export async function activerSyncCloud() {
     evaluations: 'evaluations'
   };
 
-  let firstSnapshots = 0;
   demarrerSyncFirestore({
     onBaseRecipes: (list) => {
       cloudState.baseRecipes = list;
@@ -238,22 +266,59 @@ export async function activerSyncCloud() {
       cloudState.sharedRecipes = list;
       reconstruireCatalogueFusionne();
     },
-    onCollectionUpdate: (colName, list) => {
+    onCollectionUpdate: (colName, list, fromCache = false) => {
       const stateKey = collectionMap[colName];
       if (!stateKey) return;
-      _suppressCloudSync = true;
-      // Si l'utilisateur vient de se connecter et que Firestore est vide mais qu'il a des données locales, pousser le local
-      if (!cloudState.initialSyncDone && list.length === 0 && (appState[stateKey] || []).length > 0) {
-        _suppressCloudSync = false;
-        sauvegarderDonnees(false);
+
+      // Ne jamais traiter un cache local vide comme un serveur vide
+      if (fromCache && list.length === 0) {
         return;
       }
-      appState[stateKey] = list;
-      if (stateKey === 'projets') migrerLotsPesees(appState.projets);
-      sauvegarderDonnees(true);
-      _suppressCloudSync = false;
-      firstSnapshots++;
-      if (firstSnapshots >= 6) cloudState.initialSyncDone = true;
+
+      const isFirstServerForCol = !fromCache && !cloudState.syncedCols[colName];
+      const localItems = appState[stateKey] || [];
+
+      if (isFirstServerForCol) {
+        cloudState.syncedCols[colName] = true;
+
+        if (list.length === 0 && localItems.length > 0) {
+          // Serveur réellement vide et données locales présentes : pousser vers le cloud
+          sauvegarderDonnees(false);
+        } else if (list.length > 0 && localItems.length > 0 && isNewDeviceLogin) {
+          // Première connexion sur cet appareil : fusionner serveur + éléments locaux absents du serveur
+          const serverIds = new Set(list.map(i => String(i.id)));
+          const localOnly = localItems.filter(i => i && i.id && !serverIds.has(String(i.id)));
+          const merged = [...list, ...localOnly];
+          _suppressCloudSync = true;
+          appState[stateKey] = merged;
+          if (stateKey === 'projets') migrerLotsPesees(appState.projets);
+          sauvegarderDonnees(true);
+          _suppressCloudSync = false;
+          if (localOnly.length > 0) {
+            sauvegarderDonnees(false);
+          }
+        } else {
+          _suppressCloudSync = true;
+          appState[stateKey] = list;
+          if (stateKey === 'projets') migrerLotsPesees(appState.projets);
+          sauvegarderDonnees(true);
+          _suppressCloudSync = false;
+        }
+
+        if (Object.keys(cloudState.syncedCols).length >= 6) {
+          cloudState.initialSyncDone = true;
+          cloudState.syncStatus = 'synced';
+          cloudState.lastSyncedAt = new Date().toISOString();
+          if (currentUid) localStorage.setItem(LAST_UID_KEY, currentUid);
+        }
+      } else {
+        _suppressCloudSync = true;
+        appState[stateKey] = list;
+        if (stateKey === 'projets') migrerLotsPesees(appState.projets);
+        sauvegarderDonnees(true);
+        _suppressCloudSync = false;
+      }
+
       if (typeof window.rafraichirVueActive === 'function') {
         window.rafraichirVueActive();
       }
@@ -274,6 +339,24 @@ export async function activerSyncCloud() {
       reconstruireCatalogueFusionne();
     }
   });
+}
+
+export async function forcerSyncCloud() {
+  if (!estConnecteFirebase()) throw new Error('Non connecté au Cloud.');
+  cloudState.syncStatus = 'syncing';
+  cloudState.syncError = null;
+  try {
+    await syncAllUserDataToFirestore(appState);
+    cloudState.syncStatus = 'synced';
+    cloudState.lastSyncedAt = new Date().toISOString();
+    const user = getFirebaseUser();
+    if (user?.uid) localStorage.setItem(LAST_UID_KEY, user.uid);
+    return true;
+  } catch (err) {
+    cloudState.syncStatus = 'error';
+    cloudState.syncError = err?.message || 'Erreur de synchronisation Firestore';
+    throw err;
+  }
 }
 
 /**
