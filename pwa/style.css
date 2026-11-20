@@ -1,15 +1,15 @@
 :root {
   --primary: #C84B31;
-  --primary-light: #FCECE8;
+  --primary-light: #FDEDEA;
   --primary-dark: #9E2F1B;
   --secondary: #236B48;
   --secondary-light: #E8F5EE;
   --accent: #D97706;
-  --bg: #FBF9F5;
+  --bg: #F7F6F2;
   --surface: #FFFFFF;
-  --surface-subtle: #F5F2EB;
-  --text: #1C1917;
-  --text-muted: #78716C;
+  --surface-subtle: #F0EDE6;
+  --text: #181614;
+  --text-muted: #655E57;
   --border: #E7E5E4;
   --border-light: #F0EDE8;
   --danger: #DC2626;
@@ -912,4 +912,138 @@ body.dark-mode {
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+/* Dark mode header */
+body.dark-mode .app-header {
+  background: rgba(20, 18, 18, 0.92);
+}
+@media (prefers-color-scheme: dark) {
+  body:not(.light-mode) .app-header {
+    background: rgba(20, 18, 18, 0.92);
+  }
+}
+
+/* Guide débutant (aligné APK) */
+.guide-debutant-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.guide-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.84rem;
+}
+.guide-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Carte projet : À suivre & résumé lots */
+.proj-next-step {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--secondary-light);
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Carte Étape en cours (Planning) */
+.active-step-card {
+  background: var(--primary-light);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.active-step-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+/* Jauge de perte de poids sur carte lot */
+.lot-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+.lot-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 99px;
+  transition: width 0.25s ease;
+}
+.lot-progress-fill.done {
+  background: var(--secondary);
+}
+
+/* Avatar initiales client */
+.client-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Chips produits & lignes commande multi-produits */
+.cmd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cmd-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.cmd-line-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  margin-bottom: 6px;
 }

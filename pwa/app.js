@@ -1,8 +1,12 @@
 // L'Affinoir - Point d'entrée modulaire ES6 (PWA iPhone & Web)
 import {
   appState, uiState, chargerDonnees, initialiserDonneesDefaut, sauvegarderDonnees,
-  getValeurParametre, verifierPersistanceStockage, exporterDonnees, importerDonnees, reinitialiserDonnees
+  getValeurParametre, verifierPersistanceStockage, exporterDonnees, importerDonnees, reinitialiserDonnees,
+  activerSyncCloud
 } from './modules/state.js';
+import {
+  observerAuth, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase
+} from './modules/firebase.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA
 } from './modules/photos.js';
@@ -17,22 +21,26 @@ import {
   ouvrirModalEvaluationProjet, sauvegarderEvaluationModal
 } from './modules/evaluation.js';
 import {
-  rendreProjets, ouvrirDetailProjet, basculerSousOngletProjet, rendrePlanningProjet,
-  decalerEtapePWA, demarrerEtapeMaintenantPWA,
+  rendreProjets, masquerGuideDebutant, ouvrirDetailProjet, basculerSousOngletProjet, rendrePlanningProjet,
+  decalerEtapePWA, demarrerEtapeMaintenantPWA, ouvrirModalHoraireEtape, confirmerHoraireEtape,
   basculerEtapeProjetActuel, basculerStatutProjetActuel, supprimerProjetActuel,
-  rendreProductionProjet, enregistrerSortieReelle, rendreBudgetProjet,
+  rendreProductionProjet, enregistrerSortieReelle, ouvrirModalSortieDecoupe, sauvegarderSortieDecoupe,
+  ouvrirModalModifierLot, sauvegarderLotModifie, ouvrirModalAmeliorerRecette, confirmerAmeliorerRecette,
+  rendreBudgetProjet, basculerReventeProjetActuel, ouvrirModalBudgetPrix, sauvegarderBudgetPrix,
   ouvrirModalCommandePourProjetActuel
 } from './modules/projets.js';
 import {
   rendreRecettes, setFamilleFiltre, basculerAfficherMasquees, filtrerRecettes,
-  ouvrirFicheRecette, basculerMasquageDepuisFiche, planifierDepuisFiche,
+  ouvrirFicheRecette, basculerMasquageDepuisFiche, basculerMasquageRecetteDirect, planifierDepuisFiche,
   supprimerRecetteDirect, supprimerRecetteDepuisFiche, supprimerRecetteParId,
-  ouvrirModalCreerRecette, ajouterLigneIngredient, ajouterLigneEtape, sauvegarderRecettePersonnalisee
+  ouvrirModalEditRecetteItem, sauvegarderEditRecetteItem, ouvrirModalAjouterVariantePourRecette,
+  ouvrirModalPartageRecette, ajouterPartageEmailRecette, supprimerPartageEmailRecette,
+  ouvrirModalCreerRecette, ajouterLigneIngredient, ajouterLigneVarianteCreer, ajouterLigneEtape, sauvegarderRecettePersonnalisee
 } from './modules/recettes.js';
 import {
-  ouvrirModalPlanifier, selectionnerRecetteDropdown, rendreLignesLotsPlanification,
-  modifierLotDraftPlanification, ajouterLigneLotPlanification, supprimerLigneLotPlanification,
-  actualiserEstimationPlanification, confirmerPlanification, togglePlanRecetteDropdown,
+  ouvrirModalPlanifier, definirDatePlanificationShortcut, selectionnerRecetteDropdown, rendreLignesLotsPlanification,
+  modifierLotDraftPlanification, ajouterLigneLotPlanification, confirmerCustomLotPlanification, supprimerLigneLotPlanification,
+  actualiserEstimationPlanification, modifierPrixReventePlanification, confirmerPlanification, togglePlanRecetteDropdown,
   ouvrirPlanRecetteDropdown, fermerPlanRecetteDropdown, filtrerCategorieDropdown,
   effacerRechercheRecettes, filtrerRecettesDropdown, selectionnerModeSalage
 } from './modules/planification.js';
@@ -42,7 +50,8 @@ import {
 } from './modules/courses.js';
 import {
   rendreRevente, basculerPaiementCommande, basculerLivraisonCommande, supprimerCommande,
-  ouvrirModalNouvelleCommande, ouvrirModalModifierCommande, recalculerTotalCommandeModal, mettreAJourProduitsDepuisProjetModal,
+  ouvrirModalNouvelleCommande, ouvrirModalModifierCommande, rendreLignesCommandeModal, ajouterLigneCommandeModal,
+  modifierLigneCommandeModal, supprimerLigneCommandeModal, recalculerTotalCommandeModal, mettreAJourProduitsDepuisProjetModal,
   remplirSuggestionsClientsModal, sauvegarderCommandeModal, rendreClients,
   ouvrirModalClient, ouvrirModalModifierClient, sauvegarderClientModal, supprimerClient
 } from './modules/revente.js';
@@ -87,13 +96,14 @@ export function initialiserTheme() {
 }
 
 export function basculerTheme() {
-  const isDark = document.body.classList.contains('dark-theme');
+  const isDark = document.body.classList.contains('dark-mode');
   localStorage.setItem('laffinoir-theme', !isDark ? 'dark' : 'light');
   appliquerTheme(!isDark);
 }
 
 export function appliquerTheme(isDark) {
-  document.body.classList.toggle('dark-theme', isDark);
+  document.body.classList.toggle('dark-mode', isDark);
+  document.body.classList.toggle('light-mode', !isDark);
   const btn = document.getElementById('btn-theme-toggle');
   if (btn) {
     btn.innerText = isDark ? '☀️ Clair' : '🌙 Cave';
@@ -175,11 +185,11 @@ export function fermerModals() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
 }
 
-// === SYSTÈME DE MISE À JOUR AUTOMATIQUE VIA GIT (PWA & APK) ===
-const CURRENT_APP_VERSION = '1.2.0';
+// === SYSTÈME DE MISE À JOUR AUTOMATIQUE VIA GIT (PWA) ===
+const CURRENT_APP_VERSION = '1.3.0';
 const GITHUB_REPO = 'QuentinV1/app-charcuterie';
 const UPDATE_DISMISSED_KEY = 'laffinoir_update_dismissed';
-const DEFAULT_APK_URL = `https://github.com/${GITHUB_REPO}/raw/main/LAffinoir.apk`;
+const DEFAULT_STANDALONE_URL = `https://github.com/${GITHUB_REPO}/raw/main/pwa/laffinoir-standalone.html`;
 
 let latestUpdateData = null;
 let lastAutoCheckTime = 0;
@@ -238,14 +248,10 @@ async function fetchLatestReleaseInfo() {
     const rel = await res.json();
     const version = rel.tag_name || rel.name;
     if (!version) return null;
-    const apkAsset = Array.isArray(rel.assets)
-      ? rel.assets.find(a => String(a.name || '').toLowerCase().endsWith('.apk'))
-      : null;
     return {
       version: version.startsWith('v') ? version : `v${version}`,
       notes: (rel.body || '').trim() || 'Nouvelle version publiée sur GitHub Releases.',
-      apkUrl: apkAsset?.browser_download_url || DEFAULT_APK_URL,
-      standaloneUrl: `https://github.com/${GITHUB_REPO}/raw/main/pwa/laffinoir-standalone.html`,
+      standaloneUrl: DEFAULT_STANDALONE_URL,
       htmlUrl: rel.html_url || `https://github.com/${GITHUB_REPO}/releases`,
       source: 'release'
     };
@@ -281,8 +287,7 @@ async function fetchMainBranchInfo() {
     return {
       version: `v${String(data.version).replace(/^v/i, '')}`,
       notes,
-      apkUrl: data.apkUrl || DEFAULT_APK_URL,
-      standaloneUrl: data.standaloneUrl || `https://github.com/${GITHUB_REPO}/raw/main/pwa/laffinoir-standalone.html`,
+      standaloneUrl: data.standaloneUrl || DEFAULT_STANDALONE_URL,
       htmlUrl: `https://github.com/${GITHUB_REPO}`,
       source: 'git-main'
     };
@@ -301,8 +306,7 @@ async function fetchLocalVersionInfo() {
     return {
       version: `v${String(data.version).replace(/^v/i, '')}`,
       notes: (data.notes || '').trim() || 'Nouvelle version déployée sur le serveur.',
-      apkUrl: data.apkUrl || DEFAULT_APK_URL,
-      standaloneUrl: data.standaloneUrl || `https://github.com/${GITHUB_REPO}/raw/main/pwa/laffinoir-standalone.html`,
+      standaloneUrl: data.standaloneUrl || DEFAULT_STANDALONE_URL,
       htmlUrl: `https://github.com/${GITHUB_REPO}`,
       source: 'local-host'
     };
@@ -422,22 +426,90 @@ export async function actualiserPwaDepuisGit() {
   window.location.reload();
 }
 
-export function telechargerApkDepuisGit() {
-  let targetUrl = DEFAULT_APK_URL;
-  if (window.location.protocol === 'file:' && latestUpdateData?.standaloneUrl) {
-    targetUrl = latestUpdateData.standaloneUrl;
-  } else if (latestUpdateData?.apkUrl) {
-    targetUrl = latestUpdateData.apkUrl;
-  }
-
+export function telechargerStandaloneDepuisGit() {
+  let targetUrl = latestUpdateData?.standaloneUrl || DEFAULT_STANDALONE_URL;
   if (!isTrustedGitUrl(targetUrl)) {
-    targetUrl = DEFAULT_APK_URL;
+    targetUrl = DEFAULT_STANDALONE_URL;
   }
   window.open(targetUrl, '_blank', 'noopener,noreferrer');
 }
 
+export function rafraichirVueActive() {
+  const active = document.querySelector('.view.active');
+  if (!active) return;
+  const id = active.id.replace('view-', '');
+  if (id === 'projets') rendreProjets();
+  else if (id === 'projet-detail') {
+    const p = appState.projets.find(x => x.id === uiState.projetActuelId);
+    if (p) {
+      const activeTab = document.querySelector('#view-projet-detail .sub-tab.active');
+      if (activeTab?.id === 'tab-btn-production') rendreProductionProjet(p);
+      else if (activeTab?.id === 'tab-btn-budget') rendreBudgetProjet(p);
+      else rendrePlanningProjet(p);
+    }
+  }
+  else if (id === 'recettes') rendreRecettes();
+  else if (id === 'courses') rendreCourses();
+  else if (id === 'cave') rendreJournalCave();
+  else if (id === 'revente') rendreRevente();
+  else if (id === 'clients') rendreClients();
+  else if (id === 'parametres') rendreParametres();
+  mettreAJourBadgeCourses();
+}
+
+export function ouvrirModalAuth() {
+  const errEl = document.getElementById('auth-error-msg');
+  if (errEl) errEl.style.display = 'none';
+  document.getElementById('modal-auth')?.classList.add('active');
+}
+
+export async function soumettreAuthEmail(isRegister) {
+  const email = document.getElementById('auth-email')?.value || '';
+  const pwd = document.getElementById('auth-password')?.value || '';
+  const errEl = document.getElementById('auth-error-msg');
+  if (errEl) errEl.style.display = 'none';
+  try {
+    if (isRegister) await inscriptionEmail(email, pwd);
+    else await connexionEmail(email, pwd);
+    fermerModals();
+  } catch (e) {
+    if (errEl) {
+      errEl.textContent = e.message || 'Erreur de connexion.';
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+export async function soumettreAuthGoogle() {
+  const errEl = document.getElementById('auth-error-msg');
+  if (errEl) errEl.style.display = 'none';
+  try {
+    await connexionGoogle();
+    fermerModals();
+  } catch (e) {
+    if (errEl) {
+      errEl.textContent = e.message || 'Erreur de connexion Google.';
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+export async function deconnexionCloud() {
+  if (!confirm('Se déconnecter du compte Cloud ?')) return;
+  await deconnexionFirebase();
+  rafraichirVueActive();
+}
+
 // Exposer sur window pour les handlers inline du HTML (onclick, oninput, onchange)
 Object.assign(window, {
+  rafraichirVueActive,
+  ouvrirModalAuth,
+  soumettreAuthEmail,
+  soumettreAuthGoogle,
+  deconnexionCloud,
+  ouvrirModalPartageRecette,
+  ajouterPartageEmailRecette,
+  supprimerPartageEmailRecette,
   naviguerVers,
   basculerTheme,
   toggleModulePrix,
@@ -452,7 +524,7 @@ Object.assign(window, {
   // Mises à jour Git
   verifierMisesAJourGit,
   actualiserPwaDepuisGit,
-  telechargerApkDepuisGit,
+  telechargerStandaloneDepuisGit,
   ignorerMiseAJourGit,
   fermerModalMiseAJourGit,
   // Photos
@@ -476,17 +548,29 @@ Object.assign(window, {
   sauvegarderEvaluationModal,
   // Projets
   rendreProjets,
+  masquerGuideDebutant,
   ouvrirDetailProjet,
   basculerSousOngletProjet,
   rendrePlanningProjet,
   decalerEtapePWA,
   demarrerEtapeMaintenantPWA,
+  ouvrirModalHoraireEtape,
+  confirmerHoraireEtape,
   basculerEtapeProjetActuel,
   basculerStatutProjetActuel,
   supprimerProjetActuel,
   rendreProductionProjet,
   enregistrerSortieReelle,
+  ouvrirModalSortieDecoupe,
+  sauvegarderSortieDecoupe,
+  ouvrirModalModifierLot,
+  sauvegarderLotModifie,
+  ouvrirModalAmeliorerRecette,
+  confirmerAmeliorerRecette,
   rendreBudgetProjet,
+  basculerReventeProjetActuel,
+  ouvrirModalBudgetPrix,
+  sauvegarderBudgetPrix,
   ouvrirModalCommandePourProjetActuel,
   // Recettes
   rendreRecettes,
@@ -495,22 +579,30 @@ Object.assign(window, {
   filtrerRecettes,
   ouvrirFicheRecette,
   basculerMasquageDepuisFiche,
+  basculerMasquageRecetteDirect,
   planifierDepuisFiche,
   supprimerRecetteDirect,
   supprimerRecetteDepuisFiche,
   supprimerRecetteParId,
+  ouvrirModalEditRecetteItem,
+  sauvegarderEditRecetteItem,
+  ouvrirModalAjouterVariantePourRecette,
   ouvrirModalCreerRecette,
   ajouterLigneIngredient,
+  ajouterLigneVarianteCreer,
   ajouterLigneEtape,
   sauvegarderRecettePersonnalisee,
   // Planification
   ouvrirModalPlanifier,
+  definirDatePlanificationShortcut,
   selectionnerRecetteDropdown,
   rendreLignesLotsPlanification,
   modifierLotDraftPlanification,
   ajouterLigneLotPlanification,
+  confirmerCustomLotPlanification,
   supprimerLigneLotPlanification,
   actualiserEstimationPlanification,
+  modifierPrixReventePlanification,
   confirmerPlanification,
   selectionnerModeSalage,
   togglePlanRecetteDropdown,
@@ -537,6 +629,10 @@ Object.assign(window, {
   supprimerCommande,
   ouvrirModalNouvelleCommande,
   ouvrirModalModifierCommande,
+  rendreLignesCommandeModal,
+  ajouterLigneCommandeModal,
+  modifierLigneCommandeModal,
+  supprimerLigneCommandeModal,
   recalculerTotalCommandeModal,
   mettreAJourProduitsDepuisProjetModal,
   remplirSuggestionsClientsModal,
@@ -570,6 +666,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initialiserTheme();
   verifierPersistanceStockage();
   naviguerVers('projets');
+
+  observerAuth(async (user) => {
+    const btnAuth = document.getElementById('btn-auth-header');
+    if (btnAuth) {
+      if (user) {
+        const label = (user.email || user.displayName || 'Cloud').split('@')[0];
+        btnAuth.innerText = `👤 ${label}`;
+        btnAuth.title = `Connecté : ${user.email || user.uid}`;
+      } else {
+        btnAuth.innerText = '☁️ Connexion';
+        btnAuth.title = 'Se connecter au Cloud';
+      }
+    }
+    if (user) {
+      await activerSyncCloud();
+    }
+    rafraichirVueActive();
+  });
 
   if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {
     let isRefreshing = false;

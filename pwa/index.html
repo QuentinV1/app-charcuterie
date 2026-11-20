@@ -24,7 +24,8 @@
         <div class="brand-subtitle">Atelier Charcuterie & Salaison</div>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:8px;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button class="btn-theme-toggle" id="btn-auth-header" onclick="ouvrirModalAuth()" title="Compte Cloud">☁️ Connexion</button>
       <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="basculerTheme()">🌙 Cave</button>
       <button class="btn btn-secondary btn-sm" id="btn-quick-new" onclick="ouvrirModalPlanifier()">+ Planifier</button>
     </div>
@@ -48,6 +49,8 @@
           Nouveau
         </button>
       </div>
+
+      <div id="guide-debutant-container"></div>
 
       <div id="projets-list">
         <!-- Rendered by JS -->
@@ -103,7 +106,7 @@
       <div class="view-header">
         <div>
           <div class="view-title">Charcuteries</div>
-          <div class="view-desc" id="recettes-count">Catalogue artisanal (21 recettes)</div>
+          <div class="view-desc" id="recettes-count">Catalogue artisanal (22 recettes)</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="ouvrirModalCreerRecette()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -214,6 +217,11 @@
 
       <!-- Sous-vue 1: Options & Tarifs -->
       <div id="subview-params-tarifs">
+        <div class="card">
+          <div style="font-weight: 700; margin-bottom: 8px;">Compte Cloud & Synchronisation</div>
+          <div id="cloud-account-box"></div>
+        </div>
+
         <!-- Mises à jour automatiques (Git) -->
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -221,11 +229,11 @@
             <span id="params-version-badge" class="badge badge-primary">v1.2.0</span>
           </div>
           <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">
-            La PWA se met à jour automatiquement depuis Git à chaque ouverture. Vous pouvez aussi forcer une vérification ou télécharger la dernière version Android.
+            La PWA se met à jour automatiquement depuis Git à chaque ouverture. Vous pouvez aussi forcer une vérification ou télécharger la version HTML autonome.
           </p>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button type="button" class="btn btn-primary btn-sm" onclick="verifierMisesAJourGit(true)">🔄 Vérifier les mises à jour</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerApkDepuisGit()">📲 Télécharger l'APK Android</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerStandaloneDepuisGit()">📄 Version hors-ligne (HTML)</button>
           </div>
         </div>
 
@@ -364,13 +372,13 @@
       </div>
       <span>Courses</span>
     </button>
-    <button class="nav-item" onclick="naviguerVers('cave')" id="nav-cave">
-      <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-      <span>Cave</span>
-    </button>
     <button class="nav-item" onclick="naviguerVers('revente')" id="nav-revente" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       <span>Revente</span>
+    </button>
+    <button class="nav-item" onclick="naviguerVers('cave')" id="nav-cave">
+      <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+      <span>Cave</span>
     </button>
     <button class="nav-item" onclick="naviguerVers('parametres')" id="nav-parametres">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -436,6 +444,11 @@
         <div class="form-group" style="flex:1">
           <label class="form-label">Date & heure de démarrage</label>
           <input type="datetime-local" id="plan-date" class="form-control">
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+            <button type="button" class="chip-sm" onclick="definirDatePlanificationShortcut('now')">Maintenant</button>
+            <button type="button" class="chip-sm" onclick="definirDatePlanificationShortcut('demain9h')">Demain 9h00</button>
+            <button type="button" class="chip-sm" onclick="definirDatePlanificationShortcut('samedi9h')">Samedi 9h00</button>
+          </div>
         </div>
       </div>
 
@@ -479,7 +492,18 @@
         </div>
         <div class="form-group" style="flex:1">
           <label class="form-label">Marge revente (%)</label>
-          <input type="number" id="plan-marge" class="form-control" value="10" step="1" oninput="actualiserEstimationPlanification()">
+          <input type="number" id="plan-marge" class="form-control" value="10" step="1" oninput="document.getElementById('plan-prix-revente').dataset.manual=''; actualiserEstimationPlanification()">
+        </div>
+      </div>
+
+      <div id="plan-revente-toggle-row" style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; font-weight:600; cursor:pointer;">
+          <input type="checkbox" id="plan-activer-revente" checked style="width:18px; height:18px; accent-color:var(--primary);">
+          <span>Option Revente sur ce projet</span>
+        </label>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label class="form-label" style="margin:0; font-size:0.78rem;">Prix conseillé (€)</label>
+          <input type="number" id="plan-prix-revente" class="form-control" style="width:90px; padding:6px 8px;" step="0.1" oninput="modifierPrixReventePlanification()">
         </div>
       </div>
 
@@ -524,8 +548,30 @@
           </select>
         </div>
         <div class="form-group" style="flex:1">
+          <label class="form-label">Type</label>
+          <select id="cr-type" class="form-control">
+            <option value="Salaison & Séchage">Salaison & Séchage</option>
+            <option value="Fumaison">Fumaison</option>
+            <option value="Charcuterie cuite">Charcuterie cuite</option>
+            <option value="Personnalisée">Personnalisée</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Unité de base</label>
+          <select id="cr-unite-base" class="form-control">
+            <option value="kg">kg</option>
+            <option value="pièce">pièce</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
           <label class="form-label">Perte cible %</label>
           <input type="number" id="cr-perte" class="form-control" value="35">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">T° cœur (°C)</label>
+          <input type="number" id="cr-temp-coeur" class="form-control" placeholder="Optionnel">
         </div>
       </div>
       <div class="form-group">
@@ -539,6 +585,13 @@
         <button class="btn btn-secondary btn-sm" onclick="ajouterLigneIngredient()">+ Ingrédient</button>
       </div>
       <div id="cr-ingredients-list"></div>
+
+      <!-- Variantes dynamiques -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 14px 0 6px;">
+        <label class="form-label" style="margin:0; font-weight:700;">Lots / Variantes (optionnel)</label>
+        <button class="btn btn-secondary btn-sm" onclick="ajouterLigneVarianteCreer()">+ Lot</button>
+      </div>
+      <div id="cr-variantes-list"></div>
 
       <!-- Étapes dynamiques -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin: 16px 0 6px;">
@@ -566,7 +619,8 @@
       </div>
       <div id="fiche-body"></div>
       <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 12px; gap: 8px;">
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" id="btn-fiche-partager" style="display:none;" onclick="ouvrirModalPartageRecette()">🤝 Partager</button>
           <button class="btn btn-secondary btn-sm" id="btn-fiche-masquer" onclick="basculerMasquageDepuisFiche()">Masquer</button>
           <button class="btn btn-danger btn-sm" id="btn-fiche-supprimer" onclick="supprimerRecetteDepuisFiche()">Supprimer</button>
         </div>
@@ -774,23 +828,19 @@
           <!-- Filled by JS -->
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Produit</label>
-        <input type="text" id="cmd-produit" class="form-control" placeholder="Ex: Magret séché - Fumé">
+      <div id="cmd-produits-chips-wrap" style="display:none; margin-bottom:10px;">
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">Ajout rapide depuis la session</div>
+        <div id="cmd-produits-chips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Quantité</label>
-          <input type="number" id="cmd-qte" class="form-control" value="1" min="1" step="0.5" oninput="recalculerTotalCommandeModal()">
-        </div>
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Prix unitaire (€)</label>
-          <input type="number" id="cmd-prix-unit" class="form-control" value="12.0" step="0.5" oninput="recalculerTotalCommandeModal()">
-        </div>
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Total (€)</label>
-          <input type="number" step="0.1" id="cmd-prix" class="form-control" value="12.0">
-        </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="form-label" style="margin:0;">Produits (Nom · Qté · Unité · €/u)</label>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterLigneCommandeModal()">+ Ligne</button>
+      </div>
+      <div id="cmd-lignes-container"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--surface-subtle); border-radius:var(--radius-sm); margin-bottom:12px;">
+        <span style="font-weight:700; font-size:0.86rem;">Total commande</span>
+        <strong id="cmd-total-auto" style="color:var(--primary); font-size:1.05rem;">12.00 €</strong>
+        <input type="hidden" id="cmd-prix" value="12.00">
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1;">
@@ -982,7 +1032,7 @@
     </div>
   </div>
 
-  <!-- MODAL MISE À JOUR GIT (PWA & ANDROID) -->
+  <!-- MODAL MISE À JOUR GIT (PWA) -->
   <div class="modal-overlay" id="modal-update-git">
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
@@ -998,9 +1048,306 @@
       </div>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <button type="button" class="btn btn-primary" id="btn-update-pwa-refresh" onclick="actualiserPwaDepuisGit()">🔄 Actualiser la PWA maintenant</button>
-        <button type="button" class="btn btn-secondary" id="btn-update-apk-dl" onclick="telechargerApkDepuisGit()">📲 Télécharger l'APK Android</button>
         <button type="button" class="btn btn-secondary" onclick="ignorerMiseAJourGit()">Plus tard</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL HORAIRE EXACT D'UNE ÉTAPE -->
+  <div class="modal-overlay" id="modal-horaire-etape">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title">🕒 Horaire — <span id="modal-horaire-titre">Étape</span></div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="modal-horaire-idx">
+      <div class="form-group">
+        <label class="form-label">Nouvelle date & heure (décale les étapes suivantes)</label>
+        <input type="datetime-local" id="modal-horaire-dt" class="form-control">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerHoraireEtape()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFIER LOT & AVIS -->
+  <div class="modal-overlay" id="modal-lot-edit">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <div class="modal-title">✎ Modifier lot — <span id="modal-lot-edit-titre">Lot</span></div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="modal-lot-edit-idx">
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Quantité réelle</label>
+          <input type="number" step="0.5" min="0" id="modal-lot-edit-qte" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Épices (g)</label>
+          <input type="number" step="1" min="0" id="modal-lot-edit-epices" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Salage (h)</label>
+          <input type="number" step="0.5" min="0" id="modal-lot-edit-salage" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Poids départ (g)</label>
+          <input type="number" step="1" min="0" id="modal-lot-edit-poids-init" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Poids actuel (g)</label>
+          <input type="number" step="1" min="0" id="modal-lot-edit-poids-act" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note dégustation</label>
+        <select id="modal-lot-edit-note" class="form-control">
+          <option value="5">★★★★★ (5/5 — Excellent)</option>
+          <option value="4">★★★★☆ (4/5 — Très bon)</option>
+          <option value="3">★★★☆☆ (3/5 — Correct)</option>
+          <option value="2">★★☆☆☆ (2/5 — Moyen)</option>
+          <option value="1">★☆☆☆☆ (1/5 — À revoir)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avis / Commentaire</label>
+        <input type="text" id="modal-lot-edit-comm" class="form-control" placeholder="Ex: Parfait en sel, fumage équilibré">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderLotModifie()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AMÉLIORER LA RECETTE DE BASE -->
+  <div class="modal-overlay" id="modal-ameliorer-recette">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">✨ Améliorer la recette de base</div>
+          <div id="modal-ameliorer-recette-nom" style="font-size:0.78rem; color:var(--text-muted);"></div>
+        </div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="modal-ameliorer-lot-idx">
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Salage (heures)</label>
+          <input type="number" step="0.5" min="0" id="modal-ameliorer-salage" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Épices (g/unité)</label>
+          <input type="number" step="0.5" min="0" id="modal-ameliorer-epices" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Perte cible (%)</label>
+          <input type="number" step="1" min="1" max="80" id="modal-ameliorer-perte" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note de version</label>
+        <input type="text" id="modal-ameliorer-note" class="form-control" placeholder="Ex: Réduit le salage à 18h, résultat idéal">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerAmeliorerRecette()">Créer nouvelle version</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SORTIE DÉCOUPE -->
+  <div class="modal-overlay" id="modal-sortie-decoupe">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">✎ Sortie — <span id="modal-sortie-nom">Produit</span></div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="modal-sortie-idx">
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Quantité réelle</label>
+          <input type="number" step="0.1" min="0" id="modal-sortie-qte" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Réf boutique (€/u)</label>
+          <input type="number" step="0.1" min="0" id="modal-sortie-val-ref" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Prix revente (€/u)</label>
+          <input type="number" step="0.1" min="0" id="modal-sortie-prix-rev" class="form-control" placeholder="Auto">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Commentaire</label>
+        <input type="text" id="modal-sortie-comm" class="form-control" placeholder="Ex: Bocaux de 500g">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderSortieDecoupe()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BUDGET & PRIX -->
+  <div class="modal-overlay" id="modal-budget-prix">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <div class="modal-title">✎ Modifier les prix du projet</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Quantité matière réelle</label>
+          <input type="number" step="0.1" min="0.1" id="modal-budget-qte" class="form-control">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Prix matière (€/u)</label>
+          <input type="number" step="0.1" min="0" id="modal-budget-prix-mat" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prix revente unitaire fixe (€, optionnel)</label>
+        <input type="number" step="0.1" min="0" id="modal-budget-prix-fixe" class="form-control" placeholder="Calculé auto si vide">
+      </div>
+      <div id="modal-budget-sorties-prix"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderBudgetPrix()">Appliquer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJOUTER LOT PERSONNALISÉ (PLANIFICATION) -->
+  <div class="modal-overlay" id="modal-planif-custom-lot">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">+ Nouveau lot d'assaisonnement</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du lot *</label>
+        <input type="text" id="pcl-nom" class="form-control" placeholder="Ex: Poivre & Genièvre">
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Quantité</label>
+          <input type="number" step="0.5" min="0.5" id="pcl-qte" class="form-control" value="1">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Épices (g/u)</label>
+          <input type="number" step="1" min="0" id="pcl-epices" class="form-control" value="15">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Salage (h, opt.)</label>
+          <input type="number" step="1" min="0" id="pcl-salage" class="form-control" placeholder="Auto">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description des épices</label>
+        <input type="text" id="pcl-desc" class="form-control" placeholder="Ex: Poivre concassé, baies de genièvre">
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+        <input type="checkbox" id="pcl-save-catalog" style="width:18px; height:18px; accent-color:var(--primary);">
+        <span>Enregistrer aussi ce lot dans mes lots prédéfinis</span>
+      </label>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmerCustomLotPlanification()">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJUSTER INGRÉDIENT / ÉTAPE RECETTE (VERSIONING) -->
+  <div class="modal-overlay" id="modal-edit-recette-item">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title" id="edit-rec-item-modal-title">Ajuster la recette</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <input type="hidden" id="edit-rec-item-type">
+      <input type="hidden" id="edit-rec-item-idx">
+      <div id="edit-rec-ing-fields" style="display:none;">
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Quantité</label>
+            <input type="number" step="0.1" min="0" id="edit-rec-ing-qte" class="form-control">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Unité</label>
+            <input type="text" id="edit-rec-ing-unite" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div id="edit-rec-etape-fields" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Titre de l'étape</label>
+          <input type="text" id="edit-rec-etape-titre" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Durée (heures)</label>
+          <input type="number" step="0.5" min="0" id="edit-rec-etape-duree-h" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instructions</label>
+          <textarea id="edit-rec-etape-instr" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="sauvegarderEditRecetteItem()">Enregistrer (v+1)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONNEXION CLOUD (FIREBASE AUTH) -->
+  <div class="modal-overlay" id="modal-auth">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title">☁️ Compte Cloud L'Affinoir</div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">
+        Connectez-vous pour synchroniser vos sessions, ventes, courses et partager vos recettes.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="auth-email" class="form-control" placeholder="prenom@exemple.fr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe (6 car. min)</label>
+        <input type="password" id="auth-password" class="form-control" placeholder="••••••••">
+      </div>
+      <div id="auth-error-msg" style="display:none; color:var(--danger); font-size:0.8rem; margin-bottom:10px;"></div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" class="btn btn-primary" onclick="soumettreAuthEmail(false)">Se connecter</button>
+        <button type="button" class="btn btn-secondary" onclick="soumettreAuthEmail(true)">Créer un compte</button>
+        <button type="button" class="btn btn-secondary" onclick="soumettreAuthGoogle()">G Continuer avec Google</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARTAGER UNE RECETTE -->
+  <div class="modal-overlay" id="modal-partage-recette">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">🤝 Partager la recette</div>
+          <div id="partage-recette-nom" style="font-size:0.78rem; color:var(--text-muted);"></div>
+        </div>
+        <button class="btn-icon" onclick="fermerModals()">✕</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
+        <input type="email" id="partage-email-input" class="form-control" placeholder="Email de la personne" style="flex:1;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="ajouterPartageEmailRecette()">Ajouter</button>
+      </div>
+      <div style="font-size:0.78rem; font-weight:700; margin-bottom:6px;">Personnes ayant accès :</div>
+      <div id="partage-emails-list"></div>
     </div>
   </div>
 

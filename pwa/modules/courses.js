@@ -114,8 +114,20 @@ export function rendreCourses() {
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     });
 
-    container.innerHTML = catsTriees.map(cat => {
+    const budgetRestant = courses.filter(c => !c.achete).reduce((acc, c) => acc + (c.prixReelPaye || c.prix || 0), 0);
+    const budgetCardHtml = prixActif ? `
+      <div class="card" style="background:var(--primary-light); border-color:var(--primary); display:flex; justify-content:space-between; align-items:center; padding:12px 14px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); text-transform:uppercase;">Budget restant estimé</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${nbRestants} article${nbRestants > 1 ? 's' : ''} à acheter</div>
+        </div>
+        <div style="font-size:1.25rem; font-weight:800; color:var(--primary);">${budgetRestant.toFixed(2)} €</div>
+      </div>
+    ` : '';
+
+    container.innerHTML = budgetCardHtml + catsTriees.map(cat => {
       const items = parCategorie[cat];
+      const restantsCat = items.filter(i => !i.tousAchetes).length;
       const sTotal = items.reduce((acc, i) => acc + i.prixTotal, 0);
       const catTitre = LIBELLES_CATEGORIES[cat] || cat;
 
@@ -123,7 +135,7 @@ export function rendreCourses() {
         <div class="card" style="padding:14px; margin-bottom:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-bottom:1px solid var(--border-light); padding-bottom:8px; margin-bottom:10px;">
             <div style="font-weight:800; font-size:0.95rem; color:var(--primary);">${escapeHtml(catTitre)}</div>
-            ${prixActif ? `<div style="font-size:0.8rem; font-weight:700; white-space:nowrap;">${sTotal.toFixed(2)} €</div>` : ''}
+            <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); white-space:nowrap;">${restantsCat}/${items.length} restant${prixActif ? ` · ${sTotal.toFixed(2)} €` : ''}</div>
           </div>
           <div>
             ${items.map(it => {

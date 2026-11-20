@@ -1,4 +1,8 @@
 import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import {
+  estConnecteFirebase, saveUserRecipeFirestore, deleteUserRecipeFirestore,
+  updateRecipeSharingFirestore, deleteBaseRecipeFirestore, getFirebaseUser
+} from './firebase.js';
 export function rendreRecettes() {
   const container = document.getElementById('recettes-list');
   const countDesc = document.getElementById('recettes-count');
@@ -37,25 +41,30 @@ export function rendreRecettes() {
       <div class="card" style="cursor:pointer; ${r.masquee ? 'opacity:0.6; border-style:dashed;' : ''}" onclick="ouvrirFicheRecette('${escapeJsStr(r.id || r.code)}')">
         <div class="card-header" style="margin-bottom:6px;">
           <div style="flex:1; padding-right:8px;">
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
               <span class="badge badge-mini">${escapeHtml(r.famille || 'Artisanal')}</span>
               ${r.typeRecette ? `<span class="badge badge-muted">${escapeHtml(r.typeRecette)}</span>` : ''}
+              ${r._source === 'shared' ? `<span class="badge badge-primary">🤝 Partagée</span>` : (r._source === 'user' && r.baseRecipeId ? `<span class="badge badge-mini">Perso (modifiée)</span>` : (r._source === 'user' ? `<span class="badge badge-mini">Perso</span>` : ''))}
               ${r.masquee ? '<span class="badge badge-muted">Masquée</span>' : ''}
             </div>
             <div style="font-weight:800; font-size:1.05rem; margin-top:3px;">${escapeHtml(r.nom)}</div>
           </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            ${cible ? `<div class="badge badge-green">-${cible}% perte</div>` : ''}
+          <div style="display:flex; align-items:center; gap:4px;">
+            ${cible ? `<div class="badge badge-green">Séchage -${cible}%</div>` : (r.tempCoeurCible ? `<div class="badge badge-primary">Cuisson ${r.tempCoeurCible}°C</div>` : '')}
+            <button class="btn-icon" style="padding:4px;" title="${r.masquee ? 'Afficher' : 'Masquer'}" onclick="event.stopPropagation(); basculerMasquageRecetteDirect('${escapeJsStr(r.id || r.code)}')">${r.masquee ? '👁️' : '🙈'}</button>
             <button class="btn-icon" style="color:var(--danger); padding:4px;" title="Supprimer la recette" onclick="event.stopPropagation(); supprimerRecetteDirect('${escapeJsStr(r.id || r.code)}')">🗑️</button>
           </div>
         </div>
         <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
           ${escapeHtml(r.description || '')}
         </p>
-        <div style="display:flex; gap:12px; margin-top:8px; font-size:0.75rem; color:var(--text-muted);">
-          <span>⏱ ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
-          <span>🧂 ${ingrCount} ingrédient${ingrCount > 1 ? 's' : ''}</span>
-          ${varCount > 0 ? `<span>🌿 ${varCount} lot${varCount > 1 ? 's' : ''} d'épices</span>` : ''}
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;">
+          <div style="display:flex; gap:10px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap;">
+            <span>⏱ ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
+            <span>🧂 ${ingrCount} ingr.</span>
+            ${varCount > 0 ? `<span>🌿 ${varCount} lot${varCount > 1 ? 's' : ''}</span>` : ''}
+          </div>
+          <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.76rem;" onclick="event.stopPropagation(); ouvrirModalPlanifier('${escapeJsStr(r.id || r.code)}')">Planifier</button>
         </div>
       </div>
     `;
@@ -91,11 +100,15 @@ export function ouvrirFicheRecette(id) {
   recetteFicheActiveId = r.id || r.code;
 
   document.getElementById('fiche-nom').innerText = r.nom;
-  document.getElementById('fiche-famille').innerText = `${r.famille} · ${r.typeRecette || ''}`;
+  document.getElementById('fiche-famille').innerText = `${r.famille} · ${r.typeRecette || ''} · v${r.versionActuelle || 1}`;
 
   const btnMasquer = document.getElementById('btn-fiche-masquer');
   if (btnMasquer) {
     btnMasquer.innerText = r.masquee ? 'Démasquer' : 'Masquer';
+  }
+  const btnPartager = document.getElementById('btn-fiche-partager');
+  if (btnPartager) {
+    btnPartager.style.display = (estConnecteFirebase() && r._source !== 'shared') ? 'inline-flex' : 'none';
   }
 
   let html = `
@@ -129,25 +142,31 @@ export function ouvrirFicheRecette(id) {
     `;
   }
 
-  // Ingrédients
+  // Ingrédients (cliquables pour ajuster & versionner)
   if (r.ingredients && r.ingredients.length > 0) {
     html += `
-      <div style="font-weight:700; font-size:0.9rem; margin-top:14px; margin-bottom:6px;">Ingrédients de base</div>
-      <div style="background:var(--surface-subtle); border-radius:var(--radius-sm); padding:10px 12px;">
-        ${r.ingredients.map(ing => `
-          <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:0.82rem; border-bottom:1px solid var(--border-light);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:6px;">
+        <div style="font-weight:700; font-size:0.9rem;">Ingrédients de base</div>
+        <span style="font-size:0.72rem; color:var(--text-muted);">Tap pour ajuster</span>
+      </div>
+      <div style="background:var(--surface-subtle); border-radius:var(--radius-sm); padding:6px 10px;">
+        ${r.ingredients.map((ing, iIdx) => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 2px; font-size:0.82rem; border-bottom:1px solid var(--border-light); cursor:pointer;" onclick="ouvrirModalEditRecetteItem('ing', ${iIdx})">
             <span>${escapeHtml(ing.nomIngredient || ing.nom)}</span>
-            <strong style="color:var(--primary);">${ing.quantite || ing.qte} ${escapeHtml(ing.unite)}</strong>
+            <strong style="color:var(--primary);">${ing.quantite || ing.qte} ${escapeHtml(ing.unite)} ✎</strong>
           </div>
         `).join('')}
       </div>
     `;
   }
 
-  // Variantes
-  if (r.variantes && r.variantes.length > 0) {
-    html += `
-      <div style="font-weight:700; font-size:0.9rem; margin-top:14px; margin-bottom:6px;">Lots & Variantes d'épices</div>
+  // Variantes + bouton + Ajouter
+  html += `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:6px;">
+      <div style="font-weight:700; font-size:0.9rem;">Lots & Variantes d'épices</div>
+      <button type="button" class="btn btn-secondary btn-sm" style="padding:3px 9px; font-size:0.75rem;" onclick="ouvrirModalAjouterVariantePourRecette('${escapeJsStr(r.id || r.code)}')">+ Ajouter</button>
+    </div>
+    ${(r.variantes && r.variantes.length > 0) ? `
       <div style="display:flex; flex-direction:column; gap:6px;">
         ${r.variantes.map(v => `
           <div style="font-size:0.8rem; padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface);">
@@ -157,17 +176,23 @@ export function ouvrirFicheRecette(id) {
           </div>
         `).join('')}
       </div>
-    `;
-  }
+    ` : '<div style="font-size:0.78rem; color:var(--text-muted);">Aucun lot prédéfini.</div>'}
+  `;
 
-  // Étapes
+  // Étapes (cliquables pour ajuster & versionner)
   if (r.etapes && r.etapes.length > 0) {
     html += `
-      <div style="font-weight:700; font-size:0.9rem; margin-top:14px; margin-bottom:6px;">Planning de fabrication</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; margin-bottom:6px;">
+        <div style="font-weight:700; font-size:0.9rem;">Planning de fabrication</div>
+        <span style="font-size:0.72rem; color:var(--text-muted);">Tap pour ajuster</span>
+      </div>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        ${r.etapes.map(e => `
-          <div style="font-size:0.82rem; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface-subtle);">
-            <div style="font-weight:700; color:var(--text);">${e.ordre}. ${escapeHtml(e.titre)}</div>
+        ${r.etapes.map((e, eIdx) => `
+          <div style="font-size:0.82rem; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface-subtle); cursor:pointer;" onclick="ouvrirModalEditRecetteItem('etape', ${eIdx})">
+            <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--text);">
+              <span>${e.ordre}. ${escapeHtml(e.titre)}</span>
+              <span style="color:var(--primary); font-size:0.75rem;">✎</span>
+            </div>
             <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px; white-space:pre-line;">${escapeHtml(e.instructions || '')}</div>
             ${e.astuce ? `<div class="astuce-box" style="margin-top:4px;">💡 ${escapeHtml(e.astuce)}</div>` : ''}
           </div>
@@ -176,8 +201,163 @@ export function ouvrirFicheRecette(id) {
     `;
   }
 
+  if (Array.isArray(r.historiqueVersions) && r.historiqueVersions.length > 0) {
+    html += `
+      <div style="font-weight:700; font-size:0.85rem; margin-top:14px; margin-bottom:4px;">Historique des versions</div>
+      <div style="font-size:0.75rem; color:var(--text-muted);">
+        ${r.historiqueVersions.slice(0, 5).map(hv => `<div>• <strong>v${hv.version}</strong> (${escapeHtml(hv.date || '')}) : ${escapeHtml(hv.resume || '')}</div>`).join('')}
+      </div>
+    `;
+  }
+
   document.getElementById('fiche-body').innerHTML = html;
   document.getElementById('modal-fiche-recette').classList.add('active');
+}
+
+export function basculerMasquageRecetteDirect(id) {
+  const r = appState.recettes.find(x => x.id === id || x.code === id);
+  if (!r) return;
+  r.masquee = !r.masquee;
+  sauvegarderDonnees();
+  rendreRecettes();
+}
+
+export function ouvrirModalEditRecetteItem(type, idx) {
+  const r = appState.recettes.find(x => x.id === recetteFicheActiveId || x.code === recetteFicheActiveId);
+  if (!r) return;
+  document.getElementById('edit-rec-item-type').value = type;
+  document.getElementById('edit-rec-item-idx').value = idx;
+  if (type === 'ing') {
+    const ing = r.ingredients[idx];
+    if (!ing) return;
+    document.getElementById('edit-rec-item-modal-title').innerText = `Ajuster : ${ing.nomIngredient || ing.nom}`;
+    document.getElementById('edit-rec-ing-fields').style.display = 'block';
+    document.getElementById('edit-rec-etape-fields').style.display = 'none';
+    document.getElementById('edit-rec-ing-qte').value = ing.quantite || ing.qte || 0;
+    document.getElementById('edit-rec-ing-unite').value = ing.unite || 'g';
+  } else {
+    const et = r.etapes[idx];
+    if (!et) return;
+    document.getElementById('edit-rec-item-modal-title').innerText = `Ajuster l'étape ${et.ordre || idx + 1}`;
+    document.getElementById('edit-rec-ing-fields').style.display = 'none';
+    document.getElementById('edit-rec-etape-fields').style.display = 'block';
+    document.getElementById('edit-rec-etape-titre').value = et.titre || '';
+    document.getElementById('edit-rec-etape-duree-h').value = Math.round(((et.dureeMinutes || 0) / 60) * 10) / 10;
+    document.getElementById('edit-rec-etape-instr').value = et.instructions || '';
+  }
+  document.getElementById('modal-edit-recette-item').classList.add('active');
+}
+
+export function sauvegarderEditRecetteItem() {
+  const r = appState.recettes.find(x => x.id === recetteFicheActiveId || x.code === recetteFicheActiveId);
+  if (!r) return;
+  const type = document.getElementById('edit-rec-item-type').value;
+  const idx = parseInt(document.getElementById('edit-rec-item-idx').value, 10);
+  let resume = '';
+
+  if (type === 'ing' && r.ingredients[idx]) {
+    const ing = r.ingredients[idx];
+    const qte = parseFloat(document.getElementById('edit-rec-ing-qte').value);
+    const unite = document.getElementById('edit-rec-ing-unite').value.trim() || ing.unite;
+    if (Number.isFinite(qte) && qte >= 0) ing.quantite = qte;
+    ing.unite = unite;
+    resume = `Ingrédient "${ing.nomIngredient || ing.nom}" → ${ing.quantite} ${ing.unite}`;
+  } else if (type === 'etape' && r.etapes[idx]) {
+    const et = r.etapes[idx];
+    const titre = document.getElementById('edit-rec-etape-titre').value.trim();
+    const dureeH = parseFloat(document.getElementById('edit-rec-etape-duree-h').value);
+    const instr = document.getElementById('edit-rec-etape-instr').value.trim();
+    if (titre) et.titre = titre;
+    if (Number.isFinite(dureeH) && dureeH >= 0) et.dureeMinutes = Math.round(dureeH * 60);
+    et.instructions = instr;
+    resume = `Étape "${et.titre}" modifiée`;
+  }
+
+  r.versionActuelle = (r.versionActuelle || 1) + 1;
+  if (!Array.isArray(r.historiqueVersions)) r.historiqueVersions = [];
+  r.historiqueVersions.unshift({
+    version: r.versionActuelle,
+    date: new Date().toISOString().slice(0, 10),
+    resume
+  });
+
+  sauvegarderDonnees();
+  if (estConnecteFirebase()) {
+    saveUserRecipeFirestore(r).then((saved) => {
+      if (saved) {
+        Object.assign(r, saved);
+        recetteFicheActiveId = saved.id;
+      }
+    }).catch(err => console.warn('Sync recette modifiée:', err));
+  }
+  document.getElementById('modal-edit-recette-item').classList.remove('active');
+  ouvrirFicheRecette(r.id || r.code);
+}
+
+export async function ouvrirModalPartageRecette() {
+  if (!recetteFicheActiveId || !estConnecteFirebase()) return;
+  let r = appState.recettes.find(x => x.id === recetteFicheActiveId || x.code === recetteFicheActiveId);
+  if (!r) return;
+
+  if (r._source === 'base' || !r.ownerUid) {
+    const forked = await saveUserRecipeFirestore(r);
+    if (forked) {
+      Object.assign(r, forked);
+      recetteFicheActiveId = forked.id;
+    }
+  }
+
+  document.getElementById('partage-recette-nom').innerText = r.nom;
+  document.getElementById('partage-email-input').value = '';
+  rendreListePartagesRecette(r);
+  document.getElementById('modal-partage-recette').classList.add('active');
+}
+
+function rendreListePartagesRecette(r) {
+  const listEl = document.getElementById('partage-emails-list');
+  if (!listEl) return;
+  const emails = Array.isArray(r.sharedWithEmails) ? r.sharedWithEmails : [];
+  listEl.innerHTML = emails.length === 0
+    ? '<div style="font-size:0.8rem; color:var(--text-muted);">Non partagée pour le moment.</div>'
+    : emails.map(em => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:var(--surface-subtle); border-radius:6px; margin-bottom:6px; font-size:0.84rem;">
+        <span>${escapeHtml(em)}</span>
+        <button type="button" class="btn-icon" style="color:var(--danger);" onclick="supprimerPartageEmailRecette('${escapeJsStr(em)}')">✕</button>
+      </div>
+    `).join('');
+}
+
+export async function ajouterPartageEmailRecette() {
+  const r = appState.recettes.find(x => x.id === recetteFicheActiveId || x.code === recetteFicheActiveId);
+  if (!r) return;
+  const inp = document.getElementById('partage-email-input');
+  const email = (inp.value || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    alert('Veuillez saisir une adresse email valide.');
+    return;
+  }
+  const emails = Array.isArray(r.sharedWithEmails) ? [...r.sharedWithEmails] : [];
+  if (!emails.includes(email)) emails.push(email);
+  r.sharedWithEmails = emails;
+  await updateRecipeSharingFirestore(r.id, emails);
+  inp.value = '';
+  rendreListePartagesRecette(r);
+}
+
+export async function supprimerPartageEmailRecette(email) {
+  const r = appState.recettes.find(x => x.id === recetteFicheActiveId || x.code === recetteFicheActiveId);
+  if (!r) return;
+  r.sharedWithEmails = (r.sharedWithEmails || []).filter(e => e !== email);
+  await updateRecipeSharingFirestore(r.id, r.sharedWithEmails);
+  rendreListePartagesRecette(r);
+}
+
+export function ouvrirModalAjouterVariantePourRecette(recId) {
+  const select = document.getElementById('lots-param-recette-select');
+  if (select) select.value = recId;
+  if (typeof window.ouvrirModalAjouterVariante === 'function') {
+    window.ouvrirModalAjouterVariante();
+  }
 }
 
 export function basculerMasquageDepuisFiche() {
@@ -223,11 +403,30 @@ export function supprimerRecetteParId(id) {
   const rec = appState.recettes[idx];
   const recId = rec.id || rec.code;
 
-  if (!Array.isArray(appState.recettesSupprimees)) {
-    appState.recettesSupprimees = [];
-  }
-  if (!appState.recettesSupprimees.includes(recId)) {
-    appState.recettesSupprimees.push(recId);
+  if (estConnecteFirebase()) {
+    const me = getFirebaseUser();
+    if (rec._source === 'user' || rec.ownerUid === me?.uid) {
+      if (rec._source === 'base') {
+        if (confirm('Voulez-vous supprimer cette recette de base pour TOUT LE MONDE ?\n(Les personnes ayant déjà créé un projet ou modifié la recette la conserveront.)')) {
+          deleteBaseRecipeFirestore(recId).catch(err => console.warn(err));
+        } else {
+          if (!Array.isArray(appState.recettesSupprimees)) appState.recettesSupprimees = [];
+          if (!appState.recettesSupprimees.includes(recId)) appState.recettesSupprimees.push(recId);
+        }
+      } else {
+        deleteUserRecipeFirestore(recId).catch(err => console.warn(err));
+      }
+    } else if (rec._source === 'base') {
+      if (!Array.isArray(appState.recettesSupprimees)) appState.recettesSupprimees = [];
+      if (!appState.recettesSupprimees.includes(recId)) appState.recettesSupprimees.push(recId);
+    }
+  } else {
+    if (!Array.isArray(appState.recettesSupprimees)) {
+      appState.recettesSupprimees = [];
+    }
+    if (!appState.recettesSupprimees.includes(recId)) {
+      appState.recettesSupprimees.push(recId);
+    }
   }
 
   appState.recettes.splice(idx, 1);
@@ -246,37 +445,61 @@ export function ouvrirModalCreerRecette() {
   if (!modal) return;
   document.getElementById('cr-nom').value = '';
   document.getElementById('cr-famille').value = 'Porc';
+  const typeEl = document.getElementById('cr-type');
+  if (typeEl) typeEl.value = 'Salaison & Séchage';
+  const uniteEl = document.getElementById('cr-unite-base');
+  if (uniteEl) uniteEl.value = 'kg';
   document.getElementById('cr-perte').value = '35';
+  const tempEl = document.getElementById('cr-temp-coeur');
+  if (tempEl) tempEl.value = '';
   document.getElementById('cr-desc').value = '';
   const ingList = document.getElementById('cr-ingredients-list');
+  const varList = document.getElementById('cr-variantes-list');
   const etapesList = document.getElementById('cr-etapes-list');
   if (ingList) ingList.innerHTML = '';
+  if (varList) varList.innerHTML = '';
   if (etapesList) etapesList.innerHTML = '';
-  ajouterLigneIngredient('Sel fin', '28', 'g', 'POURCENT_POIDS');
+  ajouterLigneIngredient('Sel fin', '28', 'g', 'POURCENT_POIDS', '1');
   ajouterLigneEtape('Salage & Assaisonnement', '2', 'jours', 'Frotter la pièce avec le mélange sel et épices puis mettre au frais.');
   modal.classList.add('active');
 }
 
-export function ajouterLigneIngredient(nom = '', quantite = '', unite = 'g', typeCalcul = 'POURCENT_POIDS') {
+export function ajouterLigneIngredient(nom = '', quantite = '', unite = 'g', typeCalcul = 'POURCENT_POIDS', prix = '') {
   const list = document.getElementById('cr-ingredients-list');
   if (!list) return;
   const row = document.createElement('div');
   row.className = 'cr-ing-row';
-  row.style.cssText = 'display:grid; grid-template-columns:1.5fr 0.7fr 0.7fr 1.1fr auto; gap:6px; margin-bottom:6px; align-items:center;';
+  row.style.cssText = 'display:grid; grid-template-columns:1.3fr 0.6fr 0.6fr 0.9fr 0.6fr auto; gap:5px; margin-bottom:6px; align-items:center;';
   row.innerHTML = `
-    <input type="text" class="form-control cr-ing-nom" placeholder="Ingrédient" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.82rem;">
-    <input type="number" step="0.1" class="form-control cr-ing-qte" placeholder="Qté" value="${escapeHtml(String(quantite))}" style="padding:7px 8px; font-size:0.82rem;">
-    <select class="form-control cr-ing-unite" style="padding:7px 6px; font-size:0.82rem;">
+    <input type="text" class="form-control cr-ing-nom" placeholder="Ingrédient" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.8rem;">
+    <input type="number" step="0.1" class="form-control cr-ing-qte" placeholder="Qté" value="${escapeHtml(String(quantite))}" style="padding:7px 6px; font-size:0.8rem;">
+    <select class="form-control cr-ing-unite" style="padding:7px 4px; font-size:0.8rem;">
       <option value="g" ${unite === 'g' ? 'selected' : ''}>g</option>
       <option value="kg" ${unite === 'kg' ? 'selected' : ''}>kg</option>
       <option value="mL" ${unite === 'mL' ? 'selected' : ''}>mL</option>
       <option value="pièce" ${unite === 'pièce' ? 'selected' : ''}>pièce</option>
     </select>
-    <select class="form-control cr-ing-mode" style="padding:7px 6px; font-size:0.82rem;">
+    <select class="form-control cr-ing-mode" style="padding:7px 4px; font-size:0.8rem;">
       <option value="POURCENT_POIDS" ${typeCalcul === 'POURCENT_POIDS' ? 'selected' : ''}>par kg</option>
       <option value="PAR_UNITE" ${typeCalcul === 'PAR_UNITE' ? 'selected' : ''}>par unité</option>
       <option value="FIXE" ${typeCalcul === 'FIXE' ? 'selected' : ''}>fixe</option>
     </select>
+    <input type="number" step="0.1" min="0" class="form-control cr-ing-prix" placeholder="€/u" value="${escapeHtml(String(prix))}" style="padding:7px 6px; font-size:0.8rem;" title="Prix estimé (€/kg ou €/unité)">
+    <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="color:var(--danger); padding:4px 6px;" title="Supprimer">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+export function ajouterLigneVarianteCreer(nom = '', epices = '', gParUnite = '15') {
+  const list = document.getElementById('cr-variantes-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'cr-var-row';
+  row.style.cssText = 'display:grid; grid-template-columns:1fr 1.4fr 0.6fr auto; gap:5px; margin-bottom:6px; align-items:center;';
+  row.innerHTML = `
+    <input type="text" class="form-control cr-var-nom" placeholder="Ex: Poivre" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.8rem;">
+    <input type="text" class="form-control cr-var-desc" placeholder="Épices" value="${escapeHtml(epices)}" style="padding:7px 8px; font-size:0.8rem;">
+    <input type="number" step="1" min="0" class="form-control cr-var-g" placeholder="g/u" value="${escapeHtml(String(gParUnite))}" style="padding:7px 6px; font-size:0.8rem;">
     <button type="button" class="btn-icon" onclick="this.parentElement.remove()" style="color:var(--danger); padding:4px 6px;" title="Supprimer">✕</button>
   `;
   list.appendChild(row);
@@ -311,8 +534,12 @@ export function sauvegarderRecettePersonnalisee() {
     return;
   }
   const famille = document.getElementById('cr-famille').value || 'Porc';
+  const typeRecette = document.getElementById('cr-type')?.value || 'Personnalisée';
+  const uniteBase = document.getElementById('cr-unite-base')?.value || 'kg';
   const perteParsed = parseFloat(document.getElementById('cr-perte').value);
   const perteCiblePct = (!Number.isNaN(perteParsed) && perteParsed >= 0) ? perteParsed : 35;
+  const tempParsed = parseFloat(document.getElementById('cr-temp-coeur')?.value || '');
+  const tempCoeurCible = (!Number.isNaN(tempParsed) && tempParsed > 0) ? tempParsed : null;
   const description = (document.getElementById('cr-desc').value || '').trim();
 
   const ingredients = Array.from(document.querySelectorAll('#cr-ingredients-list .cr-ing-row')).map(row => {
@@ -320,15 +547,29 @@ export function sauvegarderRecettePersonnalisee() {
     const qte = parseFloat(row.querySelector('.cr-ing-qte')?.value || '0') || 0;
     const unite = row.querySelector('.cr-ing-unite')?.value || 'g';
     const typeCalcul = row.querySelector('.cr-ing-mode')?.value || 'POURCENT_POIDS';
+    const prix = parseFloat(row.querySelector('.cr-ing-prix')?.value || '0') || 0;
     return {
       nom: ingNom,
       quantite: qte,
       unite,
       typeCalcul,
+      modeCalcul: typeCalcul,
       categorieCourses: 'Épices & Assaisonnement',
-      prixKgOuUniteEstime: 0
+      prixKgOuUniteEstime: prix
     };
   }).filter(i => i.nom && i.quantite > 0);
+
+  const variantes = Array.from(document.querySelectorAll('#cr-variantes-list .cr-var-row')).map(row => {
+    const vNom = (row.querySelector('.cr-var-nom')?.value || '').trim();
+    const vDesc = (row.querySelector('.cr-var-desc')?.value || '').trim();
+    const vG = parseFloat(row.querySelector('.cr-var-g')?.value || '0') || 0;
+    return {
+      nom: vNom,
+      descriptionEpices: vDesc,
+      epicesGrammesParUnite: vG,
+      ajouteEtapeFumage: false
+    };
+  }).filter(v => v.nom);
 
   let offsetMin = 0;
   const etapes = Array.from(document.querySelectorAll('#cr-etapes-list .cr-etape-row')).map((row, idx) => {
@@ -358,19 +599,26 @@ export function sauvegarderRecettePersonnalisee() {
     code,
     nom,
     famille,
-    typeRecette: 'Personnalisée',
-    uniteBase: 'kg',
+    typeRecette,
+    uniteBase,
     quantiteBaseDefaut: 1,
     description: description || 'Recette personnalisée',
     perteCiblePct,
+    tempCoeurCible,
+    versionActuelle: 1,
     ingredients,
     etapes,
-    variantes: [],
+    variantes,
     sortiesDecoupe: []
   };
 
   appState.recettes.unshift(nouvelleRecette);
   sauvegarderDonnees();
+  if (estConnecteFirebase()) {
+    saveUserRecipeFirestore(nouvelleRecette).then(saved => {
+      if (saved) Object.assign(nouvelleRecette, saved);
+    }).catch(err => console.warn('Sync nouvelle recette:', err));
+  }
   rendreRecettes();
   if (typeof window.initialiserSelectRecettesLotsParam === 'function') window.initialiserSelectRecettesLotsParam();
   window.fermerModals();

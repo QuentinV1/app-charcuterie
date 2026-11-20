@@ -1,0 +1,365 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model (L'Affinoir PWA - app-charcuterie)
+    // ===============================================================
+    //
+    // Collection: charcuterie_base_recipes/{recipeId}
+    // Fields:
+    //   - ownerUid: string (required, immutable, == request.auth.uid on create unless admin)
+    //   - nom: string (required, 1..200 chars)
+    //   - famille: string (required, 1..100 chars)
+    //   - id, code: string (optional, 1..128 chars)
+    //   - typeRecette, type: string (optional, 0..60 chars)
+    //   - uniteBase, unite: string (optional, 0..40 chars)
+    //   - quantiteDefaut: number (optional, 0..100000)
+    //   - perteCiblePct, perteCible: number (optional, 0..100)
+    //   - tempCoeurCible: number (optional, -50..300)
+    //   - conditionsConservation, pointsVigilance: string (optional, 0..2000 chars)
+    //   - description: string (optional, 0..4000 chars)
+    //   - masquee: bool (optional)
+    //   - sortiesDecoupe, variantes, historiqueVersions: list (optional, <= 50 items)
+    //   - ingredients, etapes: list (optional, <= 100 items)
+    //   - versionActuelle: number (optional, 1..10000)
+    //   - createdAt: timestamp or ISO string (optional, immutable)
+    //   - updatedAt: timestamp or ISO string (optional)
+    //
+    // Collection: charcuterie_user_recipes/{recipeId}
+    // Fields:
+    //   - All fields from charcuterie_base_recipes, plus:
+    //   - sharedWithEmails: list (required, <= 20 items, lowercase emails for sharing)
+    //   - baseRecipeId: string (optional, 0..128 chars)
+    //
+    // Collection: charcuterie_users/{userId}/projects/{docId}
+    //   Private per-user projects (lots, historiquePesees, dates, notes).
+    // Collection: charcuterie_users/{userId}/courses/{docId}
+    //   Private per-user shopping list items.
+    // Collection: charcuterie_users/{userId}/commandes/{docId}
+    //   Private per-user orders.
+    // Collection: charcuterie_users/{userId}/clients/{docId}
+    //   Private per-user clients.
+    // Collection: charcuterie_users/{userId}/cave_releves/{docId}
+    //   Private per-user curing cellar temperature/humidity logs.
+    // Collection: charcuterie_users/{userId}/evaluations/{docId}
+    //   Private per-user tasting evaluations.
+    // Collection: charcuterie_users/{userId}/settings/{docId}
+    //   Private per-user app settings.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() >= minLen &&
+             request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidOptionalNumber(field, minVal, maxVal) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
+             (request.resource.data[field] is number &&
+              request.resource.data[field] >= minVal &&
+              request.resource.data[field] <= maxVal);
+    }
+
+    function isValidOptionalBool(field) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] is bool;
+    }
+
+    function isValidOptionalList(field, maxSize) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
+             (request.resource.data[field] is list &&
+              request.resource.data[field].size() <= maxSize);
+    }
+
+    function isValidOptionalTimestampOrDateStr(field) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
+             request.resource.data[field] is timestamp ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() <= 40);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function hasValidCommonRecipeFields(data) {
+      return data.ownerUid is string && data.ownerUid.size() >= 1 && data.ownerUid.size() <= 128 &&
+             validStringLength('nom', 1, 200) &&
+             validStringLength('famille', 1, 100) &&
+             isValidOptionalString('id', 1, 128) &&
+             isValidOptionalString('code', 1, 128) &&
+             isValidOptionalString('typeRecette', 0, 60) &&
+             isValidOptionalString('type', 0, 60) &&
+             isValidOptionalString('uniteBase', 0, 40) &&
+             isValidOptionalString('unite', 0, 40) &&
+             isValidOptionalNumber('quantiteDefaut', 0, 100000) &&
+             isValidOptionalNumber('perteCiblePct', 0, 100) &&
+             isValidOptionalNumber('perteCible', 0, 100) &&
+             isValidOptionalNumber('tempCoeurCible', -50, 300) &&
+             isValidOptionalString('conditionsConservation', 0, 2000) &&
+             isValidOptionalString('pointsVigilance', 0, 2000) &&
+             isValidOptionalString('description', 0, 4000) &&
+             isValidOptionalBool('masquee') &&
+             isValidOptionalList('sortiesDecoupe', 50) &&
+             isValidOptionalList('variantes', 50) &&
+             isValidOptionalList('ingredients', 100) &&
+             isValidOptionalList('etapes', 100) &&
+             isValidOptionalNumber('versionActuelle', 1, 10000) &&
+             isValidOptionalList('historiqueVersions', 50) &&
+             isValidOptionalTimestampOrDateStr('createdAt') &&
+             isValidOptionalTimestampOrDateStr('updatedAt');
+    }
+
+    function isValidBaseRecipe(data) {
+      return hasRequiredFields(['ownerUid', 'nom', 'famille']) &&
+             hasOnlyAllowedFields([
+               'ownerUid', 'nom', 'famille', 'id', 'code', 'typeRecette', 'type',
+               'uniteBase', 'unite', 'quantiteDefaut', 'perteCiblePct', 'perteCible',
+               'tempCoeurCible', 'conditionsConservation', 'pointsVigilance',
+               'description', 'masquee', 'sortiesDecoupe', 'variantes',
+               'ingredients', 'etapes', 'versionActuelle', 'historiqueVersions',
+               'createdAt', 'updatedAt'
+             ]) &&
+             hasValidCommonRecipeFields(data);
+    }
+
+    function isValidUserRecipe(data) {
+      return hasRequiredFields(['ownerUid', 'nom', 'famille', 'sharedWithEmails']) &&
+             hasOnlyAllowedFields([
+               'ownerUid', 'nom', 'famille', 'sharedWithEmails', 'baseRecipeId',
+               'id', 'code', 'typeRecette', 'type', 'uniteBase', 'unite',
+               'quantiteDefaut', 'perteCiblePct', 'perteCible', 'tempCoeurCible',
+               'conditionsConservation', 'pointsVigilance', 'description', 'masquee',
+               'sortiesDecoupe', 'variantes', 'ingredients', 'etapes',
+               'versionActuelle', 'historiqueVersions', 'createdAt', 'updatedAt'
+             ]) &&
+             hasValidCommonRecipeFields(data) &&
+             isValidOptionalString('baseRecipeId', 0, 128) &&
+             data.sharedWithEmails is list &&
+             data.sharedWithEmails.size() <= 20;
+    }
+
+    function isValidUserSubdocBase(data) {
+      return data is map &&
+             data.keys().size() >= 1 &&
+             data.keys().size() <= 40 &&
+             isValidOptionalString('id', 1, 128) &&
+             isValidOptionalTimestampOrDateStr('createdAt') &&
+             isValidOptionalTimestampOrDateStr('updatedAt');
+    }
+
+    function isValidProject(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('nom', 0, 200) &&
+             isValidOptionalString('statut', 0, 50) &&
+             isValidOptionalString('dateDebut', 0, 40) &&
+             isValidOptionalString('dateFin', 0, 40) &&
+             isValidOptionalString('recetteId', 0, 128) &&
+             isValidOptionalString('recettePrincipaleId', 0, 128) &&
+             isValidOptionalString('nomRecettePrincipale', 0, 200) &&
+             isValidOptionalString('notes', 0, 5000) &&
+             isValidOptionalList('lots', 100);
+    }
+
+    function isValidCourse(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('nom', 0, 200) &&
+             isValidOptionalString('categorie', 0, 80) &&
+             isValidOptionalString('unite', 0, 40) &&
+             isValidOptionalString('projetId', 0, 128) &&
+             isValidOptionalNumber('quantite', 0, 1000000) &&
+             isValidOptionalBool('coche');
+    }
+
+    function isValidCommande(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('clientId', 0, 128) &&
+             isValidOptionalString('clientNom', 0, 200) &&
+             isValidOptionalString('statut', 0, 50) &&
+             isValidOptionalString('date', 0, 40) &&
+             isValidOptionalString('notes', 0, 2000) &&
+             isValidOptionalList('lignes', 100);
+    }
+
+    function isValidClient(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('nom', 0, 200) &&
+             isValidOptionalString('telephone', 0, 40) &&
+             isValidOptionalString('email', 0, 254) &&
+             isValidOptionalString('adresse', 0, 500) &&
+             isValidOptionalString('notes', 0, 2000);
+    }
+
+    function isValidCaveReleve(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('date', 0, 40) &&
+             isValidOptionalNumber('temperature', -50, 100) &&
+             isValidOptionalNumber('hygrometrie', 0, 100) &&
+             isValidOptionalString('note', 0, 1000);
+    }
+
+    function isValidEvaluation(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('projetId', 0, 128) &&
+             isValidOptionalString('recetteId', 0, 128) &&
+             isValidOptionalString('nomRecette', 0, 200) &&
+             isValidOptionalString('date', 0, 40) &&
+             isValidOptionalNumber('noteGlobale', 0, 20) &&
+             isValidOptionalString('texture', 0, 100) &&
+             isValidOptionalString('salinite', 0, 100) &&
+             isValidOptionalString('aromes', 0, 100) &&
+             isValidOptionalString('commentaire', 0, 2000);
+    }
+
+    function isValidSetting(data) {
+      return isValidUserSubdocBase(data) &&
+             isValidOptionalString('cle', 0, 100) &&
+             isValidOptionalString('libelle', 0, 200) &&
+             isValidOptionalString('description', 0, 1000) &&
+             isValidOptionalString('unite', 0, 40);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // 1. Global base recipes (readable by any authenticated user; writable by owner or admin)
+    match /charcuterie_base_recipes/{recipeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       isValidBaseRecipe(request.resource.data) &&
+                       (request.resource.data.ownerUid == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() &&
+                       isValidBaseRecipe(request.resource.data) &&
+                       (resource.data.ownerUid == request.auth.uid || isAdmin()) &&
+                       areImmutableFieldsUnchanged(['ownerUid', 'createdAt']);
+      allow delete: if isAuthenticated() &&
+                       (resource.data.ownerUid == request.auth.uid || isAdmin());
+    }
+
+    // 2. User personal & modified recipes (owner full access; shared emails read-only)
+    match /charcuterie_user_recipes/{recipeId} {
+      allow read: if isAuthenticated() && (
+        resource.data.ownerUid == request.auth.uid ||
+        (request.auth.token.email != null &&
+         resource.data.sharedWithEmails is list &&
+         request.auth.token.email.lower() in resource.data.sharedWithEmails)
+      );
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerUid == request.auth.uid &&
+                       isValidUserRecipe(request.resource.data);
+      allow update: if isAuthenticated() &&
+                       resource.data.ownerUid == request.auth.uid &&
+                       request.resource.data.ownerUid == resource.data.ownerUid &&
+                       areImmutableFieldsUnchanged(['ownerUid', 'createdAt']) &&
+                       isValidUserRecipe(request.resource.data);
+      allow delete: if isAuthenticated() &&
+                       resource.data.ownerUid == request.auth.uid;
+    }
+
+    // 3. Per-user private data subcollections
+    match /charcuterie_users/{userId} {
+      match /projects/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidProject(request.resource.data);
+        allow update: if isOwner(userId) && isValidProject(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /courses/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCourse(request.resource.data);
+        allow update: if isOwner(userId) && isValidCourse(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /commandes/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCommande(request.resource.data);
+        allow update: if isOwner(userId) && isValidCommande(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /clients/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidClient(request.resource.data);
+        allow update: if isOwner(userId) && isValidClient(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /cave_releves/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCaveReleve(request.resource.data);
+        allow update: if isOwner(userId) && isValidCaveReleve(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /evaluations/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidEvaluation(request.resource.data);
+        allow update: if isOwner(userId) && isValidEvaluation(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /settings/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSetting(request.resource.data);
+        allow update: if isOwner(userId) && isValidSetting(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // 4. Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

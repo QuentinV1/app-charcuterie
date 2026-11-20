@@ -1,8 +1,7 @@
 {
   "name": "laffinoir",
-  "version": "1.2.0",
-  "versionCode": 3,
-  "apkUrl": "https://github.com/QuentinV1/app-charcuterie/raw/main/LAffinoir.apk",
+  "version": "1.3.0",
+  "versionCode": 4,
   "standaloneUrl": "https://github.com/QuentinV1/app-charcuterie/raw/main/pwa/laffinoir-standalone.html",
-  "notes": "Liste de courses groupée/dédupliquée, modale + Lot PWA, parité backup Android, mise à l'échelle auto des lots et calcul POURCENT_POIDS à la pièce."
+  "notes": "Passage en PWA uniquement (suppression de l'APK) : thème sombre Cave corrigé, guide débutant, étape en cours + horaire exact, jauge de perte de poids, édition/versioning des recettes, amélioration recette depuis un lot, commandes multi-produits et édition prix/sorties."
 }

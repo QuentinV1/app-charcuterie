@@ -1,6 +1,6 @@
-# 📲 L'Affinoir - Version PWA iPhone & Web
+# 📲 L'Affinoir - PWA (iOS, Android & Web)
 
-Cette version web progressive (PWA) permet d'utiliser **L'Affinoir** directement sur iPhone (Safari iOS) comme une application native, tout en conservant l'application Android APK.
+Cette application web progressive (PWA) permet d'utiliser **L'Affinoir** directement sur iPhone (Safari iOS), Android (Chrome) et ordinateur comme une application native, sans APK à maintenir.
 
 ---
 

@@ -1,8 +1,21 @@
-// État global, persistance localStorage, sécurité iOS & export/import complet
+// État global, persistance localStorage, sécurité iOS & synchronisation Firestore
 import { CATALOGUE_BASE, PARAMETRES_DEFAUT, INGREDIENTS_CATALOGUE_DEFAUT } from './catalog.js';
 import { exporterToutesPhotosIDB, importerPhotosIDB } from './photos.js';
+import {
+  estConnecteFirebase, seedRecettesBaseSiVide, demarrerSyncFirestore, syncAllUserDataToFirestore
+} from './firebase.js';
 
 export const STORAGE_KEY = 'laffinoir_data_v2';
+
+export const cloudState = {
+  baseRecipes: [],
+  userRecipes: [],
+  sharedRecipes: [],
+  initialSyncDone: false
+};
+
+let _suppressCloudSync = false;
+let _syncTimer = null;
 
 export let appState = {
   recettes: JSON.parse(JSON.stringify(CATALOGUE_BASE)),
@@ -144,7 +157,7 @@ export function initialiserDonneesDefaut() {
 }
 
 let _quotaAlertShown = false;
-export function sauvegarderDonnees() {
+export function sauvegarderDonnees(skipCloud = false) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   } catch (e) {
@@ -157,6 +170,110 @@ export function sauvegarderDonnees() {
   if (typeof window.mettreAJourBadgeCourses === 'function') {
     window.mettreAJourBadgeCourses();
   }
+  if (!skipCloud && !_suppressCloudSync && estConnecteFirebase()) {
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(() => {
+      syncAllUserDataToFirestore(appState).catch(err => console.warn('Sync Firestore:', err));
+    }, 450);
+  }
+}
+
+export function reconstruireCatalogueFusionne() {
+  const userByBaseId = new Map();
+  (cloudState.userRecipes || []).forEach(u => {
+    if (u.baseRecipeId) userByBaseId.set(u.baseRecipeId, u);
+  });
+
+  const supprimees = new Set(appState.recettesSupprimees || []);
+  const result = [];
+
+  (cloudState.baseRecipes || []).forEach(baseRec => {
+    const baseId = baseRec.id || baseRec.code;
+    if (userByBaseId.has(baseId)) return; // La version modifiée par l'utilisateur prévaut
+    if (supprimees.has(baseId)) return;
+    result.push({ ...baseRec, _source: 'base' });
+  });
+
+  (cloudState.userRecipes || []).forEach(uRec => {
+    result.push({ ...uRec, _source: 'user' });
+  });
+
+  (cloudState.sharedRecipes || []).forEach(sRec => {
+    result.push({ ...sRec, _source: 'shared' });
+  });
+
+  if (result.length > 0 || cloudState.baseRecipes.length > 0) {
+    appState.recettes = result;
+    sauvegarderDonnees(true);
+    if (typeof window.rafraichirVueActive === 'function') {
+      window.rafraichirVueActive();
+    }
+  }
+}
+
+export async function activerSyncCloud() {
+  if (!estConnecteFirebase()) return;
+  await seedRecettesBaseSiVide();
+
+  const collectionMap = {
+    projects: 'projets',
+    courses: 'courses',
+    commandes: 'commandes',
+    clients: 'clients',
+    cave_releves: 'caveReleves',
+    evaluations: 'evaluations'
+  };
+
+  let firstSnapshots = 0;
+  demarrerSyncFirestore({
+    onBaseRecipes: (list) => {
+      cloudState.baseRecipes = list;
+      reconstruireCatalogueFusionne();
+    },
+    onUserRecipes: (list) => {
+      cloudState.userRecipes = list;
+      reconstruireCatalogueFusionne();
+    },
+    onSharedRecipes: (list) => {
+      cloudState.sharedRecipes = list;
+      reconstruireCatalogueFusionne();
+    },
+    onCollectionUpdate: (colName, list) => {
+      const stateKey = collectionMap[colName];
+      if (!stateKey) return;
+      _suppressCloudSync = true;
+      // Si l'utilisateur vient de se connecter et que Firestore est vide mais qu'il a des données locales, pousser le local
+      if (!cloudState.initialSyncDone && list.length === 0 && (appState[stateKey] || []).length > 0) {
+        _suppressCloudSync = false;
+        sauvegarderDonnees(false);
+        return;
+      }
+      appState[stateKey] = list;
+      if (stateKey === 'projets') migrerLotsPesees(appState.projets);
+      sauvegarderDonnees(true);
+      _suppressCloudSync = false;
+      firstSnapshots++;
+      if (firstSnapshots >= 6) cloudState.initialSyncDone = true;
+      if (typeof window.rafraichirVueActive === 'function') {
+        window.rafraichirVueActive();
+      }
+    },
+    onSettingsUpdate: (data) => {
+      _suppressCloudSync = true;
+      if (Array.isArray(data.parametres) && data.parametres.length > 0) {
+        appState.parametres = data.parametres;
+      }
+      if (Array.isArray(data.recettesSupprimees)) {
+        appState.recettesSupprimees = data.recettesSupprimees;
+      }
+      if (data.lastBackupAt !== undefined) {
+        appState.lastBackupAt = data.lastBackupAt;
+      }
+      sauvegarderDonnees(true);
+      _suppressCloudSync = false;
+      reconstruireCatalogueFusionne();
+    }
+  });
 }
 
 /**
@@ -446,7 +563,7 @@ export function importerDonnees(event) {
 }
 
 export function reinitialiserDonnees() {
-  if (!confirm('Voulez-vous réinitialiser le catalogue avec les 21 recettes par défaut et vider les sessions/courses ?')) return;
+  if (!confirm('Voulez-vous réinitialiser le catalogue avec les 22 recettes par défaut et vider les sessions/courses ?')) return;
   initialiserDonneesDefaut();
   alert('Catalogue réinitialisé.');
   location.reload();

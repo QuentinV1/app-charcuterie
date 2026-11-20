@@ -73,8 +73,30 @@ export function ouvrirModalPlanifier(recetteIdPreselectionnee = null) {
   if (tarifsRow) tarifsRow.style.display = prixActif ? 'flex' : 'none';
   const estBox = document.getElementById('plan-estimation-box');
   if (estBox) estBox.style.display = prixActif ? 'block' : 'none';
+  const revToggleRow = document.getElementById('plan-revente-toggle-row');
+  if (revToggleRow) revToggleRow.style.display = prixActif ? 'flex' : 'none';
+  const chkRev = document.getElementById('plan-activer-revente');
+  if (chkRev) chkRev.checked = prixActif && getValeurParametre('ACTIVER_REVENTE', 1) >= 0.5;
+  const prixRevInp = document.getElementById('plan-prix-revente');
+  if (prixRevInp) prixRevInp.dataset.manual = '';
 
   document.getElementById('modal-planifier').classList.add('active');
+}
+
+export function definirDatePlanificationShortcut(type) {
+  const d = new Date();
+  if (type === 'demain9h') {
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+  } else if (type === 'samedi9h') {
+    const day = d.getDay(); // 0=dim, 6=sam
+    const diff = (6 - day + 7) % 7 || 7;
+    d.setDate(d.getDate() + diff);
+    d.setHours(9, 0, 0, 0);
+  }
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  const inp = document.getElementById('plan-date');
+  if (inp) inp.value = d.toISOString().slice(0, 16);
 }
 
 export function selectionnerRecetteDropdown(recId) {
@@ -170,14 +192,50 @@ export function rendreLignesLotsPlanification() {
 }
 
 export function ajouterLigneLotPlanification() {
+  const modal = document.getElementById('modal-planif-custom-lot');
+  if (!modal) return;
+  document.getElementById('pcl-nom').value = '';
+  document.getElementById('pcl-qte').value = '1';
+  document.getElementById('pcl-epices').value = '15';
+  document.getElementById('pcl-salage').value = '';
+  document.getElementById('pcl-desc').value = '';
+  document.getElementById('pcl-save-catalog').checked = false;
+  modal.classList.add('active');
+}
+
+export function confirmerCustomLotPlanification() {
   const r = appState.recettes.find(x => x.id === uiState.dropdownRecetteSelectionneeId || x.code === uiState.dropdownRecetteSelectionneeId);
   const unite = (r && r.sortiesDecoupe && r.sortiesDecoupe[0]) ? r.sortiesDecoupe[0].unite : (r ? r.uniteBase : 'pièce');
+  const nomLot = (document.getElementById('pcl-nom').value || '').trim() || 'Nouveau lot';
+  const qteLot = Math.max(0.5, parseFloat(document.getElementById('pcl-qte').value) || 1);
+  const epicesLotG = Math.max(0, parseFloat(document.getElementById('pcl-epices').value) || 0);
+  const salageRaw = parseFloat(document.getElementById('pcl-salage').value);
+  const salageLotH = (!Number.isNaN(salageRaw) && salageRaw > 0) ? salageRaw : null;
+  const descLot = (document.getElementById('pcl-desc').value || '').trim();
+  const saveCatalog = document.getElementById('pcl-save-catalog').checked;
+
   lotsDraftPlanification.push({
-    variante: 'Nouvelle variante',
-    quantite: 1,
-    unite: unite,
-    epicesGrammesParUnite: 15
+    variante: nomLot,
+    quantite: qteLot,
+    baseQuantite: qteLot,
+    unite,
+    epicesGrammesParUnite: epicesLotG,
+    dureeSalageHeuresSpecifique: salageLotH
   });
+
+  if (saveCatalog && r) {
+    if (!Array.isArray(r.variantes)) r.variantes = [];
+    r.variantes.push({
+      nom: nomLot,
+      descriptionEpices: descLot || `${epicesLotG}g / ${unite}`,
+      epicesGrammesParUnite: epicesLotG,
+      dureeSalageHeuresSpecifique: salageLotH,
+      ajouteEtapeFumage: false
+    });
+    sauvegarderDonnees();
+  }
+
+  document.getElementById('modal-planif-custom-lot').classList.remove('active');
   rendreLignesLotsPlanification();
   actualiserEstimationPlanification();
 }
@@ -221,6 +279,34 @@ export function actualiserEstimationPlanification() {
   const est = CalculateurCharcuterie.estimerPrixUnitairePlanification(r, qBase, prixMatiere, codesCoches, margePct, modeSalageSelectionne);
   document.getElementById('plan-est-cout').innerHTML = `Coût de revient estimé : <strong>${est.coutRevientUnitaireEstime.toFixed(2)} € / ${escapeHtml(est.uniteProduitPrincipal)}</strong>`;
   document.getElementById('plan-est-prix').innerHTML = `Prix conseillé : <strong style="color:var(--primary);">${est.prixReventeConseilleUnitaire.toFixed(2)} € / ${escapeHtml(est.uniteProduitPrincipal)}</strong>`;
+
+  const prixRevInp = document.getElementById('plan-prix-revente');
+  if (prixRevInp && !prixRevInp.dataset.manual) {
+    prixRevInp.value = est.prixReventeConseilleUnitaire.toFixed(2);
+  }
+}
+
+export function modifierPrixReventePlanification() {
+  const r = appState.recettes.find(x => x.id === uiState.dropdownRecetteSelectionneeId || x.code === uiState.dropdownRecetteSelectionneeId);
+  const prixRevInp = document.getElementById('plan-prix-revente');
+  const margeInp = document.getElementById('plan-marge');
+  if (!r || !prixRevInp || !margeInp) return;
+  prixRevInp.dataset.manual = '1';
+
+  const qBase = parseFloat(document.getElementById('plan-quantite').value) || 1.0;
+  const prixMatiere = parseFloat(document.getElementById('plan-prix-matiere').value) || 0;
+  const codesCoches = new Set();
+  document.querySelectorAll('#plan-sorties-checklist input[type="checkbox"]').forEach(chk => {
+    if (chk.checked) codesCoches.add(chk.getAttribute('data-code'));
+  });
+  const est = CalculateurCharcuterie.estimerPrixUnitairePlanification(r, qBase, prixMatiere, codesCoches, 0, modeSalageSelectionne);
+  const coutUnit = est.coutRevientUnitaireEstime;
+  const prixSaisi = parseFloat(prixRevInp.value);
+  if (coutUnit > 0 && Number.isFinite(prixSaisi) && prixSaisi >= 0) {
+    const newMarge = ((prixSaisi / coutUnit) - 1) * 100;
+    margeInp.value = Math.round(newMarge * 10) / 10;
+  }
+  document.getElementById('plan-est-prix').innerHTML = `Prix conseillé : <strong style="color:var(--primary);">${(Number.isFinite(prixSaisi) ? prixSaisi : 0).toFixed(2)} € / ${escapeHtml(est.uniteProduitPrincipal)}</strong>`;
 }
 
 export function confirmerPlanification() {
@@ -451,8 +537,14 @@ export function confirmerPlanification() {
   });
 
   // Nouveau projet
+  const activerRevente = document.getElementById('plan-activer-revente')?.checked ?? true;
+  const prixRevInp = document.getElementById('plan-prix-revente');
+  const prixRevFixe = (prixRevInp && prixRevInp.dataset.manual && parseFloat(prixRevInp.value) > 0) ? parseFloat(prixRevInp.value) : null;
+
   const nouveauProjet = {
     id: projId,
+    activerRevente,
+    prixReventeUnitaireFixe: prixRevFixe,
     recettePrincipaleId: r.id || r.code,
     nomRecettePrincipale: r.nom,
     nom: nom,
