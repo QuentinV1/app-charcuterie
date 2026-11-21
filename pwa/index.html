@@ -56,14 +56,14 @@
     <!-- 1b. VUE DÉTAIL D'UN PROJET / SESSION -->
     <section id="view-projet-detail" class="view">
       <div class="view-header" style="align-items: flex-start;">
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
           <button class="btn btn-secondary btn-sm" onclick="naviguerVers('projets')" title="Retour aux sessions">←</button>
-          <div>
+          <div style="min-width:0;">
             <div class="view-title" id="proj-detail-titre">Session</div>
             <div class="view-desc" id="proj-detail-recette">Recette</div>
           </div>
         </div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" onclick="supprimerProjetActuel()" style="color:var(--danger);">Supprimer</button>
           <button class="btn btn-primary btn-sm" id="btn-toggle-termine-projet" onclick="basculerStatutProjetActuel()">Terminer</button>
         </div>
@@ -134,7 +134,7 @@
           <div class="view-title">Liste de courses</div>
           <div class="view-desc" id="courses-total-desc">Regroupée par session & catégorie</div>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" onclick="ouvrirModalAjoutCourseManuel()">+ Article</button>
           <button class="btn btn-danger btn-sm" onclick="nettoyerCoursesAchetees()" id="btn-clean-courses">
             Nettoyer achetés
@@ -159,7 +159,7 @@
           <div class="view-title">Revente & Amis</div>
           <div class="view-desc">Prix conseillé & commandes réservées</div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" onclick="naviguerVers('clients')">
             Clients (<span id="clients-count-badge">0</span>)
           </button>
@@ -243,14 +243,14 @@
               <div style="font-weight: 600;">Gestion des prix & coûts</div>
               <div style="font-size: 0.8rem; color: var(--text-muted);">Afficher ou masquer tout ce qui concerne les prix, coûts et budgets</div>
             </div>
-            <input type="checkbox" id="toggle-prix" onchange="toggleModulePrix(this.checked)" style="width: 22px; height: 22px; accent-color: var(--primary);">
+            <input type="checkbox" id="toggle-prix" onchange="toggleModulePrix(this.checked)" style="width: 22px; height: 22px; flex-shrink: 0; margin-left: 12px; accent-color: var(--primary);">
           </label>
           <label id="label-option-revente" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
             <div>
               <div style="font-weight: 600;">Module Revente</div>
               <div style="font-size: 0.8rem; color: var(--text-muted);">Afficher l'onglet Revente dans la navigation</div>
             </div>
-            <input type="checkbox" id="toggle-revente" onchange="toggleModuleRevente(this.checked)" style="width: 22px; height: 22px; accent-color: var(--primary);">
+            <input type="checkbox" id="toggle-revente" onchange="toggleModuleRevente(this.checked)" style="width: 22px; height: 22px; flex-shrink: 0; margin-left: 12px; accent-color: var(--primary);">
           </label>
         </div>
 
@@ -631,7 +631,7 @@
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <div id="fiche-body"></div>
-      <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 12px; gap: 8px;">
+      <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--border-light); padding-top: 12px; gap: 8px;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-secondary btn-sm" id="btn-fiche-partager" style="display:none;" onclick="ouvrirModalPartageRecette()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>

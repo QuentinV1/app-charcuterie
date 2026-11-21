@@ -45,7 +45,7 @@ export function rendreRevente() {
   const reste = Math.max(0, total - paye);
 
   container.innerHTML = `
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+    <div class="revente-stats-grid">
       <div class="bilan-stat-card" style="padding:10px;">
         <div class="bilan-stat-label" style="font-size:0.68rem;">Total ventes</div>
         <div class="bilan-stat-val" style="font-size:1.05rem;">${total.toFixed(2)} €</div>

@@ -471,7 +471,6 @@ export function ajouterLigneIngredient(nom = '', quantite = '', unite = 'g', typ
   if (!list) return;
   const row = document.createElement('div');
   row.className = 'cr-ing-row';
-  row.style.cssText = 'display:grid; grid-template-columns:1.3fr 0.6fr 0.6fr 0.9fr 0.6fr auto; gap:5px; margin-bottom:6px; align-items:center;';
   row.innerHTML = `
     <input type="text" class="form-control cr-ing-nom" placeholder="Ingrédient" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.8rem;">
     <input type="number" step="0.1" class="form-control cr-ing-qte" placeholder="Qté" value="${escapeHtml(String(quantite))}" style="padding:7px 6px; font-size:0.8rem;">
@@ -497,7 +496,6 @@ export function ajouterLigneVarianteCreer(nom = '', epices = '', gParUnite = '15
   if (!list) return;
   const row = document.createElement('div');
   row.className = 'cr-var-row';
-  row.style.cssText = 'display:grid; grid-template-columns:1fr 1.4fr 0.6fr auto; gap:5px; margin-bottom:6px; align-items:center;';
   row.innerHTML = `
     <input type="text" class="form-control cr-var-nom" placeholder="Ex: Poivre" value="${escapeHtml(nom)}" style="padding:7px 8px; font-size:0.8rem;">
     <input type="text" class="form-control cr-var-desc" placeholder="Épices" value="${escapeHtml(epices)}" style="padding:7px 8px; font-size:0.8rem;">
@@ -514,8 +512,8 @@ export function ajouterLigneEtape(titre = '', duree = '1', uniteDuree = 'jours',
   row.className = 'cr-etape-row';
   row.style.cssText = 'background:var(--surface-subtle); border:1px solid var(--border); border-radius:8px; padding:8px; margin-bottom:8px;';
   row.innerHTML = `
-    <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
-      <input type="text" class="form-control cr-etape-titre" placeholder="Titre de l'étape" value="${escapeHtml(titre)}" style="flex:2; padding:7px 8px; font-size:0.82rem;">
+    <div class="cr-etape-header">
+      <input type="text" class="form-control cr-etape-titre" placeholder="Titre de l'étape" value="${escapeHtml(titre)}" style="flex:2 1 160px; min-width:0; padding:7px 8px; font-size:0.82rem;">
       <input type="number" min="0" step="1" class="form-control cr-etape-duree" value="${escapeHtml(String(duree))}" style="width:62px; padding:7px 6px; font-size:0.82rem;">
       <select class="form-control cr-etape-unite" style="width:86px; padding:7px 6px; font-size:0.82rem;">
         <option value="heures" ${uniteDuree === 'heures' ? 'selected' : ''}>heures</option>
