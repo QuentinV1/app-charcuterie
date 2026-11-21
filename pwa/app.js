@@ -59,7 +59,8 @@ import {
 import {
   basculerSousOngletParametres, rendreParametres, ouvrirModalModifierParam, sauvegarderParametreModal,
   initialiserSelectRecettesLotsParam, rendreLotsParametrage, ouvrirModalAjouterVariante,
-  ouvrirModalModifierVariante, sauvegarderVarianteModal, supprimerVariante
+  ouvrirModalModifierVariante, sauvegarderVarianteModal, supprimerVariante,
+  ouvrirModalAutresApps
 } from './modules/parametres.js';
 
 let isRestoringHistory = false;
@@ -845,7 +846,8 @@ Object.assign(window, {
   ouvrirModalAjouterVariante,
   ouvrirModalModifierVariante,
   sauvegarderVarianteModal,
-  supprimerVariante
+  supprimerVariante,
+  ouvrirModalAutresApps
 });
 
 document.addEventListener('DOMContentLoaded', () => {

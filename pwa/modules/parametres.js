@@ -215,3 +215,34 @@ export function supprimerVariante(recId, idx) {
   }
   rendreLotsParametrage();
 }
+
+const AUTRES_APPLICATIONS = [
+  { id: 'app-peche', nom: 'Pêche France', desc: 'Réglementation, mailles, cartes & carnet de prises', url: 'https://quentinv1.github.io/app-peche/' },
+  { id: 'app-voyage', nom: 'App Voyage', desc: 'Planificateur d\'itinéraire, carte & carnet de voyage', url: 'https://quentinv1.github.io/app-voyage/' },
+  { id: 'budget-previsionnel', nom: 'Budget Prévisionnel', desc: 'Budget du foyer, provisions & projections', url: 'https://quentinv1.github.io/budget-previsionnel/' },
+  { id: 'cave-a-vin', nom: 'Cave à vin', desc: 'Stock de bouteilles, apogée & dégustations', url: 'https://quentinv1.github.io/cave-a-vin/' },
+  { id: 'checklist-valise', nom: 'Checklist Valise', desc: 'Bagages, calculateur de poids & règles IATA', url: 'https://quentinv1.github.io/checklist-valise/' },
+  { id: 'livre-recettes', nom: 'Livre de recettes', desc: 'Recettes, planning semaine & liste de courses', url: 'https://quentinv1.github.io/livre-recettes/' },
+  { id: 'suivi-chasse', nom: 'Suivi Chasse', desc: 'Carnet de sorties, carte & album trophées', url: 'https://quentinv1.github.io/suivi-chasse/' },
+  { id: 'travaux-maison', nom: 'Travaux Maison', desc: 'Plan 2D/3D, courses, tâches & entretien', url: 'https://quentinv1.github.io/travaux-maison/' },
+];
+
+export function ouvrirModalAutresApps() {
+  const listEl = document.getElementById('autres-apps-list');
+  const modal = document.getElementById('modal-autres-apps');
+  if (!listEl || !modal) return;
+  listEl.innerHTML = AUTRES_APPLICATIONS.map(app => `
+    <a href="${escapeHtml(app.url)}" target="_blank" rel="noopener noreferrer"
+       style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border-color); border-radius:10px; text-decoration:none; color:var(--text); background:var(--bg-card);">
+      <div style="min-width:0;">
+        <div style="font-weight:700; font-size:0.88rem;">${escapeHtml(app.nom)}</div>
+        <div style="font-size:0.76rem; color:var(--text-muted);">${escapeHtml(app.desc)}</div>
+      </div>
+      <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; font-weight:600; color:var(--primary); white-space:nowrap;">
+        Ouvrir
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </span>
+    </a>
+  `).join('');
+  modal.classList.add('active');
+}

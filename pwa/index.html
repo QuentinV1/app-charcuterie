@@ -290,6 +290,20 @@
             <button class="btn btn-danger btn-sm" onclick="reinitialiserDonnees()">Réinitialiser le catalogue</button>
           </div>
         </div>
+
+        <!-- Mes autres applications -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+              <div style="font-weight: 700; margin-bottom: 4px;">Mes autres applications</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Accéder rapidement aux autres applications web (GitHub Pages)</div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="ouvrirModalAutresApps()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              Mes autres applications
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Sous-vue 2: Lots à paramétrer par recette -->
@@ -915,6 +929,26 @@
       <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
         <button class="btn btn-secondary" onclick="fermerModals()">Annuler</button>
         <button class="btn btn-primary" onclick="sauvegarderParametreModal()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Mes autres applications -->
+  <div class="modal-overlay" id="modal-autres-apps">
+    <div class="modal-content" style="max-width: 560px;">
+      <div class="modal-header">
+        <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          Mes autres applications
+        </div>
+        <button class="btn-icon" onclick="fermerModals()" aria-label="Fermer">✕</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">
+        Retrouvez toutes les autres applications hébergées sur GitHub Pages.
+      </p>
+      <div id="autres-apps-list" style="display:grid; gap:8px; max-height:60vh; overflow-y:auto;"></div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="fermerModals()">Fermer</button>
       </div>
     </div>
   </div>
