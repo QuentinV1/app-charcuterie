@@ -5,9 +5,10 @@ import {
   activerSyncCloud, forcerSyncCloud, reinitialiserEtatCloud
 } from './modules/state.js';
 import {
-  observerAuth, getFirebaseUser, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase,
+  observerAuth, getFirebaseUser, initFirebase, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase,
   renvoyerEmailVerification, rechargerUtilisateurFirebase
 } from './modules/firebase.js';
+import { resolveUserAccess, renderAccessControlPanel } from './modules/access-control.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA
 } from './modules/photos.js';
@@ -555,6 +556,43 @@ export function ouvrirModalAuth() {
     const emailEl = document.getElementById('auth-connected-email');
     if (emailEl) emailEl.textContent = user.email || user.displayName || user.uid;
     majStatutSyncModal();
+
+    const tabsEl = document.getElementById('auth-role-tabs');
+    const accountSec = document.getElementById('auth-account-section');
+    const accessPanel = document.getElementById('auth-access-panel');
+    const deniedEl = document.getElementById('auth-access-denied-msg');
+    const btnTabAcc = document.getElementById('btn-auth-tab-account');
+    const btnTabAccess = document.getElementById('btn-auth-tab-access');
+    if (tabsEl) tabsEl.style.display = 'none';
+    if (accountSec) accountSec.style.display = 'block';
+    if (accessPanel) accessPanel.style.display = 'none';
+    if (deniedEl) deniedEl.style.display = 'none';
+    if (btnTabAcc) { btnTabAcc.className = 'btn btn-primary btn-sm'; }
+    if (btnTabAccess) { btnTabAccess.className = 'btn btn-secondary btn-sm'; }
+
+    if (user.emailVerified && user.email) {
+      initFirebase().then(async (fb) => {
+        if (!fb) return;
+        const access = await resolveUserAccess(fb, 'app-charcuterie', user.email);
+        if (deniedEl) deniedEl.style.display = access.hasAppAccess ? 'none' : 'block';
+        if (tabsEl) tabsEl.style.display = access.isAdmin ? 'flex' : 'none';
+        if (access.isAdmin && btnTabAcc && btnTabAccess && accountSec && accessPanel) {
+          btnTabAcc.onclick = () => {
+            accountSec.style.display = 'block';
+            accessPanel.style.display = 'none';
+            btnTabAcc.className = 'btn btn-primary btn-sm';
+            btnTabAccess.className = 'btn btn-secondary btn-sm';
+          };
+          btnTabAccess.onclick = () => {
+            accountSec.style.display = 'none';
+            accessPanel.style.display = 'block';
+            btnTabAcc.className = 'btn btn-secondary btn-sm';
+            btnTabAccess.className = 'btn btn-primary btn-sm';
+            renderAccessControlPanel({ container: accessPanel, fb, user, appId: 'app-charcuterie', appName: "L'Affinoir" });
+          };
+        }
+      });
+    }
   } else if (loggedOutPanel && loggedInPanel) {
     loggedOutPanel.style.display = 'block';
     loggedInPanel.style.display = 'none';

@@ -1,8 +1,9 @@
 import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
 import {
   estConnecteFirebase, saveUserRecipeFirestore, deleteUserRecipeFirestore,
-  updateRecipeSharingFirestore, deleteBaseRecipeFirestore, getFirebaseUser
+  updateRecipeSharingFirestore, deleteBaseRecipeFirestore, getFirebaseUser, initFirebase
 } from './firebase.js';
+import { listShareableAppUsers } from './access-control.js';
 export function rendreRecettes() {
   const container = document.getElementById('recettes-list');
   const countDesc = document.getElementById('recettes-count');
@@ -327,6 +328,34 @@ function rendreListePartagesRecette(r) {
         <button type="button" class="btn-icon" style="color:var(--danger);" onclick="supprimerPartageEmailRecette('${escapeJsStr(em)}')">✕</button>
       </div>
     `).join('');
+
+  const suggEl = document.getElementById('partage-whitelist-suggestions');
+  if (suggEl) {
+    suggEl.innerHTML = '';
+    const me = (getFirebaseUser()?.email || '').trim().toLowerCase();
+    initFirebase().then(async (fb) => {
+      if (!fb) return;
+      const members = await listShareableAppUsers(fb, 'app-charcuterie');
+      const available = members.filter(m => m.email !== me && !emails.includes(m.email));
+      if (available.length === 0) return;
+      suggEl.innerHTML = available.map(m => `
+        <button type="button" class="btn btn-secondary btn-sm" data-share-suggest="${escapeHtml(m.email)}" title="${escapeHtml(m.email)}">
+          + ${escapeHtml(m.displayName || m.email)}
+        </button>
+      `).join('');
+      suggEl.querySelectorAll('[data-share-suggest]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const targetEmail = btn.getAttribute('data-share-suggest');
+          if (!targetEmail) return;
+          const next = Array.isArray(r.sharedWithEmails) ? [...r.sharedWithEmails] : [];
+          if (!next.includes(targetEmail)) next.push(targetEmail);
+          r.sharedWithEmails = next;
+          await updateRecipeSharingFirestore(r.id, next);
+          rendreListePartagesRecette(r);
+        });
+      });
+    }).catch(() => {});
+  }
 }
 
 export async function ajouterPartageEmailRecette() {
