@@ -6,9 +6,9 @@ import {
 } from './modules/state.js';
 import {
   observerAuth, getFirebaseUser, initFirebase, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase,
-  renvoyerEmailVerification, rechargerUtilisateurFirebase
+  arreterListenersFirestore
 } from './modules/firebase.js';
-import { resolveUserAccess, renderAccessControlPanel } from './modules/access-control.js';
+import { resolveUserAccess, resolveGateAccess, clearCachedAuthAccess, renderAccessControlPanel } from './modules/access-control.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA
 } from './modules/photos.js';
@@ -570,11 +570,11 @@ export function ouvrirModalAuth() {
     if (btnTabAcc) { btnTabAcc.className = 'btn btn-primary btn-sm'; }
     if (btnTabAccess) { btnTabAccess.className = 'btn btn-secondary btn-sm'; }
 
-    if (user.emailVerified && user.email) {
+    if (user.email) {
       initFirebase().then(async (fb) => {
         if (!fb) return;
         const access = await resolveUserAccess(fb, 'app-charcuterie', user.email);
-        if (deniedEl) deniedEl.style.display = access.hasAppAccess ? 'none' : 'block';
+        if (deniedEl) deniedEl.style.display = (!access.offline && !access.hasAppAccess) ? 'block' : 'none';
         if (tabsEl) tabsEl.style.display = access.isAdmin ? 'flex' : 'none';
         if (access.isAdmin && btnTabAcc && btnTabAccess && accountSec && accessPanel) {
           btnTabAcc.onclick = () => {
@@ -604,11 +604,6 @@ export function ouvrirModalAuth() {
 function majStatutSyncModal() {
   const statusEl = document.getElementById('auth-sync-status');
   const syncErrEl = document.getElementById('auth-sync-error-msg');
-  const unverifiedBox = document.getElementById('auth-unverified-box');
-  const user = getFirebaseUser();
-  if (unverifiedBox) {
-    unverifiedBox.style.display = (user && !user.emailVerified) ? 'block' : 'none';
-  }
   if (!statusEl) return;
 
   if (cloudState.syncStatus === 'syncing') {
@@ -684,49 +679,122 @@ export async function soumettreAuthGoogle() {
 
 export async function deconnexionCloud() {
   if (!confirm('Se déconnecter du compte Cloud ?')) return;
+  clearCachedAuthAccess('app-charcuterie');
   await deconnexionFirebase();
   reinitialiserEtatCloud();
   fermerModals();
+  afficherGateEtat('login');
   rafraichirVueActive();
 }
 
-export async function renvoyerVerificationCloud() {
-  const msgEl = document.getElementById('auth-unverified-msg');
-  const btn = document.getElementById('btn-resend-verif');
-  if (btn) btn.disabled = true;
-  try {
-    const sent = await renvoyerEmailVerification();
-    if (msgEl) {
-      msgEl.textContent = sent
-        ? 'E-mail de vérification envoyé ! Vérifiez votre boîte de réception (et les spams), puis cliquez sur « J\'ai vérifié ».'
-        : 'Votre adresse est déjà vérifiée.';
-    }
-  } catch (e) {
-    if (msgEl) msgEl.textContent = e?.message || 'Impossible d\'envoyer l\'e-mail de vérification.';
-  } finally {
-    if (btn) btn.disabled = false;
+const APP_ID = 'app-charcuterie';
+
+function afficherGateEtat(mode, info = {}) {
+  const overlay = document.getElementById('auth-gate-overlay');
+  const loadingEl = document.getElementById('auth-gate-loading');
+  const loginEl = document.getElementById('auth-gate-login');
+  const deniedEl = document.getElementById('auth-gate-denied');
+  const offlineEl = document.getElementById('auth-gate-offline');
+  if (!overlay) return;
+
+  if (mode === 'allowed') {
+    overlay.classList.remove('active');
+    return;
+  }
+
+  overlay.classList.add('active');
+  if (loadingEl) loadingEl.style.display = mode === 'loading' ? 'block' : 'none';
+  if (loginEl) loginEl.style.display = mode === 'login' ? 'block' : 'none';
+  if (deniedEl) deniedEl.style.display = mode === 'denied' ? 'block' : 'none';
+  if (offlineEl) offlineEl.style.display = mode === 'offline' ? 'block' : 'none';
+
+  if (mode === 'denied') {
+    const emailEl = document.getElementById('gate-denied-email');
+    if (emailEl) emailEl.textContent = info.email || '';
+  } else if (mode === 'offline') {
+    const msgEl = document.getElementById('gate-offline-msg');
+    const emailEl = document.getElementById('gate-offline-email');
+    if (msgEl) msgEl.textContent = info.message || 'Connexion Internet requise pour vérifier vos autorisations';
+    if (emailEl) emailEl.textContent = info.email ? `Compte : ${info.email}` : '';
   }
 }
 
-export async function verifierStatutEmailCloud() {
-  const msgEl = document.getElementById('auth-unverified-msg');
-  const btn = document.getElementById('btn-check-verif');
-  if (btn) btn.disabled = true;
-  try {
-    const user = await rechargerUtilisateurFirebase();
-    if (user?.emailVerified) {
-      await user.getIdToken(true);
-      await activerSyncCloud();
-      majStatutSyncModal();
-      rafraichirVueActive();
-    } else if (msgEl) {
-      msgEl.textContent = 'Adresse toujours non vérifiée. Cliquez d\'abord sur le lien reçu par e-mail.';
-    }
-  } catch (e) {
-    if (msgEl) msgEl.textContent = e?.message || 'Erreur lors de la vérification.';
-  } finally {
-    if (btn) btn.disabled = false;
+async function verifierEtAppliquerGate(user, { background = false } = {}) {
+  if (!user) {
+    arreterListenersFirestore();
+    reinitialiserEtatCloud();
+    afficherGateEtat('login');
+    return false;
   }
+
+  if (!background) {
+    afficherGateEtat('loading');
+  }
+
+  const fb = await initFirebase();
+  const res = await resolveGateAccess(fb, APP_ID, user);
+
+  if (res.status === 'allowed') {
+    afficherGateEtat('allowed');
+    if (!background || cloudState.syncStatus === 'idle') {
+      await activerSyncCloud();
+    }
+    rafraichirVueActive();
+    return true;
+  }
+
+  arreterListenersFirestore();
+  reinitialiserEtatCloud();
+
+  if (res.status === 'denied') {
+    afficherGateEtat('denied', { email: user.email });
+  } else if (res.status === 'offline-blocked') {
+    afficherGateEtat('offline', { email: user.email, message: res.message });
+  } else {
+    afficherGateEtat('login');
+  }
+  return false;
+}
+
+export async function soumettreGateAuthEmail(isRegister) {
+  const email = document.getElementById('gate-auth-email')?.value || '';
+  const pwd = document.getElementById('gate-auth-password')?.value || '';
+  const errEl = document.getElementById('gate-auth-error');
+  if (errEl) errEl.style.display = 'none';
+  try {
+    if (isRegister) await inscriptionEmail(email, pwd);
+    else await connexionEmail(email, pwd);
+  } catch (e) {
+    if (errEl) {
+      errEl.textContent = e.message || 'Erreur de connexion.';
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+export async function soumettreGateAuthGoogle() {
+  const errEl = document.getElementById('gate-auth-error');
+  if (errEl) errEl.style.display = 'none';
+  try {
+    await connexionGoogle();
+  } catch (e) {
+    if (errEl) {
+      errEl.textContent = e.message || 'Erreur de connexion Google.';
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+export async function deconnexionGate() {
+  clearCachedAuthAccess(APP_ID);
+  await deconnexionFirebase();
+  reinitialiserEtatCloud();
+  afficherGateEtat('login');
+}
+
+export async function reverifierGateAcces() {
+  const user = getFirebaseUser();
+  await verifierEtAppliquerGate(user, { background: false });
 }
 
 // Exposer sur window pour les handlers inline du HTML (onclick, oninput, onchange)
@@ -737,8 +805,10 @@ Object.assign(window, {
   soumettreAuthEmail,
   soumettreAuthGoogle,
   deconnexionCloud,
-  renvoyerVerificationCloud,
-  verifierStatutEmailCloud,
+  soumettreGateAuthEmail,
+  soumettreGateAuthGoogle,
+  deconnexionGate,
+  reverifierGateAcces,
   ouvrirModalPartageRecette,
   ajouterPartageEmailRecette,
   supprimerPartageEmailRecette,
@@ -901,6 +971,22 @@ document.addEventListener('DOMContentLoaded', () => {
   initialiserNavigationRetour();
   naviguerVers('projets', { replaceHistory: true });
 
+  afficherGateEtat('loading');
+
+  document.getElementById('gate-auth-password')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      soumettreGateAuthEmail(false);
+    }
+  });
+
+  window.addEventListener('online', () => {
+    const user = getFirebaseUser();
+    if (user) {
+      verifierEtAppliquerGate(user, { background: true });
+    }
+  });
+
   observerAuth(async (user) => {
     const btnAuth = document.getElementById('btn-auth-header');
     if (btnAuth) {
@@ -919,10 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAuth.title = 'Se connecter au Cloud';
       }
     }
-    if (user) {
-      await activerSyncCloud();
-    }
-    rafraichirVueActive();
+    await verifierEtAppliquerGate(user);
   });
 
   if (window.location.protocol.startsWith('http') && 'serviceWorker' in navigator) {

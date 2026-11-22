@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laffinoir-v17';
+const CACHE_NAME = 'laffinoir-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './version.json',
   './modules/firebase.js',
+  './modules/access-control.js',
   './modules/catalog.js',
   './modules/salage.js',
   './modules/state.js',
