@@ -1,5 +1,5 @@
 // Fiche d'évaluation & Dégustation finale + Rappel automatique lors de la planification
-import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 
 export function getEvaluationProjet(projetId) {
   if (!Array.isArray(appState.evaluations)) return null;
@@ -79,7 +79,7 @@ export function rendreCarteEvaluationProjet(p) {
       <div class="card" style="border:1px dashed var(--primary); background:var(--surface-subtle);">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
           <div>
-            <div style="font-weight:700; font-size:0.92rem;">🍷 Fiche d'évaluation & Dégustation</div>
+            <div style="font-weight:700; font-size:0.92rem;">${svgIcon('wine', 16)} Fiche d'évaluation & Dégustation</div>
             <div style="font-size:0.78rem; color:var(--text-muted);">Notez texture, salinité et arômes pour ajuster votre prochaine session.</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="ouvrirModalEvaluationProjet('${escapeJsStr(p.id)}')">Évaluer</button>
@@ -88,11 +88,12 @@ export function rendreCarteEvaluationProjet(p) {
     `;
   }
 
-  const etoiles = '⭐'.repeat(ev.noteGlobale) + '☆'.repeat(Math.max(0, 5 - ev.noteGlobale));
+  const noteClamp = Math.max(0, Math.min(5, Number(ev.noteGlobale) || 0));
+  const etoiles = svgIcon('star-filled', 14).repeat(noteClamp) + svgIcon('star', 14).repeat(5 - noteClamp);
   return `
     <div class="card" style="border-left:4px solid var(--primary);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div style="font-weight:700; font-size:0.95rem;">🍷 Évaluation & Dégustation</div>
+        <div style="font-weight:700; font-size:0.95rem;">${svgIcon('wine', 16)} Évaluation & Dégustation</div>
         <button class="btn btn-secondary btn-sm" onclick="ouvrirModalEvaluationProjet('${escapeJsStr(p.id)}')">Modifier</button>
       </div>
       <div style="font-size:0.95rem; margin-bottom:6px;">${etoiles} <span style="font-size:0.78rem; color:var(--text-muted);">(${new Date(ev.date).toLocaleDateString('fr-FR')})</span></div>
@@ -115,13 +116,14 @@ export function rendreRappelEvaluationPlanification(recetteId, nomRecette) {
     box.innerHTML = '';
     return;
   }
-  const etoiles = '⭐'.repeat(ev.noteGlobale);
+  const noteClamp = Math.max(0, Math.min(5, Number(ev.noteGlobale) || 0));
+  const etoiles = svgIcon('star-filled', 13).repeat(noteClamp);
   box.style.display = 'block';
   box.innerHTML = `
-    <div style="font-weight:700; font-size:0.82rem; margin-bottom:3px;">💡 Retour de votre dernière session (${new Date(ev.date).toLocaleDateString('fr-FR')}) ${etoiles}</div>
+    <div style="font-weight:700; font-size:0.82rem; margin-bottom:3px;">${svgIcon('lightbulb', 14)} Retour de votre dernière session (${new Date(ev.date).toLocaleDateString('fr-FR')}) ${etoiles}</div>
     <div style="font-size:0.78rem; color:var(--text);">
       Texture : <strong>${escapeHtml(ev.texture)}</strong> · Salinité : <strong>${escapeHtml(ev.salinite)}</strong> · Arômes : <strong>${escapeHtml(ev.aromes)}</strong>
     </div>
-    ${ev.commentaire ? `<div style="font-size:0.78rem; color:var(--primary); margin-top:3px; font-weight:600;">📝 "${escapeHtml(ev.commentaire)}"</div>` : ''}
+    ${ev.commentaire ? `<div style="font-size:0.78rem; color:var(--primary); margin-top:3px; font-weight:600;">${svgIcon('file-text', 13)} "${escapeHtml(ev.commentaire)}"</div>` : ''}
   `;
 }

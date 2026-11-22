@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './version.json',
   './modules/firebase.js',
+  './modules/feedback.js',
   './modules/access-control.js',
   './modules/catalog.js',
   './modules/salage.js',

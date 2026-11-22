@@ -8,6 +8,7 @@ import {
   observerAuth, getFirebaseUser, initFirebase, connexionEmail, inscriptionEmail, connexionGoogle, deconnexionFirebase,
   arreterListenersFirestore
 } from './modules/firebase.js';
+import './modules/feedback.js';
 import { resolveUserAccess, resolveGateAccess, clearCachedAuthAccess, renderAccessControlPanel } from './modules/access-control.js';
 import {
   ajouterPhotosEtapePWA, ouvrirApercuPhotoEtape, supprimerPhotoEtapePWA

@@ -1,4 +1,4 @@
-import { appState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import { appState, sauvegarderDonnees, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 
 let coursesModeVue = 'groupee';
 
@@ -35,11 +35,11 @@ function formaterQuantiteFusionnee(qteBase, fam, uniteOrig) {
 }
 
 const LIBELLES_CATEGORIES = {
-  VIANDE: '🥩 Viandes & Matière première',
-  SEL_SUCRE: '🧂 Sel & Sucre',
-  EPICES: '🌿 Épices & Aromates',
-  CONSOMMABLES: '📦 Consommables',
-  AUTRE: '🛒 Autres'
+  VIANDE: `${svgIcon('utensils', 14)} Viandes & Matière première`,
+  SEL_SUCRE: `${svgIcon('salt', 14)} Sel & Sucre`,
+  EPICES: `${svgIcon('leaf', 14)} Épices & Aromates`,
+  CONSOMMABLES: `${svgIcon('package', 14)} Consommables`,
+  AUTRE: `${svgIcon('shopping-cart', 14)} Autres`
 };
 
 export function rendreCourses() {
@@ -62,7 +62,7 @@ export function rendreCourses() {
   if (courses.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🛒</div>
+        <div style="margin-bottom: 12px; color: var(--primary);">${svgIcon('shopping-cart', 44)}</div>
         <div style="font-weight: 700; font-size: 1.1rem; color: var(--text);">Votre panier est vide</div>
         <p style="font-size: 0.85rem; max-width: 320px; margin: 8px auto 16px;">Les ingrédients sont générés automatiquement lors de la planification d'une session.</p>
         <button class="btn btn-primary btn-sm" onclick="ouvrirModalAjoutCourseManuel()">+ Ajouter un article</button>

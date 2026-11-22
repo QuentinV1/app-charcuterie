@@ -17,60 +17,122 @@
 
   <!-- PORTAIL D'ACCÈS BLOQUANT (AUTH + WHITELIST + HORS-LIGNE) -->
   <div class="auth-gate-overlay active" id="auth-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-gate-title">
-    <div class="auth-gate-card">
-      <div class="auth-gate-brand">
-        <img src="icons/icon.svg" alt="L'Affinoir" class="auth-gate-logo">
+    <div class="split-auth-card">
+      <!-- Panneau éditorial -->
+      <div class="split-auth-editorial">
         <div>
-          <div class="auth-gate-title" id="auth-gate-title">L'Affinoir</div>
-          <div class="auth-gate-subtitle">Atelier Charcuterie &amp; Salaison</div>
+          <div class="split-auth-brand">
+            <div class="split-auth-badge">
+              <img src="icons/icon.svg" alt="L'Affinoir">
+            </div>
+            <div>
+              <div class="split-auth-brand-title" id="auth-gate-title">L'Affinoir</div>
+              <div class="split-auth-brand-sub">Atelier Charcuterie &amp; Salaison</div>
+            </div>
+          </div>
+
+          <h1 class="split-auth-headline">
+            Maîtrise tes salaisons, pesées et affinages.
+          </h1>
+          <p class="split-auth-lead">
+            Synchronisé en temps réel sur tous tes appareils et accessible hors-ligne dans ta cave.
+          </p>
+
+          <div class="split-auth-highlights">
+            <div class="split-auth-highlight">
+              <div class="split-auth-highlight-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              </div>
+              <div>
+                <h3>Catalogue &amp; Recettes</h3>
+                <p>22 charcuteries de référence et tes recettes personnalisées.</p>
+              </div>
+            </div>
+            <div class="split-auth-highlight">
+              <div class="split-auth-highlight-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              </div>
+              <div>
+                <h3>Suivi de séchage &amp; lots</h3>
+                <p>Courbes de perte de poids, pesées et journal de cave.</p>
+              </div>
+            </div>
+            <div class="split-auth-highlight">
+              <div class="split-auth-highlight-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              </div>
+              <div>
+                <h3>Courses &amp; Revente</h3>
+                <p>Liste d'ingrédients auto-calculée et suivi des commandes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="split-auth-footer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
+          <span>Mode PWA hors-ligne inclus</span>
         </div>
       </div>
 
-      <div id="auth-gate-loading" class="auth-gate-section">
-        <div class="auth-gate-spinner"></div>
-        <p class="auth-gate-msg">Vérification de votre session et de vos autorisations…</p>
-      </div>
+      <!-- Formulaire -->
+      <div class="split-auth-form-pane">
+        <div id="auth-gate-loading" class="auth-gate-section" style="text-align:center; padding:32px 0;">
+          <div class="auth-gate-spinner"></div>
+          <p class="auth-gate-msg">Vérification de votre session et de vos autorisations…</p>
+        </div>
 
-      <div id="auth-gate-login" class="auth-gate-section" style="display:none;">
-        <p class="auth-gate-msg" style="margin-bottom:14px;">
-          Connectez-vous pour accéder à l'application et synchroniser vos données.
-        </p>
-        <div class="form-group">
-          <label class="form-label" for="gate-auth-email">Email</label>
-          <input type="email" id="gate-auth-email" class="form-control" placeholder="prenom@exemple.fr" autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="gate-auth-password">Mot de passe (6 car. min)</label>
-          <input type="password" id="gate-auth-password" class="form-control" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <div id="gate-auth-error" class="auth-gate-error" style="display:none;"></div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <button type="button" class="btn btn-primary" onclick="soumettreGateAuthEmail(false)">Se connecter</button>
-          <button type="button" class="btn btn-secondary" onclick="soumettreGateAuthEmail(true)">Créer un compte</button>
-          <button type="button" class="btn btn-secondary" onclick="soumettreGateAuthGoogle()">
-            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/><path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/></svg>
+        <div id="auth-gate-login" class="auth-gate-section" style="display:none;">
+          <h2 class="split-auth-form-title" id="gate-form-heading">Connexion à ton espace</h2>
+          <p class="split-auth-form-sub">
+            Utilise ton compte autorisé pour retrouver tes sessions et recettes synchronisées.
+          </p>
+
+          <button type="button" class="split-auth-google-btn" onclick="soumettreGateAuthGoogle()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
             Continuer avec Google
           </button>
-        </div>
-      </div>
 
-      <div id="auth-gate-denied" class="auth-gate-section" style="display:none;">
-        <div class="auth-gate-alert auth-gate-alert-danger">
-          <strong>Accès non autorisé</strong>
-          <p style="margin-top:6px;">Le compte <strong id="gate-denied-email"></strong> n'est pas autorisé sur cette application. Contactez un administrateur.</p>
-        </div>
-        <button type="button" class="btn btn-danger" style="width:100%;" onclick="deconnexionGate()">Se déconnecter / Changer de compte</button>
-      </div>
+          <div class="split-auth-divider"><span>ou par e-mail</span></div>
 
-      <div id="auth-gate-offline" class="auth-gate-section" style="display:none;">
-        <div class="auth-gate-alert auth-gate-alert-warn">
-          <strong>Connexion Internet requise</strong>
-          <p id="gate-offline-msg" style="margin-top:6px;">Connexion Internet requise pour vérifier vos autorisations</p>
-          <p id="gate-offline-email" style="margin-top:4px; font-size:0.78rem; opacity:0.85;"></p>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <input type="email" id="gate-auth-email" class="split-auth-input" placeholder="adresse@email.com" autocomplete="email">
+            <input type="password" id="gate-auth-password" class="split-auth-input" placeholder="Mot de passe (6+ caractères)" autocomplete="current-password">
+            <button type="button" id="gate-auth-submit-login" class="split-auth-submit-btn" onclick="soumettreGateAuthEmail(false)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              Se connecter par e-mail
+            </button>
+            <button type="button" id="gate-auth-submit-register" class="split-auth-submit-btn" style="display:none;" onclick="soumettreGateAuthEmail(true)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+              Créer un compte
+            </button>
+          </div>
+
+          <button type="button" id="gate-auth-mode-toggle" class="split-auth-toggle-btn" onclick="(function(){var r=document.getElementById('gate-auth-submit-register');var l=document.getElementById('gate-auth-submit-login');var h=document.getElementById('gate-form-heading');var t=document.getElementById('gate-auth-mode-toggle');var reg=r.style.display==='none';r.style.display=reg?'flex':'none';l.style.display=reg?'none':'flex';h.textContent=reg?'Créer ton compte':'Connexion à ton espace';t.textContent=reg?'Déjà inscrit ? Se connecter':'Pas encore de compte ? Créer un compte';})()">
+            Pas encore de compte ? Créer un compte
+          </button>
+
+          <div id="gate-auth-error" class="auth-gate-error" style="display:none; margin-top:12px;"></div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <button type="button" class="btn btn-primary" onclick="reverifierGateAcces()">Réessayer</button>
-          <button type="button" class="btn btn-secondary" onclick="deconnexionGate()">Se déconnecter / Changer de compte</button>
+
+        <div id="auth-gate-denied" class="auth-gate-section" style="display:none;">
+          <div class="auth-gate-alert auth-gate-alert-danger">
+            <strong>Accès non autorisé</strong>
+            <p style="margin-top:6px;">Le compte <strong id="gate-denied-email"></strong> n'est pas autorisé sur cette application. Contactez un administrateur.</p>
+          </div>
+          <button type="button" class="btn btn-danger" style="width:100%;" onclick="deconnexionGate()">Se déconnecter / Changer de compte</button>
+        </div>
+
+        <div id="auth-gate-offline" class="auth-gate-section" style="display:none;">
+          <div class="auth-gate-alert auth-gate-alert-warn">
+            <strong>Connexion Internet requise</strong>
+            <p id="gate-offline-msg" style="margin-top:6px;">Connexion Internet requise pour vérifier vos autorisations</p>
+            <p id="gate-offline-email" style="margin-top:4px; font-size:0.78rem; opacity:0.85;"></p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button type="button" class="split-auth-google-btn" onclick="reverifierGateAcces()">Réessayer</button>
+            <button type="button" class="split-auth-submit-btn" onclick="deconnexionGate()">Se déconnecter / Changer de compte</button>
+          </div>
         </div>
       </div>
     </div>
@@ -86,6 +148,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn-theme-toggle" id="btn-feedback-header" onclick="ouvrirModalFeedback()" title="Envoyer un feedback (évolution ou bug)" aria-label="Envoyer un feedback"><svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg><span class="btn-text">Feedback</span></button>
       <button class="btn-theme-toggle" id="btn-auth-header" onclick="ouvrirModalAuth()" title="Compte Cloud" aria-label="Compte Cloud"><svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg><span class="btn-text">Connexion</span></button>
       <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="basculerTheme()" title="Changer de thème" aria-label="Changer de thème"><svg class="btn-svg-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span class="btn-text">Cave</span></button>
       <button class="btn btn-secondary btn-sm" id="btn-quick-new" onclick="ouvrirModalPlanifier()">+ Planifier</button>
@@ -293,7 +356,10 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
               Vérifier les mises à jour
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerStandaloneDepuisGit()">📄 Version hors-ligne (HTML)</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerStandaloneDepuisGit()">
+              <svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+              Version hors-ligne (HTML)
+            </button>
           </div>
         </div>
 
@@ -328,7 +394,10 @@
 
         <!-- MANUEL D'INSTALLATION IOS (CONSERVÉ EXPLICITEMENT) -->
         <div class="card">
-          <div style="font-weight: 700; margin-bottom: 8px;">📲 Installer sur iPhone (iOS Safari)</div>
+          <div style="font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+            <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            Installer sur iPhone (iOS Safari)
+          </div>
           <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px;">
             Pour utiliser cette application comme une vraie app native sur votre iPhone :
           </p>
@@ -794,7 +863,10 @@
   <div class="modal-overlay" id="modal-pesee">
     <div class="modal-content" style="max-height:90vh; overflow-y:auto;">
       <div class="modal-header">
-        <div class="modal-title">⚖️ Pesées & Courbe — <span id="modal-pesee-lot-nom">Lot</span></div>
+        <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+          <svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          Pesées & Courbe — <span id="modal-pesee-lot-nom">Lot</span>
+        </div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
@@ -1066,7 +1138,10 @@
       </div>
       <div id="modal-photo-meta" style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;"></div>
       <div style="margin-top: 14px; display: flex; justify-content: space-between; gap: 8px;">
-        <button class="btn btn-secondary" style="color:var(--danger, #c62828);" id="modal-photo-delete-btn">🗑️ Supprimer</button>
+        <button class="btn btn-secondary" style="color:var(--danger, #c62828);" id="modal-photo-delete-btn">
+          <svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          Supprimer
+        </button>
         <button class="btn btn-primary" onclick="fermerModals()">Fermer</button>
       </div>
     </div>
@@ -1086,11 +1161,11 @@
       <div class="form-group">
         <label class="form-label">Note globale</label>
         <select id="eval-note" class="form-control">
-          <option value="5">⭐⭐⭐⭐⭐ (5/5) Exceptionnel</option>
-          <option value="4">⭐⭐⭐⭐☆ (4/5) Très réussi</option>
-          <option value="3">⭐⭐⭐☆☆ (3/5) Correct</option>
-          <option value="2">⭐⭐☆☆☆ (2/5) À améliorer</option>
-          <option value="1">⭐☆☆☆☆ (1/5) Raté</option>
+          <option value="5">5/5 — Exceptionnel</option>
+          <option value="4">4/5 — Très réussi</option>
+          <option value="3">3/5 — Correct</option>
+          <option value="2">2/5 — À améliorer</option>
+          <option value="1">1/5 — Raté</option>
         </select>
       </div>
       <div class="form-row">
@@ -1137,7 +1212,10 @@
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">🚀 Mise à jour disponible</div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Mise à jour disponible
+          </div>
           <div id="update-git-badge" style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Nouvelle version disponible</div>
         </div>
         <button class="btn-icon" onclick="ignorerMiseAJourGit()">✕</button>
@@ -1160,7 +1238,10 @@
   <div class="modal-overlay" id="modal-horaire-etape">
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
-        <div class="modal-title">🕒 Horaire — <span id="modal-horaire-titre">Étape</span></div>
+        <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+          <svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Horaire — <span id="modal-horaire-titre">Étape</span>
+        </div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <input type="hidden" id="modal-horaire-idx">
@@ -1233,7 +1314,10 @@
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">✨ Améliorer la recette de base</div>
+          <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            Améliorer la recette de base
+          </div>
           <div id="modal-ameliorer-recette-nom" style="font-size:0.78rem; color:var(--text-muted);"></div>
         </div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
@@ -1492,6 +1576,44 @@
       </div>
       <div style="font-size:0.78rem; font-weight:700; margin-bottom:6px;">Personnes ayant accès :</div>
       <div id="partage-emails-list"></div>
+    </div>
+  </div>
+
+  <!-- MODAL FEEDBACK -->
+  <div class="modal-overlay" id="modal-feedback" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title" onclick="if(event.target===this)fermerModalFeedback()">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title" id="feedback-modal-title" style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+          <span>Feedback — L'Affinoir</span>
+        </div>
+        <button class="modal-close" onclick="fermerModalFeedback()" aria-label="Fermer">×</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="envoyerFeedbackPWA(event)" style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <div style="font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Type de retour</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button type="button" id="btn-fb-type-evol" onclick="setFeedbackType('evolution')" style="padding:9px 12px; border-radius:10px; border:1.5px solid var(--accent); font-weight:600; font-size:0.85rem; cursor:pointer;">Évolution</button>
+              <button type="button" id="btn-fb-type-bug" onclick="setFeedbackType('bug')" style="padding:9px 12px; border-radius:10px; border:1px solid var(--border); font-weight:600; font-size:0.85rem; cursor:pointer; background:transparent; color:var(--text);">Bug</button>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-bottom:6px;">
+              <label for="feedback-comment-input">Commentaire</label>
+              <span id="feedback-char-count">0 / 2000</span>
+            </div>
+            <textarea id="feedback-comment-input" maxlength="2000" rows="4" required oninput="updateFeedbackCharCount()" placeholder="Décrivez l'amélioration ou la nouvelle fonctionnalité souhaitée..." style="width:100%; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:10px 12px; font-size:0.88rem; resize:vertical; box-sizing:border-box;"></textarea>
+          </div>
+          <p id="feedback-error-msg" style="display:none; margin:0; padding:8px 10px; border-radius:8px; background:rgba(239,68,68,0.12); color:#ef4444; font-size:0.82rem;"></p>
+          <p id="feedback-success-msg" style="display:none; margin:0; padding:8px 10px; border-radius:8px; background:rgba(16,185,129,0.12); color:#10b981; font-size:0.82rem;"></p>
+          <button type="submit" id="btn-feedback-submit" class="btn btn-primary" style="width:100%;">Envoyer le feedback</button>
+        </form>
+        <div id="feedback-history-wrap" style="display:none; margin-top:16px; border-top:1px solid var(--border); padding-top:12px;">
+          <div style="font-size:0.74rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px;">Vos derniers retours</div>
+          <div id="feedback-history-list" style="display:flex; flex-direction:column; gap:8px; max-height:170px; overflow-y:auto;"></div>
+        </div>
+      </div>
     </div>
   </div>
 

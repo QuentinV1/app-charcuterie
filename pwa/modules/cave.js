@@ -1,5 +1,5 @@
 // Journal de Cave : relevés Température & Hygrométrie + graphique comparatif année par année
-import { appState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import { appState, sauvegarderDonnees, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 
 const MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 const COULEURS_ANNEES = ['#C84B31', '#1565C0', '#2E7D32', '#8E24AA', '#EF6C00', '#00838F'];
@@ -140,7 +140,7 @@ function construireSvgAnnuel(releves, type) {
   return `
     <div style="margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-size:0.82rem; font-weight:700;">${isTemp ? '🌡️ Température moyenne mensuelle (°C)' : '💧 Hygrométrie moyenne mensuelle (%)'}</span>
+        <span style="font-size:0.82rem; font-weight:700;">${isTemp ? `${svgIcon('thermometer', 14)} Température moyenne mensuelle (°C)` : `${svgIcon('droplet', 14)} Hygrométrie moyenne mensuelle (%)`}</span>
         <div style="display:flex; gap:8px;">${legendItems.join('')}</div>
       </div>
       <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block; background:var(--surface-subtle); border-radius:8px;">
@@ -195,7 +195,11 @@ export function rendreJournalCave() {
     const tempOk = dernier.temperature >= 10 && dernier.temperature <= 14;
     const hygroOk = dernier.hygrometrie >= 70 && dernier.hygrometrie <= 80;
     const badgeColor = (tempOk && hygroOk) ? '#2E7D32' : (dernier.temperature > 17 || dernier.hygrometrie < 60 || dernier.hygrometrie > 88 ? '#C62828' : '#EF6C00');
-    const badgeTxt = (tempOk && hygroOk) ? '✅ Conditions idéales' : (!tempOk && !hygroOk ? '⚠️ T° et HR hors zone cible' : (!tempOk ? '⚠️ Température hors cible (10-14°C)' : '⚠️ Hygrométrie hors cible (70-80%)'));
+    const badgeTxt = (tempOk && hygroOk)
+      ? `${svgIcon('check-circle', 13)} Conditions idéales`
+      : (!tempOk && !hygroOk
+        ? `${svgIcon('alert-triangle', 13)} T° et HR hors zone cible`
+        : (!tempOk ? `${svgIcon('alert-triangle', 13)} Température hors cible (10-14°C)` : `${svgIcon('alert-triangle', 13)} Hygrométrie hors cible (70-80%)`));
 
     statusHtml = `
       <div class="card" style="border-left:4px solid ${badgeColor}; margin-bottom:12px;">
@@ -203,7 +207,7 @@ export function rendreJournalCave() {
           <div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Dernier relevé (${new Date(dernier.date).toLocaleDateString('fr-FR')})</div>
             <div style="font-size:1.25rem; font-weight:800; margin-top:2px;">
-              🌡️ ${dernier.temperature}°C &nbsp;·&nbsp; 💧 ${dernier.hygrometrie}%
+              ${svgIcon('thermometer', 18)} ${dernier.temperature}°C &nbsp;·&nbsp; ${svgIcon('droplet', 18)} ${dernier.hygrometrie}%
             </div>
           </div>
           <span style="font-size:0.75rem; font-weight:700; color:${badgeColor}; background:var(--surface-subtle); padding:4px 8px; border-radius:6px;">${badgeTxt}</span>
@@ -218,11 +222,11 @@ export function rendreJournalCave() {
     let syntheseHtml = '';
     if (meilleurs.optimaux.length > 0) {
       syntheseHtml = `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:10px;">
-        🏆 <strong>Périodes optimales observées :</strong> ${escapeHtml(meilleurs.optimaux.join(', '))}
+        ${svgIcon('award', 14)} <strong>Périodes optimales observées :</strong> ${escapeHtml(meilleurs.optimaux.join(', '))}
       </div>`;
     } else if (meilleurs.corrects.length > 0) {
       syntheseHtml = `<div style="background:#FFF8E1; color:#EF6C00; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:10px;">
-        👍 <strong>Périodes favorables :</strong> ${escapeHtml(meilleurs.corrects.join(', '))}
+        ${svgIcon('thumbs-up', 14)} <strong>Périodes favorables :</strong> ${escapeHtml(meilleurs.corrects.join(', '))}
       </div>`;
     }
 
@@ -244,7 +248,7 @@ export function rendreJournalCave() {
   } else {
     graphHtml = `
       <div class="card" style="text-align:center; padding:24px; color:var(--text-muted);">
-        <div style="font-size:1.8rem; margin-bottom:8px;">🌡️</div>
+        <div style="margin-bottom:8px; color:var(--primary);">${svgIcon('thermometer', 32)}</div>
         <div style="font-weight:600; margin-bottom:4px;">Aucun relevé de cave pour le moment</div>
         <div style="font-size:0.82rem;">Ajoutez votre premier relevé ci-dessus pour suivre l'évolution saisonnière de votre cave année par année.</div>
       </div>
@@ -260,7 +264,7 @@ export function rendreJournalCave() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
             <div>
               <div style="font-weight:700; font-size:0.88rem;">
-                ${new Date(r.date).toLocaleDateString('fr-FR')} — 🌡️ ${r.temperature}°C · 💧 ${r.hygrometrie}%
+                ${new Date(r.date).toLocaleDateString('fr-FR')} — ${svgIcon('thermometer', 14)} ${r.temperature}°C · ${svgIcon('droplet', 14)} ${r.hygrometrie}%
               </div>
               ${r.note ? `<div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(r.note)}</div>` : ''}
             </div>

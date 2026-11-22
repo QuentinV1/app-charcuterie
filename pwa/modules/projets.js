@@ -1,5 +1,5 @@
 // Gestion des projets / sessions (liste, planning, production & lots, budget & évaluation)
-import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 import { CalculateurCharcuterie, analyserCourbePesees } from './calculateur.js';
 import { supprimerPhotosProjetIDB, chargerMiniaturesEtapesPWA } from './photos.js';
 import { rendreCarteEvaluationProjet } from './evaluation.js';
@@ -49,7 +49,7 @@ export function rendreProjets() {
   if (appState.projets.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🥩</div>
+        <div style="margin-bottom: 12px; color: var(--primary);">${svgIcon('utensils', 44)}</div>
         <div style="font-weight: 700; font-size: 1.15rem; color: var(--text); margin-bottom: 6px;">Aucune session en cours</div>
         <p style="font-size: 0.88rem; max-width: 320px; margin: 0 auto 20px;">Lancez votre première fabrication artisanale (canard, jambon, coppa, sanglier, saucisses...).</p>
         <button class="btn btn-primary" onclick="ouvrirModalPlanifier()">+ Planifier une session</button>
@@ -84,7 +84,7 @@ export function rendreProjets() {
             <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
               <span class="badge badge-mini">${escapeHtml(p.nomRecettePrincipale || 'Artisanal')}</span>
               <span class="badge ${estTermine ? 'badge-muted' : 'badge-green'}">${estTermine ? 'Terminé' : 'En cours'}</span>
-              ${heureFormatted ? `<span class="badge badge-muted">🕒 ${dateFormatted} · ${heureFormatted}</span>` : ''}
+              ${heureFormatted ? `<span class="badge badge-muted">${svgIcon('clock', 12)} ${dateFormatted} · ${heureFormatted}</span>` : ''}
             </div>
             <div style="font-weight: 800; font-size: 1.05rem;">${escapeHtml(p.nom)}</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top:2px;">
@@ -105,7 +105,7 @@ export function rendreProjets() {
 
         ${prochaineEtape && !estTermine ? `
           <div class="proj-next-step">
-            <span>▶ À suivre : ${escapeHtml(prochaineEtape.titre)}</span>
+            <span>${svgIcon('play', 12)} À suivre : ${escapeHtml(prochaineEtape.titre)}</span>
           </div>
         ` : ''}
       </div>
@@ -182,11 +182,11 @@ export function rendrePlanningProjet(p) {
       <div class="active-step-card">
         <div class="active-step-badge">ÉTAPE EN COURS (${activeIdx + 1}/${etapes.length})</div>
         <div style="font-weight:800; font-size:1rem; margin-bottom:2px;">${cur.ordre ? cur.ordre + '. ' : ''}${escapeHtml(cur.titre)}</div>
-        <div style="font-size:0.78rem; color:var(--primary-dark); font-weight:600; margin-bottom:8px;">📅 ${dtStr}</div>
+        <div style="font-size:0.78rem; color:var(--primary-dark); font-weight:600; margin-bottom:8px;">${svgIcon('calendar', 14)} ${dtStr}</div>
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
           <button type="button" class="btn btn-primary btn-sm" onclick="basculerEtapeProjetActuel(${activeIdx})">✓ Marquer comme fait</button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="demarrerEtapeMaintenantPWA(${activeIdx})">Démarrer maintenant</button>
-          ${hasLots && estEtapeSechageOuPesee(cur) ? `<button type="button" class="btn btn-secondary btn-sm" onclick="basculerSousOngletProjet('production')">⚖️ Peser mes lots</button>` : ''}
+          ${hasLots && estEtapeSechageOuPesee(cur) ? `<button type="button" class="btn btn-secondary btn-sm" onclick="basculerSousOngletProjet('production')">${svgIcon('scale', 14)} Peser mes lots</button>` : ''}
         </div>
       </div>
     `;
@@ -208,16 +208,16 @@ export function rendrePlanningProjet(p) {
             <div style="font-weight:700; font-size:0.95rem; ${isDone ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">
               ${et.ordre ? et.ordre + '. ' : ''}${escapeHtml(et.titre)}
             </div>
-            ${dateStr ? `<div style="font-size:0.75rem; color:var(--primary); font-weight:600; margin:2px 0;">📅 ${dateStr} ${dureeH ? '(' + dureeH + ')' : ''}</div>` : ''}
+            ${dateStr ? `<div style="font-size:0.75rem; color:var(--primary); font-weight:600; margin:2px 0;">${svgIcon('calendar', 13)} ${dateStr} ${dureeH ? '(' + dureeH + ')' : ''}</div>` : ''}
             <div style="font-size:0.82rem; color:var(--text); line-height:1.45; margin-top:4px; white-space:pre-line;">${escapeHtml(et.instructions || '')}</div>
-            ${et.astuce ? `<div class="astuce-box">💡 <strong>Astuce Pro :</strong> ${escapeHtml(et.astuce)}</div>` : ''}
+            ${et.astuce ? `<div class="astuce-box">${svgIcon('lightbulb', 14)} <strong>Astuce Pro :</strong> ${escapeHtml(et.astuce)}</div>` : ''}
             ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `<div class="etape-photos-strip" id="etape-photos-${idx}"></div>` : ''}
             <div class="etape-photo-actions">
               <label class="btn-photo-mini">
-                📷 ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `Ajouter photo (${et.photoIds.length})` : 'Ajouter photo'}
+                ${svgIcon('camera', 13)} ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `Ajouter photo (${et.photoIds.length})` : 'Ajouter photo'}
                 <input type="file" accept="image/*" multiple style="display:none;" onchange="ajouterPhotosEtapePWA(${idx}, this.files); this.value='';">
               </label>
-              ${showPeser ? `<button type="button" class="btn-photo-mini" onclick="basculerSousOngletProjet('production')">⚖️ Peser</button>` : ''}
+              ${showPeser ? `<button type="button" class="btn-photo-mini" onclick="basculerSousOngletProjet('production')">${svgIcon('scale', 13)} Peser</button>` : ''}
             </div>
             ${!isDone ? `
               <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
@@ -226,7 +226,7 @@ export function rendrePlanningProjet(p) {
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 15)">+15m</button>
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 60)">+1h</button>
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 1440)">+1j</button>
-                <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 9px; font-size:0.75rem;" onclick="ouvrirModalHoraireEtape(${idx})">🕒 Horaire</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 9px; font-size:0.75rem;" onclick="ouvrirModalHoraireEtape(${idx})">${svgIcon('clock', 13)} Horaire</button>
                 <button type="button" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="demarrerEtapeMaintenantPWA(${idx})">Maintenant</button>
               </div>
             ` : ''}
@@ -408,7 +408,7 @@ export function rendreProductionProjet(p) {
           <div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span class="badge badge-primary">${escapeHtml(lot.variante || 'Lot standard')}</span>
-              ${estAffine ? '<span class="badge badge-green">✨ Affiné</span>' : ''}
+              ${estAffine ? `<span class="badge badge-green">${svgIcon('sparkles', 12)} Affiné</span>` : ''}
             </div>
             <div style="font-weight:800; font-size:0.95rem; margin-top:3px;">${escapeHtml(lot.nomProduit || p.nomRecettePrincipale || 'Charcuterie')}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">
@@ -437,19 +437,19 @@ export function rendreProductionProjet(p) {
           <div>Note : <strong>${'★'.repeat(note)}</strong></div>
         </div>
 
-        ${analyse.risqueCroutage ? `<div style="font-size:0.75rem; color:#C62828; background:#FFEBEE; padding:6px 8px; border-radius:6px; margin-top:6px; font-weight:600;">${escapeHtml(analyse.alerteCroutageMsg)}</div>` : ''}
-        ${analyse.dateEstimeeFin ? `<div style="font-size:0.75rem; color:#2E7D32; margin-top:6px;">📅 Fin d'affinage estimée : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong></div>` : ''}
+        ${analyse.risqueCroutage ? `<div style="font-size:0.75rem; color:#C62828; background:#FFEBEE; padding:6px 8px; border-radius:6px; margin-top:6px; font-weight:600;">${svgIcon('alert-triangle', 13)} ${escapeHtml(analyse.alerteCroutageMsg)}</div>` : ''}
+        ${analyse.dateEstimeeFin ? `<div style="font-size:0.75rem; color:#2E7D32; margin-top:6px;">${svgIcon('calendar', 13)} Fin d'affinage estimée : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong></div>` : ''}
         ${lot.commentaire ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:6px; font-style:italic;">« ${escapeHtml(lot.commentaire)} »</div>` : ''}
 
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
           <button class="btn btn-primary btn-sm" style="flex:1;" onclick="ouvrirModalPeseeLotProjet(${idx})">
-            ⚖️ ${pInit ? `Peser (${nbPesees})` : 'Poids départ'}
+            ${svgIcon('scale', 14)} ${pInit ? `Peser (${nbPesees})` : 'Poids départ'}
           </button>
           <button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierLot(${idx})">
             ✎ Modifier & Avis
           </button>
           <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="ouvrirModalAmeliorerRecette(${idx})">
-            ✨ Améliorer la recette de base (futurs projets)
+            ${svgIcon('sparkles', 14)} Améliorer la recette de base (futurs projets)
           </button>
         </div>
       </div>
@@ -516,7 +516,7 @@ export function rendreBudgetProjet(p) {
 
     ${bilan.resumeGraisse ? `
       <div class="card" style="background:var(--surface-subtle); border-color:var(--border);">
-        <div style="font-size:0.85rem; font-weight:600; color:var(--text);">🦆 Bilan Graisse & Confit</div>
+        <div style="font-size:0.85rem; font-weight:600; color:var(--text);">${svgIcon('flame', 15)} Bilan Graisse & Confit</div>
         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; line-height:1.45;">${escapeHtml(bilan.resumeGraisse)}</div>
       </div>
     ` : ''}

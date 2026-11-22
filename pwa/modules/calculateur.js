@@ -254,7 +254,7 @@ export function analyserCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = 
       const perte = ((pInit - pes.poidsGrammes) / pInit) * 100;
       if (jours <= 7 && perte > 15) {
         risqueCroutage = true;
-        alerteCroutageMsg = `⚠️ Risque de croûtage : -${perte.toFixed(1)}% en ${Math.max(1, Math.round(jours))} j (>15% en 1re semaine). Augmentez l'HR% (75-80%) ou passez sous vide 3-5 jours pour rééquilibrer.`;
+        alerteCroutageMsg = `Risque de croûtage : -${perte.toFixed(1)}% en ${Math.max(1, Math.round(jours))} j (>15% en 1re semaine). Augmentez l'HR% (75-80%) ou passez sous vide 3-5 jours pour rééquilibrer.`;
         break;
       }
     }

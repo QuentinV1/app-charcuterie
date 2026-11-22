@@ -1,4 +1,4 @@
-import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, getValeurParametre, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 import { CalculateurCharcuterie, poidsUnitaireKgRecette } from './calculateur.js';
 import { rendreRappelEvaluationPlanification } from './evaluation.js';
 import {
@@ -44,7 +44,7 @@ export function actualiserAffichageModeSalage() {
   }
   if (elRes) {
     const dureeSelH = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE ? dureeSvH : dureeRecH;
-    elRes.innerText = `⏱️ Mise au sel : ${formaterDureeSalage(dureeSelH)} · Étapes et liste de courses adaptées automatiquement.`;
+    elRes.innerHTML = `${svgIcon('clock', 14)} Mise au sel : ${escapeHtml(formaterDureeSalage(dureeSelH))} · Étapes et liste de courses adaptées automatiquement.`;
   }
 }
 

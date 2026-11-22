@@ -1,4 +1,4 @@
-import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 import {
   estConnecteFirebase, saveUserRecipeFirestore, deleteUserRecipeFirestore,
   updateRecipeSharingFirestore, deleteBaseRecipeFirestore, getFirebaseUser, initFirebase
@@ -45,15 +45,15 @@ export function rendreRecettes() {
             <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
               <span class="badge badge-mini">${escapeHtml(r.famille || 'Artisanal')}</span>
               ${r.typeRecette ? `<span class="badge badge-muted">${escapeHtml(r.typeRecette)}</span>` : ''}
-              ${r._source === 'shared' ? `<span class="badge badge-primary">🤝 Partagée</span>` : (r._source === 'user' && r.baseRecipeId ? `<span class="badge badge-mini">Perso (modifiée)</span>` : (r._source === 'user' ? `<span class="badge badge-mini">Perso</span>` : ''))}
+              ${r._source === 'shared' ? `<span class="badge badge-primary">${svgIcon('share', 12)} Partagée</span>` : (r._source === 'user' && r.baseRecipeId ? `<span class="badge badge-mini">Perso (modifiée)</span>` : (r._source === 'user' ? `<span class="badge badge-mini">Perso</span>` : ''))}
               ${r.masquee ? '<span class="badge badge-muted">Masquée</span>' : ''}
             </div>
             <div style="font-weight:800; font-size:1.05rem; margin-top:3px;">${escapeHtml(r.nom)}</div>
           </div>
           <div style="display:flex; align-items:center; gap:4px;">
             ${cible ? `<div class="badge badge-green">Séchage -${cible}%</div>` : (r.tempCoeurCible ? `<div class="badge badge-primary">Cuisson ${r.tempCoeurCible}°C</div>` : '')}
-            <button class="btn-icon" style="padding:4px;" title="${r.masquee ? 'Afficher' : 'Masquer'}" onclick="event.stopPropagation(); basculerMasquageRecetteDirect('${escapeJsStr(r.id || r.code)}')">${r.masquee ? '👁️' : '🙈'}</button>
-            <button class="btn-icon" style="color:var(--danger); padding:4px;" title="Supprimer la recette" onclick="event.stopPropagation(); supprimerRecetteDirect('${escapeJsStr(r.id || r.code)}')">🗑️</button>
+            <button class="btn-icon" style="padding:4px;" title="${r.masquee ? 'Afficher' : 'Masquer'}" onclick="event.stopPropagation(); basculerMasquageRecetteDirect('${escapeJsStr(r.id || r.code)}')">${r.masquee ? svgIcon('eye', 16) : svgIcon('eye-off', 16)}</button>
+            <button class="btn-icon" style="color:var(--danger); padding:4px;" title="Supprimer la recette" onclick="event.stopPropagation(); supprimerRecetteDirect('${escapeJsStr(r.id || r.code)}')">${svgIcon('trash', 16)}</button>
           </div>
         </div>
         <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
@@ -61,9 +61,9 @@ export function rendreRecettes() {
         </p>
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;">
           <div style="display:flex; gap:10px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap;">
-            <span>⏱ ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
-            <span>🧂 ${ingrCount} ingr.</span>
-            ${varCount > 0 ? `<span>🌿 ${varCount} lot${varCount > 1 ? 's' : ''}</span>` : ''}
+            <span>${svgIcon('clock', 13)} ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
+            <span>${svgIcon('salt', 13)} ${ingrCount} ingr.</span>
+            ${varCount > 0 ? `<span>${svgIcon('leaf', 13)} ${varCount} lot${varCount > 1 ? 's' : ''}</span>` : ''}
           </div>
           <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.76rem;" onclick="event.stopPropagation(); ouvrirModalPlanifier('${escapeJsStr(r.id || r.code)}')">Planifier</button>
         </div>
@@ -117,11 +117,11 @@ export function ouvrirFicheRecette(id) {
   `;
 
   if (r.conditionsConservation) {
-    html += `<div class="conservation-box">🌡️ <strong>Conservation :</strong> ${escapeHtml(r.conditionsConservation)}</div>`;
+    html += `<div class="conservation-box">${svgIcon('thermometer', 14)} <strong>Conservation :</strong> ${escapeHtml(r.conditionsConservation)}</div>`;
   }
 
   if (r.pointsVigilance) {
-    html += `<div class="vigilance-box">⚠️ <strong>Points de vigilance :</strong><br>${escapeHtml(r.pointsVigilance).replace(/\n/g, '<br>')}</div>`;
+    html += `<div class="vigilance-box">${svgIcon('alert-triangle', 14)} <strong>Points de vigilance :</strong><br>${escapeHtml(r.pointsVigilance).replace(/\n/g, '<br>')}</div>`;
   }
 
   // Sorties de découpe (si multi-sorties)
@@ -197,7 +197,7 @@ export function ouvrirFicheRecette(id) {
               <span style="color:var(--primary); font-size:0.75rem;">✎</span>
             </div>
             <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px; white-space:pre-line;">${escapeHtml(e.instructions || '')}</div>
-            ${e.astuce ? `<div class="astuce-box" style="margin-top:4px;">💡 ${escapeHtml(e.astuce)}</div>` : ''}
+            ${e.astuce ? `<div class="astuce-box" style="margin-top:4px;">${svgIcon('lightbulb', 14)} ${escapeHtml(e.astuce)}</div>` : ''}
           </div>
         `).join('')}
       </div>

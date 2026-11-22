@@ -1,4 +1,4 @@
-import { appState, uiState, sauvegarderDonnees, verifierPersistanceStockage, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, verifierPersistanceStockage, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 import { estConnecteFirebase, getFirebaseUser, saveUserRecipeFirestore } from './firebase.js';
 export function basculerSousOngletParametres(onglet) {
   document.querySelectorAll('#view-parametres .sub-tab').forEach(b => b.classList.remove('active'));
@@ -24,7 +24,7 @@ export function rendreParametres() {
       cloudBox.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
-            <div style="font-weight:700; color:var(--secondary); font-size:0.88rem;">☁️ Connecté : ${escapeHtml(user.email || user.displayName || user.uid)}</div>
+            <div style="font-weight:700; color:var(--secondary); font-size:0.88rem;">${svgIcon('cloud', 15)} Connecté : ${escapeHtml(user.email || user.displayName || user.uid)}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Synchronisation temps réel active (recettes de base, recettes perso/partagées, sessions, ventes).</div>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="deconnexionCloud()">Déconnexion</button>
@@ -34,7 +34,7 @@ export function rendreParametres() {
       cloudBox.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
-            <div style="font-weight:700; font-size:0.88rem;">☁️ Mode local uniquement</div>
+            <div style="font-weight:700; font-size:0.88rem;">${svgIcon('cloud', 15)} Mode local uniquement</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Connectez-vous pour synchroniser vos sessions, ventes et recettes partagées.</div>
           </div>
           <button type="button" class="btn btn-primary btn-sm" onclick="ouvrirModalAuth()">Se connecter</button>
@@ -44,13 +44,13 @@ export function rendreParametres() {
   }
   const statusEl = document.getElementById('ios-storage-status');
   if (statusEl) {
-    const persistedTxt = uiState.storagePersisted === true
-      ? '🔒 Stockage persistant activé'
-      : (uiState.storagePersisted === false ? '⚠️ Stockage non persistant (export régulier recommandé)' : 'ℹ️ Vérification du stockage...');
+    const persistedHtml = uiState.storagePersisted === true
+      ? `${svgIcon('lock', 13)} Stockage persistant activé`
+      : (uiState.storagePersisted === false ? `${svgIcon('alert-triangle', 13)} Stockage non persistant (export régulier recommandé)` : `${svgIcon('info', 13)} Vérification du stockage...`);
     const lastB = appState.lastBackupAt
       ? `Dernier export : ${new Date(appState.lastBackupAt).toLocaleDateString('fr-FR')}`
       : 'Aucun export effectué';
-    statusEl.textContent = `${persistedTxt} · ${lastB}`;
+    statusEl.innerHTML = `${persistedHtml} · ${escapeHtml(lastB)}`;
   }
   const container = document.getElementById('params-tarifs-list');
   if (!container) return;

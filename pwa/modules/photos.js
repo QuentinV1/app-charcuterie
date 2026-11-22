@@ -1,5 +1,5 @@
 // Stockage photos étapes & affinage (IndexedDB cache local + Cloud Firestore sync)
-import { appState, uiState, sauvegarderDonnees } from './state.js';
+import { appState, uiState, sauvegarderDonnees, escapeHtml, svgIcon } from './state.js';
 import {
   estConnecteFirebase,
   savePhotoFirestore,
@@ -368,7 +368,7 @@ export async function chargerMiniaturesEtapesPWA(p) {
           const miss = document.createElement('button');
           miss.type = 'button';
           miss.className = 'etape-photo-missing';
-          miss.textContent = '📷 Indisponible ×';
+          miss.innerHTML = `${svgIcon('camera', 13)} Indisponible ×`;
           miss.title = 'Photo introuvable (cliquer pour retirer la référence)';
           miss.onclick = () => {
             if (confirm('Cette photo est introuvable localement et dans le cloud. Retirer cette référence ?')) {
@@ -407,8 +407,8 @@ export async function ouvrirApercuPhotoEtape(photoId, etapeIdx) {
 
   const tailleKo = Math.max(1, Math.round((rec.size || rec.blob.size) / 1024));
   const dateStr = rec.createdAt ? new Date(rec.createdAt).toLocaleString('fr-FR') : '';
-  const syncBadge = rec.synced ? '☁️ Sauvegardée' : '📱 Locale';
-  document.getElementById('modal-photo-meta').textContent = `${dateStr} · ${tailleKo} Ko · ${syncBadge}`;
+  const syncBadge = rec.synced ? `${svgIcon('cloud', 13)} Sauvegardée` : `${svgIcon('smartphone', 13)} Locale`;
+  document.getElementById('modal-photo-meta').innerHTML = `${escapeHtml(dateStr)} · ${tailleKo} Ko · ${syncBadge}`;
 
   const delBtn = document.getElementById('modal-photo-delete-btn');
   delBtn.onclick = () => supprimerPhotoEtapePWA(photoId, etapeIdx);

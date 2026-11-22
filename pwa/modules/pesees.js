@@ -1,5 +1,5 @@
 // Gestion de l'historique des pesées, courbe SVG et diagnostic de croûtage
-import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr } from './state.js';
+import { appState, uiState, sauvegarderDonnees, escapeHtml, escapeJsStr, svgIcon } from './state.js';
 import { analyserCourbePesees } from './calculateur.js';
 
 export function genererSvgCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = null) {
@@ -80,8 +80,8 @@ export function genererSvgCourbePesees(lot, perteCiblePct = 35, dateDebutProjet 
       ${dots}
     </svg>
     <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-top:4px; padding:0 4px;">
-      <span>🔴 Réel : -${analyse.perteActuellePct}% (${analyse.dernierPoids}g)</span>
-      <span>🟢 Idéal / Cible (-${perteCiblePct}%)</span>
+      <span>${svgIcon('circle-danger', 11)} Réel : -${analyse.perteActuellePct}% (${analyse.dernierPoids}g)</span>
+      <span>${svgIcon('circle-success', 11)} Idéal / Cible (-${perteCiblePct}%)</span>
     </div>
   `;
 }
@@ -120,10 +120,10 @@ export function rendreHistoriqueEtCourbeModal(lot, perteCible = 35, dateDebutPro
   if (alerteBox) {
     let html = '';
     if (analyse.risqueCroutage) {
-      html += `<div style="background:#FFEBEE; color:#C62828; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px; font-weight:600;">${escapeHtml(analyse.alerteCroutageMsg)}</div>`;
+      html += `<div style="background:#FFEBEE; color:#C62828; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px; font-weight:600;">${svgIcon('alert-triangle', 14)} ${escapeHtml(analyse.alerteCroutageMsg)}</div>`;
     }
     if (analyse.dateEstimeeFin) {
-      html += `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px;">📅 Fin d'affinage estimée (-${perteCible}%) : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong> (rythme ~${analyse.vitessePctParJour}%/jour)</div>`;
+      html += `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px;">${svgIcon('calendar', 14)} Fin d'affinage estimée (-${perteCible}%) : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong> (rythme ~${analyse.vitessePctParJour}%/jour)</div>`;
     }
     alerteBox.innerHTML = html;
   }
@@ -159,9 +159,9 @@ export function calculerPeseeModal() {
     const resteG = Math.max(0, Math.round(pAct - (pInit * (1 - cible / 100))));
     res.style.display = 'block';
     document.getElementById('modal-pesee-perte').innerText = `-${perte}% de perte de poids`;
-    document.getElementById('modal-pesee-details').innerText = (resteG > 0)
+    document.getElementById('modal-pesee-details').innerHTML = (resteG > 0)
       ? `Reste ~${resteG}g d'eau à perdre pour atteindre -${cible}%`
-      : '🎯 Perte cible atteinte ou dépassée !';
+      : `${svgIcon('target', 14)} Perte cible atteinte ou dépassée !`;
   } else {
     res.style.display = 'none';
   }

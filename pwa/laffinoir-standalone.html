@@ -1062,6 +1062,16 @@ body.dark-mode .app-header {
   margin-bottom: 6px;
 }
 
+.icon-inline {
+  display: inline-block;
+  vertical-align: -0.16em;
+  flex-shrink: 0;
+}
+.modal-title .icon-inline,
+.btn .icon-inline,
+.badge .icon-inline {
+  margin-right: 4px;
+}
 </style>
 </head>
 <body>
@@ -1076,8 +1086,8 @@ body.dark-mode .app-header {
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <button class="btn-theme-toggle" id="btn-auth-header" onclick="ouvrirModalAuth()" title="Compte Cloud">☁️ Connexion</button>
-      <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="basculerTheme()">🌙 Cave</button>
+      <button class="btn-theme-toggle" id="btn-auth-header" onclick="ouvrirModalAuth()" title="Compte Cloud"><svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> Connexion</button>
+      <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="basculerTheme()"><svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Cave</button>
       <button class="btn btn-secondary btn-sm" id="btn-quick-new" onclick="ouvrirModalPlanifier()">+ Planifier</button>
     </div>
   </header>
@@ -1279,8 +1289,8 @@ body.dark-mode .app-header {
             La PWA se met à jour automatiquement depuis Git à chaque ouverture. Vous pouvez aussi forcer une vérification ou télécharger la version HTML autonome.
           </p>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button type="button" class="btn btn-primary btn-sm" onclick="verifierMisesAJourGit(true)">🔄 Vérifier les mises à jour</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerStandaloneDepuisGit()">📄 Version hors-ligne (HTML)</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="verifierMisesAJourGit(true)"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> Vérifier les mises à jour</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="telechargerStandaloneDepuisGit()"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg> Version hors-ligne (HTML)</button>
           </div>
         </div>
 
@@ -1315,7 +1325,7 @@ body.dark-mode .app-header {
 
         <!-- MANUEL D'INSTALLATION IOS (CONSERVÉ EXPLICITEMENT) -->
         <div class="card">
-          <div style="font-weight: 700; margin-bottom: 8px;">📲 Installer sur iPhone (iOS Safari)</div>
+          <div style="font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:6px;"><svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg> Installer sur iPhone (iOS Safari)</div>
           <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px;">
             Pour utiliser cette application comme une vraie app native sur votre iPhone :
           </p>
@@ -1667,7 +1677,7 @@ body.dark-mode .app-header {
       <div id="fiche-body"></div>
       <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 12px; gap: 8px;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-secondary btn-sm" id="btn-fiche-partager" style="display:none;" onclick="ouvrirModalPartageRecette()">🤝 Partager</button>
+          <button class="btn btn-secondary btn-sm" id="btn-fiche-partager" style="display:none;" onclick="ouvrirModalPartageRecette()"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Partager</button>
           <button class="btn btn-secondary btn-sm" id="btn-fiche-masquer" onclick="basculerMasquageDepuisFiche()">Masquer</button>
           <button class="btn btn-danger btn-sm" id="btn-fiche-supprimer" onclick="supprimerRecetteDepuisFiche()">Supprimer</button>
         </div>
@@ -1764,7 +1774,7 @@ body.dark-mode .app-header {
   <div class="modal-overlay" id="modal-pesee">
     <div class="modal-content" style="max-height:90vh; overflow-y:auto;">
       <div class="modal-header">
-        <div class="modal-title">⚖️ Pesées & Courbe — <span id="modal-pesee-lot-nom">Lot</span></div>
+        <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg> Pesées & Courbe — <span id="modal-pesee-lot-nom">Lot</span></div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:10px;">
@@ -2016,7 +2026,7 @@ body.dark-mode .app-header {
       </div>
       <div id="modal-photo-meta" style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;"></div>
       <div style="margin-top: 14px; display: flex; justify-content: space-between; gap: 8px;">
-        <button class="btn btn-secondary" style="color:var(--danger, #c62828);" id="modal-photo-delete-btn">🗑️ Supprimer</button>
+        <button class="btn btn-secondary" style="color:var(--danger, #c62828);" id="modal-photo-delete-btn"><svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg> Supprimer</button>
         <button class="btn btn-primary" onclick="fermerModals()">Fermer</button>
       </div>
     </div>
@@ -2026,18 +2036,18 @@ body.dark-mode .app-header {
   <div class="modal-overlay" id="modal-evaluation">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">🍷 Évaluation — <span id="eval-proj-nom">Session</span></div>
+        <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></svg> Évaluation — <span id="eval-proj-nom">Session</span></div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <input type="hidden" id="eval-proj-id">
       <div class="form-group">
         <label class="form-label">Note globale</label>
         <select id="eval-note" class="form-control">
-          <option value="5">⭐⭐⭐⭐⭐ (5/5) Exceptionnel</option>
-          <option value="4">⭐⭐⭐⭐☆ (4/5) Très réussi</option>
-          <option value="3">⭐⭐⭐☆☆ (3/5) Correct</option>
-          <option value="2">⭐⭐☆☆☆ (2/5) À améliorer</option>
-          <option value="1">⭐☆☆☆☆ (1/5) Raté</option>
+          <option value="5">5/5 — Exceptionnel</option>
+          <option value="4">4/5 — Très réussi</option>
+          <option value="3">3/5 — Correct</option>
+          <option value="2">2/5 — À améliorer</option>
+          <option value="1">1/5 — Raté</option>
         </select>
       </div>
       <div class="form-row">
@@ -2084,7 +2094,7 @@ body.dark-mode .app-header {
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">🚀 Mise à jour disponible</div>
+          <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Mise à jour disponible</div>
           <div id="update-git-badge" style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Nouvelle version disponible</div>
         </div>
         <button class="btn-icon" onclick="ignorerMiseAJourGit()">✕</button>
@@ -2094,7 +2104,7 @@ body.dark-mode .app-header {
         <div id="update-git-notes" style="white-space:pre-line; background:var(--surface-subtle); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; font-size:0.84rem; max-height:180px; overflow-y:auto; line-height:1.45;"></div>
       </div>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button type="button" class="btn btn-primary" id="btn-update-pwa-refresh" onclick="actualiserPwaDepuisGit()">🔄 Actualiser la PWA maintenant</button>
+        <button type="button" class="btn btn-primary" id="btn-update-pwa-refresh" onclick="actualiserPwaDepuisGit()"><svg class="icon-inline" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> Actualiser la PWA maintenant</button>
         <button type="button" class="btn btn-secondary" onclick="ignorerMiseAJourGit()">Plus tard</button>
       </div>
     </div>
@@ -2104,7 +2114,7 @@ body.dark-mode .app-header {
   <div class="modal-overlay" id="modal-horaire-etape">
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
-        <div class="modal-title">🕒 Horaire — <span id="modal-horaire-titre">Étape</span></div>
+        <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Horaire — <span id="modal-horaire-titre">Étape</span></div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <input type="hidden" id="modal-horaire-idx">
@@ -2177,7 +2187,7 @@ body.dark-mode .app-header {
     <div class="modal-content" style="max-width: 460px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">✨ Améliorer la recette de base</div>
+          <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg> Améliorer la recette de base</div>
           <div id="modal-ameliorer-recette-nom" style="font-size:0.78rem; color:var(--text-muted);"></div>
         </div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
@@ -2356,7 +2366,7 @@ body.dark-mode .app-header {
   <div class="modal-overlay" id="modal-auth">
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
-        <div class="modal-title">☁️ Compte Cloud L'Affinoir</div>
+        <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> Compte Cloud L'Affinoir</div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
       </div>
       <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">
@@ -2384,7 +2394,7 @@ body.dark-mode .app-header {
     <div class="modal-content" style="max-width: 420px;">
       <div class="modal-header">
         <div>
-          <div class="modal-title">🤝 Partager la recette</div>
+          <div class="modal-title"><svg class="icon-inline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Partager la recette</div>
           <div id="partage-recette-nom" style="font-size:0.78rem; color:var(--text-muted);"></div>
         </div>
         <button class="btn-icon" onclick="fermerModals()">✕</button>
@@ -6828,6 +6838,53 @@ function escapeJsStr(str) {
     .replace(/\n/g, '\\n');
   return escapeHtml(js);
 }
+
+const SVG_ICONS = {
+  'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  'award': '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
+  'calendar': '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+  'camera': '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  'circle-danger': '<circle cx="12" cy="12" r="7" fill="#DC2626" stroke="#DC2626"/>',
+  'circle-success': '<circle cx="12" cy="12" r="7" fill="#236B48" stroke="#236B48"/>',
+  'clock': '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  'cloud': '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+  'droplet': '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  'eye': '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  'eye-off': '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>',
+  'file-text': '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/>',
+  'flame': '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  'info': '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  'leaf': '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  'lock': '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  'moon': '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  'package': '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  'play': '<polygon points="6 3 20 12 6 21 6 3"/>',
+  'salt': '<path d="M12 2v4"/><path d="M6.5 8h11l1.5 12H5L6.5 8z"/><path d="M9.5 13h.01"/><path d="M14.5 13h.01"/><path d="M12 16h.01"/>',
+  'scale': '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  'share': '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+  'shopping-cart': '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  'smartphone': '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+  'sparkles': '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>',
+  'star': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  'star-filled': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#D97706" stroke="#D97706"/>',
+  'sun': '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  'target': '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  'thermometer': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  'thumbs-up': '<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/>',
+  'trash': '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  'user': '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  'utensils': '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  'wine': '<path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/>'
+};
+
+function svgIcon(name, size = 15, extraClass = '') {
+  const inner = SVG_ICONS[name];
+  if (!inner) return '';
+  const cls = extraClass ? `icon-inline ${extraClass}` : 'icon-inline';
+  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+}
 function migrerLotsPesees(projets) {
   if (!Array.isArray(projets)) return;
   projets.forEach(p => {
@@ -7556,7 +7613,7 @@ function analyserCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = null) {
       const perte = ((pInit - pes.poidsGrammes) / pInit) * 100;
       if (jours <= 7 && perte > 15) {
         risqueCroutage = true;
-        alerteCroutageMsg = `⚠️ Risque de croûtage : -${perte.toFixed(1)}% en ${Math.max(1, Math.round(jours))} j (>15% en 1re semaine). Augmentez l'HR% (75-80%) ou passez sous vide 3-5 jours pour rééquilibrer.`;
+        alerteCroutageMsg = `Risque de croûtage : -${perte.toFixed(1)}% en ${Math.max(1, Math.round(jours))} j (>15% en 1re semaine). Augmentez l'HR% (75-80%) ou passez sous vide 3-5 jours pour rééquilibrer.`;
         break;
       }
     }
@@ -7675,8 +7732,8 @@ function genererSvgCourbePesees(lot, perteCiblePct = 35, dateDebutProjet = null)
       ${dots}
     </svg>
     <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-top:4px; padding:0 4px;">
-      <span>🔴 Réel : -${analyse.perteActuellePct}% (${analyse.dernierPoids}g)</span>
-      <span>🟢 Idéal / Cible (-${perteCiblePct}%)</span>
+      <span>${svgIcon('circle-danger', 11)} Réel : -${analyse.perteActuellePct}% (${analyse.dernierPoids}g)</span>
+      <span>${svgIcon('circle-success', 11)} Idéal / Cible (-${perteCiblePct}%)</span>
     </div>
   `;
 }
@@ -7713,10 +7770,10 @@ function rendreHistoriqueEtCourbeModal(lot, perteCible = 35, dateDebutProjet = n
   if (alerteBox) {
     let html = '';
     if (analyse.risqueCroutage) {
-      html += `<div style="background:#FFEBEE; color:#C62828; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px; font-weight:600;">${escapeHtml(analyse.alerteCroutageMsg)}</div>`;
+      html += `<div style="background:#FFEBEE; color:#C62828; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px; font-weight:600;">${svgIcon('alert-triangle', 14)} ${escapeHtml(analyse.alerteCroutageMsg)}</div>`;
     }
     if (analyse.dateEstimeeFin) {
-      html += `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px;">📅 Fin d'affinage estimée (-${perteCible}%) : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong> (rythme ~${analyse.vitessePctParJour}%/jour)</div>`;
+      html += `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:8px;">${svgIcon('calendar', 14)} Fin d'affinage estimée (-${perteCible}%) : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong> (rythme ~${analyse.vitessePctParJour}%/jour)</div>`;
     }
     alerteBox.innerHTML = html;
   }
@@ -7751,9 +7808,9 @@ function calculerPeseeModal() {
     const resteG = Math.max(0, Math.round(pAct - (pInit * (1 - cible / 100))));
     res.style.display = 'block';
     document.getElementById('modal-pesee-perte').innerText = `-${perte}% de perte de poids`;
-    document.getElementById('modal-pesee-details').innerText = (resteG > 0)
+    document.getElementById('modal-pesee-details').innerHTML = (resteG > 0)
       ? `Reste ~${resteG}g d'eau à perdre pour atteindre -${cible}%`
-      : '🎯 Perte cible atteinte ou dépassée !';
+      : `${svgIcon('target', 14)} Perte cible atteinte ou dépassée !`;
   } else {
     res.style.display = 'none';
   }
@@ -8015,7 +8072,7 @@ function construireSvgAnnuel(releves, type) {
   return `
     <div style="margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <span style="font-size:0.82rem; font-weight:700;">${isTemp ? '🌡️ Température moyenne mensuelle (°C)' : '💧 Hygrométrie moyenne mensuelle (%)'}</span>
+        <span style="font-size:0.82rem; font-weight:700;">${isTemp ? `${svgIcon('thermometer', 14)} Température moyenne mensuelle (°C)` : `${svgIcon('droplet', 14)} Hygrométrie moyenne mensuelle (%)`}</span>
         <div style="display:flex; gap:8px;">${legendItems.join('')}</div>
       </div>
       <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block; background:var(--surface-subtle); border-radius:8px;">
@@ -8069,7 +8126,7 @@ function rendreJournalCave() {
     const tempOk = dernier.temperature >= 10 && dernier.temperature <= 14;
     const hygroOk = dernier.hygrometrie >= 70 && dernier.hygrometrie <= 80;
     const badgeColor = (tempOk && hygroOk) ? '#2E7D32' : (dernier.temperature > 17 || dernier.hygrometrie < 60 || dernier.hygrometrie > 88 ? '#C62828' : '#EF6C00');
-    const badgeTxt = (tempOk && hygroOk) ? '✅ Conditions idéales' : (!tempOk && !hygroOk ? '⚠️ T° et HR hors zone cible' : (!tempOk ? '⚠️ Température hors cible (10-14°C)' : '⚠️ Hygrométrie hors cible (70-80%)'));
+    const badgeTxt = (tempOk && hygroOk) ? `${svgIcon('check-circle', 13)} Conditions idéales` : (!tempOk && !hygroOk ? `${svgIcon('alert-triangle', 13)} T° et HR hors zone cible` : (!tempOk ? `${svgIcon('alert-triangle', 13)} Température hors cible (10-14°C)` : `${svgIcon('alert-triangle', 13)} Hygrométrie hors cible (70-80%)`));
 
     statusHtml = `
       <div class="card" style="border-left:4px solid ${badgeColor}; margin-bottom:12px;">
@@ -8077,7 +8134,7 @@ function rendreJournalCave() {
           <div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Dernier relevé (${new Date(dernier.date).toLocaleDateString('fr-FR')})</div>
             <div style="font-size:1.25rem; font-weight:800; margin-top:2px;">
-              🌡️ ${dernier.temperature}°C &nbsp;·&nbsp; 💧 ${dernier.hygrometrie}%
+              ${svgIcon('thermometer', 18)} ${dernier.temperature}°C &nbsp;·&nbsp; ${svgIcon('droplet', 18)} ${dernier.hygrometrie}%
             </div>
           </div>
           <span style="font-size:0.75rem; font-weight:700; color:${badgeColor}; background:var(--surface-subtle); padding:4px 8px; border-radius:6px;">${badgeTxt}</span>
@@ -8092,11 +8149,11 @@ function rendreJournalCave() {
     let syntheseHtml = '';
     if (meilleurs.optimaux.length > 0) {
       syntheseHtml = `<div style="background:#E8F5E9; color:#2E7D32; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:10px;">
-        🏆 <strong>Périodes optimales observées :</strong> ${escapeHtml(meilleurs.optimaux.join(', '))}
+        ${svgIcon('award', 14)} <strong>Périodes optimales observées :</strong> ${escapeHtml(meilleurs.optimaux.join(', '))}
       </div>`;
     } else if (meilleurs.corrects.length > 0) {
       syntheseHtml = `<div style="background:#FFF8E1; color:#EF6C00; padding:8px 10px; border-radius:6px; font-size:0.78rem; margin-bottom:10px;">
-        👍 <strong>Périodes favorables :</strong> ${escapeHtml(meilleurs.corrects.join(', '))}
+        ${svgIcon('thumbs-up', 14)} <strong>Périodes favorables :</strong> ${escapeHtml(meilleurs.corrects.join(', '))}
       </div>`;
     }
 
@@ -8118,7 +8175,7 @@ function rendreJournalCave() {
   } else {
     graphHtml = `
       <div class="card" style="text-align:center; padding:24px; color:var(--text-muted);">
-        <div style="font-size:1.8rem; margin-bottom:8px;">🌡️</div>
+        <div style="margin-bottom:8px; color:var(--primary);">${svgIcon('thermometer', 32)}</div>
         <div style="font-weight:600; margin-bottom:4px;">Aucun relevé de cave pour le moment</div>
         <div style="font-size:0.82rem;">Ajoutez votre premier relevé ci-dessus pour suivre l'évolution saisonnière de votre cave année par année.</div>
       </div>
@@ -8134,7 +8191,7 @@ function rendreJournalCave() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
             <div>
               <div style="font-weight:700; font-size:0.88rem;">
-                ${new Date(r.date).toLocaleDateString('fr-FR')} — 🌡️ ${r.temperature}°C · 💧 ${r.hygrometrie}%
+                ${new Date(r.date).toLocaleDateString('fr-FR')} — ${svgIcon('thermometer', 14)} ${r.temperature}°C · ${svgIcon('droplet', 14)} ${r.hygrometrie}%
               </div>
               ${r.note ? `<div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(r.note)}</div>` : ''}
             </div>
@@ -8225,7 +8282,7 @@ function rendreCarteEvaluationProjet(p) {
       <div class="card" style="border:1px dashed var(--primary); background:var(--surface-subtle);">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
           <div>
-            <div style="font-weight:700; font-size:0.92rem;">🍷 Fiche d'évaluation & Dégustation</div>
+            <div style="font-weight:700; font-size:0.92rem;">${svgIcon('wine', 16)} Fiche d'évaluation & Dégustation</div>
             <div style="font-size:0.78rem; color:var(--text-muted);">Notez texture, salinité et arômes pour ajuster votre prochaine session.</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="ouvrirModalEvaluationProjet('${escapeJsStr(p.id)}')">Évaluer</button>
@@ -8234,11 +8291,12 @@ function rendreCarteEvaluationProjet(p) {
     `;
   }
 
-  const etoiles = '⭐'.repeat(ev.noteGlobale) + '☆'.repeat(Math.max(0, 5 - ev.noteGlobale));
+  const noteClamp = Math.max(0, Math.min(5, Number(ev.noteGlobale) || 0));
+  const etoiles = svgIcon('star-filled', 14).repeat(noteClamp) + svgIcon('star', 14).repeat(5 - noteClamp);
   return `
     <div class="card" style="border-left:4px solid var(--primary);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <div style="font-weight:700; font-size:0.95rem;">🍷 Évaluation & Dégustation</div>
+        <div style="font-weight:700; font-size:0.95rem;">${svgIcon('wine', 16)} Évaluation & Dégustation</div>
         <button class="btn btn-secondary btn-sm" onclick="ouvrirModalEvaluationProjet('${escapeJsStr(p.id)}')">Modifier</button>
       </div>
       <div style="font-size:0.95rem; margin-bottom:6px;">${etoiles} <span style="font-size:0.78rem; color:var(--text-muted);">(${new Date(ev.date).toLocaleDateString('fr-FR')})</span></div>
@@ -8260,14 +8318,15 @@ function rendreRappelEvaluationPlanification(recetteId, nomRecette) {
     box.innerHTML = '';
     return;
   }
-  const etoiles = '⭐'.repeat(ev.noteGlobale);
+  const noteClamp = Math.max(0, Math.min(5, Number(ev.noteGlobale) || 0));
+  const etoiles = svgIcon('star-filled', 13).repeat(noteClamp);
   box.style.display = 'block';
   box.innerHTML = `
-    <div style="font-weight:700; font-size:0.82rem; margin-bottom:3px;">💡 Retour de votre dernière session (${new Date(ev.date).toLocaleDateString('fr-FR')}) ${etoiles}</div>
+    <div style="font-weight:700; font-size:0.82rem; margin-bottom:3px;">${svgIcon('lightbulb', 14)} Retour de votre dernière session (${new Date(ev.date).toLocaleDateString('fr-FR')}) ${etoiles}</div>
     <div style="font-size:0.78rem; color:var(--text);">
       Texture : <strong>${escapeHtml(ev.texture)}</strong> · Salinité : <strong>${escapeHtml(ev.salinite)}</strong> · Arômes : <strong>${escapeHtml(ev.aromes)}</strong>
     </div>
-    ${ev.commentaire ? `<div style="font-size:0.78rem; color:var(--primary); margin-top:3px; font-weight:600;">📝 "${escapeHtml(ev.commentaire)}"</div>` : ''}
+    ${ev.commentaire ? `<div style="font-size:0.78rem; color:var(--primary); margin-top:3px; font-weight:600;">${svgIcon('file-text', 13)} "${escapeHtml(ev.commentaire)}"</div>` : ''}
   `;
 }
 
@@ -8317,7 +8376,7 @@ function rendreProjets() {
   if (appState.projets.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🥩</div>
+        <div style="margin-bottom: 12px; color: var(--primary);">${svgIcon('utensils', 44)}</div>
         <div style="font-weight: 700; font-size: 1.15rem; color: var(--text); margin-bottom: 6px;">Aucune session en cours</div>
         <p style="font-size: 0.88rem; max-width: 320px; margin: 0 auto 20px;">Lancez votre première fabrication artisanale (canard, jambon, coppa, sanglier, saucisses...).</p>
         <button class="btn btn-primary" onclick="ouvrirModalPlanifier()">+ Planifier une session</button>
@@ -8352,7 +8411,7 @@ function rendreProjets() {
             <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
               <span class="badge badge-mini">${escapeHtml(p.nomRecettePrincipale || 'Artisanal')}</span>
               <span class="badge ${estTermine ? 'badge-muted' : 'badge-green'}">${estTermine ? 'Terminé' : 'En cours'}</span>
-              ${heureFormatted ? `<span class="badge badge-muted">🕒 ${dateFormatted} · ${heureFormatted}</span>` : ''}
+              ${heureFormatted ? `<span class="badge badge-muted">${svgIcon('clock', 12)} ${dateFormatted} · ${heureFormatted}</span>` : ''}
             </div>
             <div style="font-weight: 800; font-size: 1.05rem;">${escapeHtml(p.nom)}</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top:2px;">
@@ -8373,7 +8432,7 @@ function rendreProjets() {
 
         ${prochaineEtape && !estTermine ? `
           <div class="proj-next-step">
-            <span>▶ À suivre : ${escapeHtml(prochaineEtape.titre)}</span>
+            <span>${svgIcon('play', 12)} À suivre : ${escapeHtml(prochaineEtape.titre)}</span>
           </div>
         ` : ''}
       </div>
@@ -8447,11 +8506,11 @@ function rendrePlanningProjet(p) {
       <div class="active-step-card">
         <div class="active-step-badge">ÉTAPE EN COURS (${activeIdx + 1}/${etapes.length})</div>
         <div style="font-weight:800; font-size:1rem; margin-bottom:2px;">${cur.ordre ? cur.ordre + '. ' : ''}${escapeHtml(cur.titre)}</div>
-        <div style="font-size:0.78rem; color:var(--primary-dark); font-weight:600; margin-bottom:8px;">📅 ${dtStr}</div>
+        <div style="font-size:0.78rem; color:var(--primary-dark); font-weight:600; margin-bottom:8px;">${svgIcon('calendar', 14)} ${dtStr}</div>
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
           <button type="button" class="btn btn-primary btn-sm" onclick="basculerEtapeProjetActuel(${activeIdx})">✓ Marquer comme fait</button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="demarrerEtapeMaintenantPWA(${activeIdx})">Démarrer maintenant</button>
-          ${hasLots && estEtapeSechageOuPesee(cur) ? `<button type="button" class="btn btn-secondary btn-sm" onclick="basculerSousOngletProjet('production')">⚖️ Peser mes lots</button>` : ''}
+          ${hasLots && estEtapeSechageOuPesee(cur) ? `<button type="button" class="btn btn-secondary btn-sm" onclick="basculerSousOngletProjet('production')">${svgIcon('scale', 14)} Peser mes lots</button>` : ''}
         </div>
       </div>
     `;
@@ -8473,16 +8532,16 @@ function rendrePlanningProjet(p) {
             <div style="font-weight:700; font-size:0.95rem; ${isDone ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">
               ${et.ordre ? et.ordre + '. ' : ''}${escapeHtml(et.titre)}
             </div>
-            ${dateStr ? `<div style="font-size:0.75rem; color:var(--primary); font-weight:600; margin:2px 0;">📅 ${dateStr} ${dureeH ? '(' + dureeH + ')' : ''}</div>` : ''}
+            ${dateStr ? `<div style="font-size:0.75rem; color:var(--primary); font-weight:600; margin:2px 0;">${svgIcon('calendar', 13)} ${dateStr} ${dureeH ? '(' + dureeH + ')' : ''}</div>` : ''}
             <div style="font-size:0.82rem; color:var(--text); line-height:1.45; margin-top:4px; white-space:pre-line;">${escapeHtml(et.instructions || '')}</div>
-            ${et.astuce ? `<div class="astuce-box">💡 <strong>Astuce Pro :</strong> ${escapeHtml(et.astuce)}</div>` : ''}
+            ${et.astuce ? `<div class="astuce-box">${svgIcon('lightbulb', 14)} <strong>Astuce Pro :</strong> ${escapeHtml(et.astuce)}</div>` : ''}
             ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `<div class="etape-photos-strip" id="etape-photos-${idx}"></div>` : ''}
             <div class="etape-photo-actions">
               <label class="btn-photo-mini">
-                📷 ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `Ajouter photo (${et.photoIds.length})` : 'Ajouter photo'}
+                ${svgIcon('camera', 13)} ${Array.isArray(et.photoIds) && et.photoIds.length > 0 ? `Ajouter photo (${et.photoIds.length})` : 'Ajouter photo'}
                 <input type="file" accept="image/*" multiple style="display:none;" onchange="ajouterPhotosEtapePWA(${idx}, this.files); this.value='';">
               </label>
-              ${showPeser ? `<button type="button" class="btn-photo-mini" onclick="basculerSousOngletProjet('production')">⚖️ Peser</button>` : ''}
+              ${showPeser ? `<button type="button" class="btn-photo-mini" onclick="basculerSousOngletProjet('production')">${svgIcon('scale', 13)} Peser</button>` : ''}
             </div>
             ${!isDone ? `
               <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
@@ -8491,7 +8550,7 @@ function rendrePlanningProjet(p) {
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 15)">+15m</button>
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 60)">+1h</button>
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="decalerEtapePWA(${idx}, 1440)">+1j</button>
-                <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 9px; font-size:0.75rem;" onclick="ouvrirModalHoraireEtape(${idx})">🕒 Horaire</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:4px 9px; font-size:0.75rem;" onclick="ouvrirModalHoraireEtape(${idx})">${svgIcon('clock', 13)} Horaire</button>
                 <button type="button" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.75rem;" onclick="demarrerEtapeMaintenantPWA(${idx})">Maintenant</button>
               </div>
             ` : ''}
@@ -8663,7 +8722,7 @@ function rendreProductionProjet(p) {
           <div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span class="badge badge-primary">${escapeHtml(lot.variante || 'Lot standard')}</span>
-              ${estAffine ? '<span class="badge badge-green">✨ Affiné</span>' : ''}
+              ${estAffine ? `<span class="badge badge-green">${svgIcon('sparkles', 12)} Affiné</span>` : ''}
             </div>
             <div style="font-weight:800; font-size:0.95rem; margin-top:3px;">${escapeHtml(lot.nomProduit || p.nomRecettePrincipale || 'Charcuterie')}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">
@@ -8692,19 +8751,19 @@ function rendreProductionProjet(p) {
           <div>Note : <strong>${'★'.repeat(note)}</strong></div>
         </div>
 
-        ${analyse.risqueCroutage ? `<div style="font-size:0.75rem; color:#C62828; background:#FFEBEE; padding:6px 8px; border-radius:6px; margin-top:6px; font-weight:600;">${escapeHtml(analyse.alerteCroutageMsg)}</div>` : ''}
-        ${analyse.dateEstimeeFin ? `<div style="font-size:0.75rem; color:#2E7D32; margin-top:6px;">📅 Fin d'affinage estimée : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong></div>` : ''}
+        ${analyse.risqueCroutage ? `<div style="font-size:0.75rem; color:#C62828; background:#FFEBEE; padding:6px 8px; border-radius:6px; margin-top:6px; font-weight:600;">${svgIcon('alert-triangle', 14)} ${escapeHtml(analyse.alerteCroutageMsg)}</div>` : ''}
+        ${analyse.dateEstimeeFin ? `<div style="font-size:0.75rem; color:#2E7D32; margin-top:6px;">${svgIcon('calendar', 13)} Fin d'affinage estimée : <strong>${new Date(analyse.dateEstimeeFin).toLocaleDateString('fr-FR')}</strong></div>` : ''}
         ${lot.commentaire ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:6px; font-style:italic;">« ${escapeHtml(lot.commentaire)} »</div>` : ''}
 
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
           <button class="btn btn-primary btn-sm" style="flex:1;" onclick="ouvrirModalPeseeLotProjet(${idx})">
-            ⚖️ ${pInit ? `Peser (${nbPesees})` : 'Poids départ'}
+            ${svgIcon('scale', 14)} ${pInit ? `Peser (${nbPesees})` : 'Poids départ'}
           </button>
           <button class="btn btn-secondary btn-sm" onclick="ouvrirModalModifierLot(${idx})">
             ✎ Modifier & Avis
           </button>
           <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="ouvrirModalAmeliorerRecette(${idx})">
-            ✨ Améliorer la recette de base (futurs projets)
+            ${svgIcon('sparkles', 14)} Améliorer la recette de base (futurs projets)
           </button>
         </div>
       </div>
@@ -8769,7 +8828,7 @@ function rendreBudgetProjet(p) {
 
     ${bilan.resumeGraisse ? `
       <div class="card" style="background:var(--surface-subtle); border-color:var(--border);">
-        <div style="font-size:0.85rem; font-weight:600; color:var(--text);">🦆 Bilan Graisse & Confit</div>
+        <div style="font-size:0.85rem; font-weight:600; color:var(--text);">${svgIcon('flame', 15)} Bilan Graisse & Confit</div>
         <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; line-height:1.45;">${escapeHtml(bilan.resumeGraisse)}</div>
       </div>
     ` : ''}
@@ -9056,15 +9115,15 @@ function rendreRecettes() {
             <div style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
               <span class="badge badge-mini">${escapeHtml(r.famille || 'Artisanal')}</span>
               ${r.typeRecette ? `<span class="badge badge-muted">${escapeHtml(r.typeRecette)}</span>` : ''}
-              ${r._source === 'shared' ? `<span class="badge badge-primary">🤝 Partagée</span>` : (r._source === 'user' && r.baseRecipeId ? `<span class="badge badge-mini">Perso (modifiée)</span>` : (r._source === 'user' ? `<span class="badge badge-mini">Perso</span>` : ''))}
+              ${r._source === 'shared' ? `<span class="badge badge-primary">${svgIcon('share', 12)} Partagée</span>` : (r._source === 'user' && r.baseRecipeId ? `<span class="badge badge-mini">Perso (modifiée)</span>` : (r._source === 'user' ? `<span class="badge badge-mini">Perso</span>` : ''))}
               ${r.masquee ? '<span class="badge badge-muted">Masquée</span>' : ''}
             </div>
             <div style="font-weight:800; font-size:1.05rem; margin-top:3px;">${escapeHtml(r.nom)}</div>
           </div>
           <div style="display:flex; align-items:center; gap:4px;">
             ${cible ? `<div class="badge badge-green">Séchage -${cible}%</div>` : (r.tempCoeurCible ? `<div class="badge badge-primary">Cuisson ${r.tempCoeurCible}°C</div>` : '')}
-            <button class="btn-icon" style="padding:4px;" title="${r.masquee ? 'Afficher' : 'Masquer'}" onclick="event.stopPropagation(); basculerMasquageRecetteDirect('${escapeJsStr(r.id || r.code)}')">${r.masquee ? '👁️' : '🙈'}</button>
-            <button class="btn-icon" style="color:var(--danger); padding:4px;" title="Supprimer la recette" onclick="event.stopPropagation(); supprimerRecetteDirect('${escapeJsStr(r.id || r.code)}')">🗑️</button>
+            <button class="btn-icon" style="padding:4px;" title="${r.masquee ? 'Afficher' : 'Masquer'}" onclick="event.stopPropagation(); basculerMasquageRecetteDirect('${escapeJsStr(r.id || r.code)}')">${r.masquee ? svgIcon('eye', 16) : svgIcon('eye-off', 16)}</button>
+            <button class="btn-icon" style="color:var(--danger); padding:4px;" title="Supprimer la recette" onclick="event.stopPropagation(); supprimerRecetteDirect('${escapeJsStr(r.id || r.code)}')">${svgIcon('trash', 16)}</button>
           </div>
         </div>
         <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
@@ -9072,9 +9131,9 @@ function rendreRecettes() {
         </p>
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px;">
           <div style="display:flex; gap:10px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap;">
-            <span>⏱ ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
-            <span>🧂 ${ingrCount} ingr.</span>
-            ${varCount > 0 ? `<span>🌿 ${varCount} lot${varCount > 1 ? 's' : ''}</span>` : ''}
+            <span>${svgIcon('clock', 13)} ${etapesCount} étape${etapesCount > 1 ? 's' : ''}</span>
+            <span>${svgIcon('salt', 13)} ${ingrCount} ingr.</span>
+            ${varCount > 0 ? `<span>${svgIcon('leaf', 13)} ${varCount} lot${varCount > 1 ? 's' : ''}</span>` : ''}
           </div>
           <button class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:0.76rem;" onclick="event.stopPropagation(); ouvrirModalPlanifier('${escapeJsStr(r.id || r.code)}')">Planifier</button>
         </div>
@@ -9124,11 +9183,11 @@ function ouvrirFicheRecette(id) {
   `;
 
   if (r.conditionsConservation) {
-    html += `<div class="conservation-box">🌡️ <strong>Conservation :</strong> ${escapeHtml(r.conditionsConservation)}</div>`;
+    html += `<div class="conservation-box">${svgIcon('thermometer', 14)} <strong>Conservation :</strong> ${escapeHtml(r.conditionsConservation)}</div>`;
   }
 
   if (r.pointsVigilance) {
-    html += `<div class="vigilance-box">⚠️ <strong>Points de vigilance :</strong><br>${escapeHtml(r.pointsVigilance).replace(/\n/g, '<br>')}</div>`;
+    html += `<div class="vigilance-box">${svgIcon('alert-triangle', 14)} <strong>Points de vigilance :</strong><br>${escapeHtml(r.pointsVigilance).replace(/\n/g, '<br>')}</div>`;
   }
 
   // Sorties de découpe (si multi-sorties)
@@ -9202,7 +9261,7 @@ function ouvrirFicheRecette(id) {
               <span style="color:var(--primary); font-size:0.75rem;">✎</span>
             </div>
             <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px; white-space:pre-line;">${escapeHtml(e.instructions || '')}</div>
-            ${e.astuce ? `<div class="astuce-box" style="margin-top:4px;">💡 ${escapeHtml(e.astuce)}</div>` : ''}
+            ${e.astuce ? `<div class="astuce-box" style="margin-top:4px;">${svgIcon('lightbulb', 14)} ${escapeHtml(e.astuce)}</div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -9653,7 +9712,7 @@ function actualiserAffichageModeSalage() {
   }
   if (elRes) {
     const dureeSelH = modeSalageSelectionne === MODE_SALAGE.SOUS_VIDE ? dureeSvH : dureeRecH;
-    elRes.innerText = `⏱️ Mise au sel : ${formaterDureeSalage(dureeSelH)} · Étapes et liste de courses adaptées automatiquement.`;
+    elRes.innerHTML = `${svgIcon('clock', 14)} Mise au sel : ${escapeHtml(formaterDureeSalage(dureeSelH))} · Étapes et liste de courses adaptées automatiquement.`;
   }
 }
 function modifierLotDraftPlanification(idx, champ, valeur) {
@@ -10259,11 +10318,11 @@ function formaterQuantiteFusionnee(qteBase, fam, uniteOrig) {
 }
 
 const LIBELLES_CATEGORIES = {
-  VIANDE: '🥩 Viandes & Matière première',
-  SEL_SUCRE: '🧂 Sel & Sucre',
-  EPICES: '🌿 Épices & Aromates',
-  CONSOMMABLES: '📦 Consommables',
-  AUTRE: '🛒 Autres'
+  VIANDE: `${svgIcon('utensils', 14)} Viandes & Matière première`,
+  SEL_SUCRE: `${svgIcon('salt', 14)} Sel & Sucre`,
+  EPICES: `${svgIcon('leaf', 14)} Épices & Aromates`,
+  CONSOMMABLES: `${svgIcon('package', 14)} Consommables`,
+  AUTRE: `${svgIcon('shopping-cart', 14)} Autres`
 };
 function rendreCourses() {
   const container = document.getElementById('courses-container');
@@ -10285,7 +10344,7 @@ function rendreCourses() {
   if (courses.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
-        <div style="font-size: 3rem; margin-bottom: 12px;">🛒</div>
+        <div style="margin-bottom: 12px; color: var(--primary);">${svgIcon('shopping-cart', 44)}</div>
         <div style="font-weight: 700; font-size: 1.1rem; color: var(--text);">Votre panier est vide</div>
         <p style="font-size: 0.85rem; max-width: 320px; margin: 8px auto 16px;">Les ingrédients sont générés automatiquement lors de la planification d'une session.</p>
         <button class="btn btn-primary btn-sm" onclick="ouvrirModalAjoutCourseManuel()">+ Ajouter un article</button>
@@ -11012,7 +11071,7 @@ function rendreParametres() {
       cloudBox.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
-            <div style="font-weight:700; color:var(--secondary); font-size:0.88rem;">☁️ Connecté : ${escapeHtml(user.email || user.displayName || user.uid)}</div>
+            <div style="font-weight:700; color:var(--secondary); font-size:0.88rem;">${svgIcon('cloud', 15)} Connecté : ${escapeHtml(user.email || user.displayName || user.uid)}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Synchronisation temps réel active (recettes de base, recettes perso/partagées, sessions, ventes).</div>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="deconnexionCloud()">Déconnexion</button>
@@ -11022,7 +11081,7 @@ function rendreParametres() {
       cloudBox.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
           <div>
-            <div style="font-weight:700; font-size:0.88rem;">☁️ Mode local uniquement</div>
+            <div style="font-weight:700; font-size:0.88rem;">${svgIcon('cloud', 15)} Mode local uniquement</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">Connectez-vous pour synchroniser vos sessions, ventes et recettes partagées.</div>
           </div>
           <button type="button" class="btn btn-primary btn-sm" onclick="ouvrirModalAuth()">Se connecter</button>
@@ -11032,13 +11091,13 @@ function rendreParametres() {
   }
   const statusEl = document.getElementById('ios-storage-status');
   if (statusEl) {
-    const persistedTxt = uiState.storagePersisted === true
-      ? '🔒 Stockage persistant activé'
-      : (uiState.storagePersisted === false ? '⚠️ Stockage non persistant (export régulier recommandé)' : 'ℹ️ Vérification du stockage...');
+    const persistedHtml = uiState.storagePersisted === true
+      ? `${svgIcon('lock', 13)} Stockage persistant activé`
+      : (uiState.storagePersisted === false ? `${svgIcon('alert-triangle', 13)} Stockage non persistant (export régulier recommandé)` : `${svgIcon('info', 13)} Vérification du stockage...`);
     const lastB = appState.lastBackupAt
       ? `Dernier export : ${new Date(appState.lastBackupAt).toLocaleDateString('fr-FR')}`
       : 'Aucun export effectué';
-    statusEl.textContent = `${persistedTxt} · ${lastB}`;
+    statusEl.innerHTML = `${persistedHtml} · ${escapeHtml(lastB)}`;
   }
   const container = document.getElementById('params-tarifs-list');
   if (!container) return;
@@ -11313,7 +11372,7 @@ function appliquerTheme(isDark) {
   document.body.classList.toggle('light-mode', !isDark);
   const btn = document.getElementById('btn-theme-toggle');
   if (btn) {
-    btn.innerText = isDark ? '☀️ Clair' : '🌙 Cave';
+    btn.innerHTML = isDark ? `${svgIcon('sun', 15)} Clair` : `${svgIcon('moon', 15)} Cave`;
   }
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute('content', isDark ? '#1A1614' : '#C84B31');
@@ -11864,10 +11923,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAuth) {
       if (user) {
         const label = (user.email || user.displayName || 'Cloud').split('@')[0];
-        btnAuth.innerText = `👤 ${label}`;
+        btnAuth.innerHTML = `${svgIcon('user', 15)} ${escapeHtml(label)}`;
         btnAuth.title = `Connecté : ${user.email || user.uid}`;
       } else {
-        btnAuth.innerText = '☁️ Connexion';
+        btnAuth.innerHTML = `${svgIcon('cloud', 15)} Connexion`;
         btnAuth.title = 'Se connecter au Cloud';
       }
     }
