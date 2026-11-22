@@ -46,6 +46,8 @@ service cloud.firestore {
     //   Private per-user tasting evaluations.
     // Collection: charcuterie_users/{userId}/settings/{docId}
     //   Private per-user app settings.
+    // Collection: charcuterie_users/{userId}/photos/{photoId}
+    //   Private per-user project step photos.
     //
     // ===============================================================
 
@@ -285,6 +287,31 @@ service cloud.firestore {
              isValidOptionalString('unite', 0, 40);
     }
 
+    function isValidOptionalTimestampOrTime(field) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
+             request.resource.data[field] is timestamp ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() <= 40) ||
+             (request.resource.data[field] is number &&
+              request.resource.data[field] >= 0);
+    }
+
+    function isValidPhoto(data) {
+      return data is map &&
+             hasRequiredFields(['id', 'projetId', 'dataUrl']) &&
+             hasOnlyAllowedFields([
+               'id', 'projetId', 'etapeIdx', 'dataUrl', 'size', 'createdAt', 'updatedAt'
+             ]) &&
+             validStringLength('id', 1, 128) &&
+             validStringLength('projetId', 1, 128) &&
+             isValidOptionalNumber('etapeIdx', 0, 200) &&
+             validStringLength('dataUrl', 1, 900000) &&
+             isValidOptionalNumber('size', 0, 1000000) &&
+             isValidOptionalTimestampOrTime('createdAt') &&
+             isValidOptionalTimestampOrTime('updatedAt');
+    }
+
     // ===============================================================
     // Collection Rules
     // ===============================================================
@@ -376,6 +403,14 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && isValidSetting(request.resource.data);
         allow update: if isOwner(userId) && isValidSetting(request.resource.data) &&
+                         areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
+
+      match /photos/{photoId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidPhoto(request.resource.data);
+        allow update: if isOwner(userId) && isValidPhoto(request.resource.data) &&
                          areImmutableFieldsUnchanged(['createdAt']);
         allow delete: if isOwner(userId);
       }

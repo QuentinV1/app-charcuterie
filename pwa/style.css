@@ -930,6 +930,18 @@ body.dark-mode {
 .etape-photo-thumb:hover {
   transform: scale(1.04);
 }
+.etape-photo-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
 .etape-photo-actions {
   margin-top: 8px;
   display: flex;

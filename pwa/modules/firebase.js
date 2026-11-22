@@ -374,3 +374,47 @@ export async function setDocSettingsFirestore(appState) {
     updatedAt: new Date().toISOString()
   }));
 }
+
+// Sauvegarde, lecture et suppression des photos dans Firestore (charcuterie_users/{uid}/photos/{photoId})
+export async function savePhotoFirestore(photo) {
+  if (!fb || !currentUser || !photo || !photo.id || !photo.dataUrl) return false;
+  const { doc, setDoc } = fb.fsMod;
+  const nowIso = new Date().toISOString();
+  await setDoc(
+    doc(fb.db, 'charcuterie_users', currentUser.uid, 'photos', String(photo.id)),
+    cleanForFirestore({
+      id: String(photo.id),
+      projetId: String(photo.projetId || ''),
+      etapeIdx: typeof photo.etapeIdx === 'number' ? photo.etapeIdx : 0,
+      dataUrl: photo.dataUrl,
+      size: Number(photo.size || photo.dataUrl.length || 0),
+      createdAt: photo.createdAt || nowIso,
+      updatedAt: nowIso
+    })
+  );
+  return true;
+}
+
+export async function getPhotoFirestore(photoId) {
+  if (!fb || !currentUser || !photoId) return null;
+  const { doc, getDoc } = fb.fsMod;
+  const snap = await getDoc(doc(fb.db, 'charcuterie_users', currentUser.uid, 'photos', String(photoId)));
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function deletePhotoFirestore(photoId) {
+  if (!fb || !currentUser || !photoId) return;
+  const { doc, deleteDoc } = fb.fsMod;
+  await deleteDoc(doc(fb.db, 'charcuterie_users', currentUser.uid, 'photos', String(photoId)));
+}
+
+export async function deleteProjectPhotosFirestore(projetId) {
+  if (!fb || !currentUser || !projetId) return;
+  const { collection, query, where, getDocs, writeBatch } = fb.fsMod;
+  const colRef = collection(fb.db, 'charcuterie_users', currentUser.uid, 'photos');
+  const snap = await getDocs(query(colRef, where('projetId', '==', String(projetId))));
+  if (snap.empty) return;
+  const batch = writeBatch(fb.db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+}

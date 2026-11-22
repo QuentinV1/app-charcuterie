@@ -1,6 +1,6 @@
 // État global, persistance localStorage, sécurité iOS & synchronisation Firestore
 import { CATALOGUE_BASE, PARAMETRES_DEFAUT, INGREDIENTS_CATALOGUE_DEFAUT } from './catalog.js';
-import { exporterToutesPhotosIDB, importerPhotosIDB } from './photos.js';
+import { exporterToutesPhotosIDB, importerPhotosIDB, synchroniserPhotosCloud } from './photos.js';
 import {
   estConnecteFirebase, getFirebaseUser, seedRecettesBaseSiVide, demarrerSyncFirestore, syncAllUserDataToFirestore
 } from './firebase.js';
@@ -320,6 +320,7 @@ export async function activerSyncCloud() {
             needsPushAfterInit = false;
             sauvegarderDonnees(false);
           }
+          synchroniserPhotosCloud();
         }
       } else {
         _suppressCloudSync = true;
@@ -365,6 +366,7 @@ export async function forcerSyncCloud() {
   cloudState.syncError = null;
   try {
     await syncAllUserDataToFirestore(appState);
+    await synchroniserPhotosCloud();
     cloudState.syncStatus = 'synced';
     cloudState.lastSyncedAt = new Date().toISOString();
     const user = getFirebaseUser();
